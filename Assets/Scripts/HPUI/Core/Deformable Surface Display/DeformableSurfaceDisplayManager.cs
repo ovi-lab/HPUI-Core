@@ -57,7 +57,8 @@ namespace HPUI.Core.DeformableSurfaceDisplay
 
 	public Coord currentCoord = new Coord();
 
-	bool _inUse = false;
+        [SerializeField]
+	private bool _inUse = false;
 	public bool inUse
 	{
 	    get

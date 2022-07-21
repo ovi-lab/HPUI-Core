@@ -26,7 +26,14 @@ namespace HPUI.Core
                 if (!manager.deformationCoordinateManager.isCalibrated())
                 {
                     manager.deformationCoordinateManager.Calibrate();
-                    manager.deformableSurfaceDisplayManager.Setup();
+                    if (manager.deformableSurfaceDisplayManager != null)
+                    {
+                        manager.deformableSurfaceDisplayManager.Setup();
+                    }
+                    else
+                    {
+                        manager.deformationCoordinateManager.GetComponent<DeformableSurfaceDisplayManager>().Setup();
+                    }
                 }
             }
 
