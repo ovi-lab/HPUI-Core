@@ -179,7 +179,7 @@ namespace HPUI.Core
 		    StartCoroutine(Timer());
 		}
 		// When the getButtons methos is called from somewhere cancell this round of checking
-		catch (InvalidOperationException e)
+		catch (InvalidOperationException)
 		{}
 	    }
 	    values.Clear();

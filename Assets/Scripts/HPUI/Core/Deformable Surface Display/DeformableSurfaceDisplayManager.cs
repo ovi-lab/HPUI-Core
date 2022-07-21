@@ -116,7 +116,7 @@ namespace HPUI.Core.DeformableSurfaceDisplay
                 case Method.fingerFOR_dynamic_deofrmed:
                 case Method.palmFOR:
                     throw new NotImplementedException();
-		    break;
+		    // break;
 	    }
 	}
 
@@ -330,10 +330,10 @@ namespace HPUI.Core.DeformableSurfaceDisplay
 		    // btn.transform.parent.forward = -btn.transform.parent.forward;
 		    // btn.transform.parent.forward = -normals[i];
 		}
-		else
-		{
-		    btn.localRotation = Quaternion.LookRotation(normals[i]);
-		}
+		// else
+		// {
+		//     btn.localRotation = Quaternion.LookRotation(normals[i]);
+		// }
 	    }
 	}
     }
