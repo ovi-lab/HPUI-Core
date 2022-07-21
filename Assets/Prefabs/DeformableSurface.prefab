@@ -162,7 +162,7 @@ MonoBehaviour:
     sideVectorP2: R2D1_anchor
     forwardVectorP1: R2D1_anchor
     forwardVectorP2: R2D4_anchor
-  handCoordinateManager: {fileID: 0}
+  handIndex: 0
   transformAnchor: {fileID: 7207032629263646689}
   display: {fileID: 7207032628327253751}
   vertices: []
@@ -218,7 +218,7 @@ MonoBehaviour:
   parent: {fileID: 0}
   secondParent: {fileID: 0}
   handIndex: 0
-  parentName: 
+  parentName: PalmBase
 --- !u!114 &7207032629049756723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -231,8 +231,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b852467f9d333c4382b2420b4a2b98c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  btnPrefab: {fileID: 8323219010113896373, guid: e0df6ea09b7dcca45ac6b0bba4e8cf20,
-    type: 3}
+  btnPrefab: {fileID: 8323219010113896373, guid: e0df6ea09b7dcca45ac6b0bba4e8cf20, type: 3}
   planeMeshGeneratorRoot: {fileID: 7207032628327253750}
   calibration: {fileID: 7207032629049756716}
   method: 1
@@ -256,7 +255,7 @@ MonoBehaviour:
   useStaticDisplaySize: 1
   planeMeshGenerator: {fileID: 7207032628327253749}
   dynamicMeshDeformer: {fileID: 7207032628327253748}
-  handCoordinateManager: {fileID: 0}
+  handIndex: 0
   keyPointsUsed:
   - R2D1_anchor/left
   - R2D1_anchor/right

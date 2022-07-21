@@ -12,9 +12,10 @@ namespace HPUI.Core
 
         public int handIndex = 0;
         public string parentName;
-        
-	// Start is called before the first frame update
-	void Start()
+        public string secondParentName;
+
+        // Start is called before the first frame update
+        void Start()
 	{
             if (!parent)
             {
@@ -30,6 +31,10 @@ namespace HPUI.Core
                 else
                 {
                     parent = HandsManager.instance.handCoordinateManagers[handIndex].getProxyTrasnform(parentName);
+                    if (!string.IsNullOrEmpty(secondParentName))
+                    {
+                        secondParent = HandsManager.instance.handCoordinateManagers[handIndex].getProxyTrasnform(secondParentName);
+                    }
                 }
             }
         
