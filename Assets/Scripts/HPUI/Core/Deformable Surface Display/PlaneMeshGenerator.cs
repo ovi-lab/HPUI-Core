@@ -35,7 +35,8 @@ namespace HPUI.Core.DeformableSurfaceDisplay
 
         public OrientationInformation orientationInformation;
 
-        public HandCoordinateManager handCoordinateManager;
+        public int handIndex = 0;
+        private HandCoordinateManager handCoordinateManager;
 
 	public Transform transformAnchor;
 
@@ -59,7 +60,8 @@ namespace HPUI.Core.DeformableSurfaceDisplay
 	{
 	    if (display == null)
 		display = GameObject.Find("DeformableDisplay");
-	}
+            handCoordinateManager = HandsManager.instance.handCoordinateManagers[handIndex];
+        }
 
 	public void CreateFlatMesh(float[] dimensions, DeformationCoordinateManager deformationCoordinateManager)
 	{

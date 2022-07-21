@@ -60,7 +60,8 @@ namespace HPUI.Core.DeformableSurfaceDisplay
 
 	public PlaneMeshGenerator planeMeshGenerator;
         public DynamicMeshDeformer dynamicMeshDeformer;
-        public HandCoordinateManager handCoordinateManager;
+        public int handIndex = 0;
+        private HandCoordinateManager handCoordinateManager;
 
         public List<string> keyPointsUsed = new List<string>();
 
@@ -83,6 +84,7 @@ namespace HPUI.Core.DeformableSurfaceDisplay
 
             // Debug.Log(transform.Find("PlaneMeshTransformAnchors/offset"));
             // Debug.Log(handCoordinateManager.getManagedCoord("R2D1_anchor/left"));
+            handCoordinateManager = HandsManager.instance.handCoordinateManagers[handIndex];
 
             foreach (var name in keyPointsUsed)
             {

@@ -4,7 +4,7 @@
 #### DeformableSurface
 - Set root's `TransformLinker` parent to the `palmbase` of hand
 - Configure `width`, `height` and `HandCoordinateManager` (a hand proxy) of `DeformableCoordinateManager`
-- Set the `HandCoordinateManager` (a hand proxy) in `PlaneMeshGenerator` of the `Surface` GameObject
+- Set the `handIndex` in `PlaneMeshGenerator` of the `Surface` GameObject. This refers to one of the `HandCoordinateManager`s in the `HandsManager`. The index refers to the index on the list of `HandCoordinateManager`s.
 - Configure parents in `TransformLinker` of the `PlaneMeshTransformAnchors` GameObject
 - Configure the offset by modifying the transform of the `offset` GameObject
 #### InteractionManager
@@ -24,7 +24,3 @@
 - Set the GameObject representing the palm base as `PalmBase`
 - Under `ManagedCoordinates`, list all the locations you may track.
 - Under `ProxyToSeletonNameMapping`, add the proxyname and corresponding name on the skeleton being abstracted.
-
-## TODO
-
-- Use HandsManager instead of directly using the HandCoordinateManager in the DeformableSurface scripts
