@@ -69,7 +69,7 @@ namespace HPUI.Core
 	    processGetButtonsFlag = true;
 	}
 
-        public void RegisterBtnSafe(ButtonController btn)
+        public void RegisterBtn(ButtonController btn)
         {
             // making sure RegisterBtnUnsafe method gets called for each button.
             if (processGetButtonsFlag)

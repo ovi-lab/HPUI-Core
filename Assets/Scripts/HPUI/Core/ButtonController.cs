@@ -181,7 +181,7 @@ namespace HPUI.Core
 	    // scabe.invokeScaleBehaviour();
 	}
 
-	public void setSelectionDefault(bool selection)
+	public void SetSelectionDefault(bool selection)
 	{
 	    isSelectionBtn = selection;
 	    colbe.setSelectionDefault(selection);
