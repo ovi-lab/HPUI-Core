@@ -1,14 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.UI;
 using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 using System;
-using System.Threading;
-using System.Linq;
-using System.IO;
-// using ViconDataStreamSDK.DotNET;
+using UnityEngine.Events;
 
 namespace HPUI.Core
 {
@@ -26,15 +20,26 @@ namespace HPUI.Core
 	    }
 	    private set {}
 	}
-    
-	private ButtonController[] buttons;
+
+        bool ProcessPostContactEventCallback { get; set; } = true;
+
+        [SerializeField]
+        [Tooltip("Event called before each button is processed during a step with the button being processed as an argument.")]
+        ButtonControllerEvent ButtonPreProcessEvent = new ButtonControllerEvent();
+        [SerializeField]
+        [Tooltip("Event called before any button is processed during a step.")]
+        UnityEvent ButtonsPreProcessEvent = new UnityEvent();
+
+        private ButtonController[] buttons;
 	private List<ButtonPair> values;
 	protected List<ButtonController> btns = new List<ButtonController>();
 	protected bool configurationComplete;
-    
-	protected ButtonController winningBtn;
+
+        //This is the button that would get the contact event trigger when mulitple buttons come into contact with the trigger
+	protected ButtonController winningBtn; 
 	private float winningValue;
-	private bool executeProcess = true;
+
+	private bool executeProcess = true; // NOTE: See the comments on the `Timer` method
 
 	public SpriteRenderer feedback;
 	public Color sensorTriggerColor = new Color(1, 0.3f, 0.016f, 1);
@@ -55,37 +60,38 @@ namespace HPUI.Core
 	    if (feedback != null)
 		defaultColor = feedback.color;
 	
-	    getButtons();
+	    GetButtons();
 	    // customSubjectHandler = FindObjectOfType<CustomSubjectScript>();
-
-	    startAmend();        
 	}
 
-	public void getButtons()
+	public void GetButtons()
 	{
 	    processGetButtonsFlag = true;
 	}
 
-        public void RegisterBtn(ButtonController btn)
+        public void RegisterBtnSafe(ButtonController btn)
         {
+            // making sure RegisterBtnUnsafe method gets called for each button.
             if (processGetButtonsFlag)
-                processGetButtonsPostProcessAction += () => _registerBtn(btn);
+                ProcessGetButtonsPostProcessAction += () => RegisterBtnUnsafe(btn);
             else
-                _registerBtn(btn);
+                RegisterBtnUnsafe(btn);
         }
-        
-        public void _registerBtn(ButtonController btn)
+
+        // NOTE: Probably safe now, leaving as is, incase.
+        // Unsafe because buttons might (?) get added after GetButtons() is called but before ProcessGenerateBtns finishes.
+        private void RegisterBtnUnsafe(ButtonController btn)
         {
             if (btns.Contains(btn))
                 return;
-            btn.setValueCallback = setValue;
-            btn.postContactCallback = postContactCallback;
+            btn.SetValueCallback = SetValue;
+            btn.PostContactCallback = PostContactCallback;
             btns.Add(btn);
         }
 
-        event System.Action processGetButtonsPostProcessAction;
+        event System.Action ProcessGetButtonsPostProcessAction;
         
-	void processGetButtons()
+	void ProcessGetButtons()
 	{
 	    buttons = FindObjectsOfType<ButtonController>();
 
@@ -94,41 +100,35 @@ namespace HPUI.Core
 	    {
 		if (btn.transform.root.transform.name == "Right_hand_button_layout" || btn.transform.root.GetComponent<InteractableButtonsRoot>() != null)
 		{
-		    _registerBtn(btn);
+		    RegisterBtnUnsafe(btn);
 		}
 	    }
 	    processGetButtonsFlag = false;
             
-            if (processGetButtonsPostProcessAction != null)
+            if (ProcessGetButtonsPostProcessAction != null)
             {    
-                processGetButtonsPostProcessAction();
-                processGetButtonsPostProcessAction = null;
+                ProcessGetButtonsPostProcessAction();
+                // Clearing out the missed calls so that they don't get called again
+                ProcessGetButtonsPostProcessAction = null;
             }
 	    Debug.Log("Got heaps of buttons "  +  btns.Count);
 	}
 
-	protected virtual void startAmend()
-	{
-	}
-
-	protected virtual void processData(string content)
-	{}
-
-	void setValue(float value, ButtonController btn)
+	void SetValue(float value, ButtonController btn)
 	{
 	    values.Add(new ButtonPair(btn, value));
 	}
 
-	void postContactCallback(ButtonController btn)
+	void PostContactCallback(ButtonController btn)
 	{
-	    if (contactEventTriggerd && processPostContactEventCallback(btn))
+	    if (contactEventTriggerd && ProcessPostContactEventCallback)
 	    {
 		contactEventTriggerd = false;
-		btn.setSelectionHighlight(false);
+		btn.SetSelectionHighlight(false);
 	    }
 	}
 
-	void setButtonState(ButtonController btn, ButtonController.State state)
+	void SetButtonState(ButtonController btn, ButtonController.State state)
 	{
 	    if (btn.state != state)
 	    {
@@ -139,15 +139,16 @@ namespace HPUI.Core
 
 	void LateUpdate()
 	{
+            // The Get Buttons routine needs to run in case there is an update to the scene
 	    if (processGetButtonsFlag)
-		processGetButtons();
-	    interactionPreProcess();
+		ProcessGetButtons();
+	    InteractionPreProcess();
 	    if (executeProcess)
 	    {
 		executeProcess = false;
-		// bool did = false;
-		preContactLoopCallback();
-		try
+                // bool did = false;
+                ButtonsPreProcessEvent.Invoke();
+                try
 		{
 		    foreach (ButtonController btn in btns)
 		    {
@@ -155,22 +156,22 @@ namespace HPUI.Core
 			if (!btn.initialized)
 			    continue;
 
-			buttonCallback(btn);
-			if (btn.stateChanged && btn.gameObject.activeInHierarchy)
+                        ButtonPreProcessEvent.Invoke(btn);
+                        if (btn.stateChanged && btn.gameObject.activeInHierarchy)
 			{
 			    switch (btn.state)
 			    {
 				case ButtonController.State.proximate:
 				    //btn.proximateAction.Invoke();
-				    btn.invokeProximate();
+				    btn.InvokeProximate();
 				    break;
 				case ButtonController.State.contact:
 				    //btn.contactAction.Invoke();
-				    processContactEventCallback(btn);
+				    ProcessContactEventCallback(btn);
 				    break;
 				default:
 				    //btn.defaultAction.Invoke();
-				    btn.invokeDefault();
+				    btn.InvokeDefault();
 				    break;
 			    }
 			    btn.stateChanged = false;
@@ -185,7 +186,7 @@ namespace HPUI.Core
 	    values.Clear();
 	}
 
-	private void interactionPreProcess()
+	private void InteractionPreProcess()
 	{
 	    foreach(var btn in btns)
 	    {
@@ -199,49 +200,37 @@ namespace HPUI.Core
 		{
 		    if (winningBtn != null)
 		    {
-			setButtonState(winningBtn, entry.btn.failedState);
+			SetButtonState(winningBtn, entry.btn.failedState);
 		    }
 		    winningBtn = entry.btn;
 		    winningValue = entry.value;
 		}
 		else
 		{
-		    setButtonState(entry.btn, entry.btn.failedState);
+		    SetButtonState(entry.btn, entry.btn.failedState);
 		}
 	    }
 
 	    if (winningBtn && winningBtn.contactDataValid())
 	    {
 		// Debug.Log("!!!!!!!  " + winningBtn.buttonParentName + winningBtn.fingerParentName + "  " + winningValue + "  " + btns.Contains(winningBtn));
-		setButtonState(winningBtn, ButtonController.State.contact);
+		SetButtonState(winningBtn, ButtonController.State.contact);
 	    }
 	}
 
-	protected virtual void buttonCallback(ButtonController btn)
+        protected virtual void ProcessContactEventCallback(ButtonController btn)
 	{
+	    InvokeContact(btn);
 	}
 
-	protected virtual void preContactLoopCallback()
+	protected void InvokeContact(ButtonController btn)
 	{
-	}
-
-    
-	protected virtual bool processPostContactEventCallback(ButtonController btn)
-	{
-	    return true;
-	}
-    
-	protected virtual void processContactEventCallback(ButtonController btn)
-	{
-	    invokeContact(btn);
-	}
-
-	protected void invokeContact(ButtonController btn)
-	{
-	    btn.invokeContact();
+	    btn.InvokeContact();
 	    contactEventTriggerd = true;
 	}
 
+        // NOTE: If I remember correctly this was added to avoid race conditions?
+        // FIXME: Revisit this
 	IEnumerator Timer()
 	{
 	    yield return new WaitForSeconds(0.1f);

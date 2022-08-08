@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-//using System.Numerics;
 using UnityEngine;
-using UnityEngine.XR;
 
 namespace HPUI.Core.DeformableSurfaceDisplay
 {

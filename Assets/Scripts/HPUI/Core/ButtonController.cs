@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Events;
+﻿using UnityEngine;
 
 namespace HPUI.Core
 {
@@ -11,7 +7,7 @@ namespace HPUI.Core
     {
 
 	public delegate void SetValue(float value, ButtonController btn);
-	public delegate void PostContactCallback(ButtonController btn);
+	public delegate void ButtonCallback(ButtonController btn);
 
 	public bool initialized {get; private set;} = false;
     
@@ -25,8 +21,8 @@ namespace HPUI.Core
 	public ButtonControllerEvent contactAction = new ButtonControllerEvent();
 	public ButtonControllerEvent defaultAction = new ButtonControllerEvent();
 
-	public SetValue setValueCallback { private get; set; }
-	public PostContactCallback postContactCallback {private get; set;}
+	public SetValue SetValueCallback { private get; set; }
+	public ButtonCallback PostContactCallback {private get; set;}
 
 	[System.NonSerialized]
 	public bool stateChanged = false;
@@ -53,9 +49,9 @@ namespace HPUI.Core
 	    {
 		previousState = _state;
 		_state = value;
-		if (previousState == State.contact && postContactCallback != null )
+		if (previousState == State.contact && PostContactCallback != null )
 		{
-		    postContactCallback(this);
+		    PostContactCallback(this);
 		}
 	    }
 	}
@@ -130,7 +126,7 @@ namespace HPUI.Core
 		{
 		    stateChanged = true;
 		}
-		setValueCallback((contactZone.colliderPosition - this.transform.position).magnitude, this);
+		SetValueCallback((contactZone.colliderPosition - this.transform.position).magnitude, this);
 	    }
 	    else if (proximalZone != null && proximalZone.state == ButtonZone.State.inside)
 	    {
@@ -164,21 +160,21 @@ namespace HPUI.Core
 	    contactZone.replicateObject(suffix);
 	}
     
-	public void invokeProximate()
+	public void InvokeProximate()
 	{
 	    proximateAction.Invoke(this);
 	    colbe.resetColor();
 	    // scabe.resetScale();
 	}
 
-	public void invokeDefault()
+	public void InvokeDefault()
 	{
 	    defaultAction.Invoke(this);
 	    colbe.resetColor();
 	    // scabe.resetScale();
 	}
 
-	public void invokeContact()
+	public void InvokeContact()
 	{
 	    contactAction.Invoke(this);
 	    colbe.invokeColorBehaviour();
@@ -197,7 +193,7 @@ namespace HPUI.Core
 	    colbe.setSelectionDefault(selection, color);
 	}
 
-	public void setSelectionHighlight(bool selection)
+	public void SetSelectionHighlight(bool selection)
 	{
 	    colbe.setSelectionHighlight(selection);
 	}
@@ -213,7 +209,4 @@ namespace HPUI.Core
             transform.parent.gameObject.SetActive(true);
         }
     }
-
-    [Serializable]
-    public class ButtonControllerEvent : UnityEvent<ButtonController> {}
 }

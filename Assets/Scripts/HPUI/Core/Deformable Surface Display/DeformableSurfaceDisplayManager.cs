@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Events;
@@ -184,7 +183,7 @@ namespace HPUI.Core.DeformableSurfaceDisplay
                         currentCoord.maxY = planeMeshGenerator.y_divisions;
                         SurfaceReadyAction.Invoke();
 			if (inUse)
-			    InteractionManger.instance.getButtons();
+			    InteractionManger.instance.GetButtons();
 		    }
 		    else
 		    {
