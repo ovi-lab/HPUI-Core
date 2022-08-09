@@ -14,15 +14,11 @@ namespace HPUI.Core
 	public ButtonZone proximalZone;
 	public ButtonZone contactZone;
 
-	[SerializeField]
-	public RelativePosition relativePosition = RelativePosition.none;
-
 	public ButtonControllerEvent proximateAction = new ButtonControllerEvent();
 	public ButtonControllerEvent contactAction = new ButtonControllerEvent();
 	public ButtonControllerEvent defaultAction = new ButtonControllerEvent();
 
 	public SetValue SetValueCallback { private get; set; }
-	public ButtonCallback PostContactCallback {private get; set;}
 
 	[System.NonSerialized]
 	public bool stateChanged = false;
@@ -30,8 +26,6 @@ namespace HPUI.Core
 	private State _state;
 	public State previousState { get; private set; }
 
-	// public string fingerParentName { get; private set; }
-	// public string buttonParentName { get; private set; }
 
 	// [System.NonSerialized]
 	public int id = -1;
@@ -49,42 +43,24 @@ namespace HPUI.Core
 	    {
 		previousState = _state;
 		_state = value;
-		if (previousState == State.contact && PostContactCallback != null )
+		if (previousState == State.contact)
 		{
-		    PostContactCallback(this);
+		    PostContactCallback();
 		}
 	    }
 	}
 
 	ButtonColorBehaviour colbe;
 	ButtonScaleBehaviour scabe;
-	bool _isSelection = false;
 
 	[System.NonSerialized]
 	public SpriteRenderer button;
     
-	public bool isSelectionBtn
-	{
-	    get{
-		return _isSelection;
-	    }
-	    private set{
-		_isSelection = value;
-	    }
-	}
-
 	public enum State
 	{
 	    outside,
 	    proximate,
 	    contact
-	}
-
-	public enum RelativePosition
-	{
-	    onSkin,
-	    offSkin,
-	    none
 	}
 
 	public bool contactRecieved()
@@ -98,7 +74,6 @@ namespace HPUI.Core
 	    state = State.outside;
 	    scabe = GetComponent<ButtonScaleBehaviour>();
 	    colbe = GetComponent<ButtonColorBehaviour>();
-	    isSelectionBtn = false;
 	    button = colbe.spriteRenderer;
 
 	    if (!proximalZone.gameObject.activeSelf)
@@ -107,7 +82,7 @@ namespace HPUI.Core
 	    initialized = true;
 	}
 
-	public void resetStates()
+	public void ResetStates()
 	{
 	    _state = State.outside;
 	    previousState = State.outside;
@@ -116,9 +91,11 @@ namespace HPUI.Core
 		proximalZone.state = ButtonZone.State.outside;
 	}
 
-	// Update is called once per frame
-	// void Update()
-	public void processUpdate()
+        /// <summary>
+        /// Based the zone that is triggered, set the state of this button. Calling this is deferred to the InteractionManger
+        /// manager to avoid race conditions.
+        /// </summary>
+	public void ProcessUpdate()
 	{
 	    if (contactZone.state == ButtonZone.State.inside)
 	    {
@@ -142,7 +119,7 @@ namespace HPUI.Core
 	    }
 	}
 
-	public bool contactDataValid()
+	public bool ContactDataValid()
 	{
 	    var r = (contactZone.colliderSurfacePoint - contactZone.colliderPosition).magnitude;
 	    var p = (contactZone.contactPlanePoint - contactZone.colliderPosition).magnitude;
@@ -159,48 +136,47 @@ namespace HPUI.Core
 	{
 	    contactZone.replicateObject(suffix);
 	}
-    
-	public void InvokeProximate()
-	{
-	    proximateAction.Invoke(this);
-	    colbe.resetColor();
-	    // scabe.resetScale();
-	}
 
+        // This function is called when the state goes from contact to anything else
+        private void PostContactCallback()
+        {
+
+        }
+
+        // This method does not check if there was a state change.
+        public void InvokeProximate()
+	{
+            proximateAction.Invoke(this);
+            colbe.ResetColor();
+        }
+
+        // This method does not check if there was a state change.
 	public void InvokeDefault()
 	{
-	    defaultAction.Invoke(this);
-	    colbe.resetColor();
-	    // scabe.resetScale();
-	}
+            defaultAction.Invoke(this);
+            colbe.ResetColor();
+        }
 
+        // This method does not check if there was a state change.
 	public void InvokeContact()
 	{
-	    contactAction.Invoke(this);
-	    colbe.invokeColorBehaviour();
-	    // scabe.invokeScaleBehaviour();
-	}
+            contactAction.Invoke(this);
+            colbe.InvokeColorBehaviour();
+        }
 
-	public void SetSelectionDefault(bool selection)
-	{
-	    isSelectionBtn = selection;
-	    colbe.setSelectionDefault(selection);
-	}
+	// public void SetDefaultStyle()
+	// {
+	//     colbe.SetDefaultStyle();
+	// }
 
-	public void setSelectionDefault(bool selection, Color color)
-	{
-	    isSelectionBtn = selection;
-	    colbe.setSelectionDefault(selection, color);
-	}
-
-	public void SetSelectionHighlight(bool selection)
-	{
-	    colbe.setSelectionHighlight(selection);
-	}
+	// public void SetContactStyle()
+	// {
+	//     colbe.setSelectionHighlight(selection);
+	// }
 
         public void Hide()
         {
-	    resetStates();
+	    ResetStates();
             transform.parent.gameObject.SetActive(false);
         }
 

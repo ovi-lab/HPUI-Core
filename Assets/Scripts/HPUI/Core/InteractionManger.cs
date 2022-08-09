@@ -21,8 +21,6 @@ namespace HPUI.Core
 	    private set {}
 	}
 
-        bool ProcessPostContactEventCallback { get; set; } = true;
-
         [SerializeField]
         [Tooltip("Event called before each button is processed during a step with the button being processed as an argument.")]
         ButtonControllerEvent ButtonPreProcessEvent = new ButtonControllerEvent();
@@ -31,7 +29,7 @@ namespace HPUI.Core
         UnityEvent ButtonsPreProcessEvent = new UnityEvent();
 
         private ButtonController[] buttons;
-	private List<ButtonPair> values;
+	private List<ButtonPair> buttonStateValues;
 	protected List<ButtonController> btns = new List<ButtonController>();
 	protected bool configurationComplete;
 
@@ -45,7 +43,6 @@ namespace HPUI.Core
 	public Color sensorTriggerColor = new Color(1, 0.3f, 0.016f, 1);
 	public Color successEventColor = Color.yellow;
 	private Color defaultColor;
-	private bool contactEventTriggerd = false;
 
 	private bool processGetButtonsFlag = false;
 	
@@ -55,7 +52,7 @@ namespace HPUI.Core
 	    // Collecting all the button elements that need to be interacted with
 	    // NOTE: Take care with the indirect case as it can collect those elements only meant for displaying.
 	    configurationComplete = false;
-	    values = new List<ButtonPair>();
+	    buttonStateValues = new List<ButtonPair>();
 
 	    if (feedback != null)
 		defaultColor = feedback.color;
@@ -64,11 +61,18 @@ namespace HPUI.Core
 	    // customSubjectHandler = FindObjectOfType<CustomSubjectScript>();
 	}
 
+        /// <summary>
+        /// Collect all the ButtonController objects in the scene.
+        /// </summary>
 	public void GetButtons()
 	{
+            // The flag is used to defer the process of getting all the buttons.
 	    processGetButtonsFlag = true;
 	}
 
+        /// <summary>
+        /// Add a ButtonController to the list of tracked buttons and setup hooks.
+        /// </summary>
         public void RegisterBtn(ButtonController btn)
         {
             // making sure RegisterBtnUnsafe method gets called for each button.
@@ -85,12 +89,14 @@ namespace HPUI.Core
             if (btns.Contains(btn))
                 return;
             btn.SetValueCallback = SetValue;
-            btn.PostContactCallback = PostContactCallback;
             btns.Add(btn);
         }
 
         event System.Action ProcessGetButtonsPostProcessAction;
-        
+
+        /// <summary>
+        /// Get all the buttons that are active in the scene.
+        /// </summary>
 	void ProcessGetButtons()
 	{
 	    buttons = FindObjectsOfType<ButtonController>();
@@ -98,12 +104,14 @@ namespace HPUI.Core
 	    btns.Clear();
 	    foreach (ButtonController btn in buttons)
 	    {
-		if (btn.transform.root.transform.name == "Right_hand_button_layout" || btn.transform.root.GetComponent<InteractableButtonsRoot>() != null)
+		if (btn.transform.root.GetComponent<InteractableButtonsRoot>() != null)
 		{
 		    RegisterBtnUnsafe(btn);
 		}
 	    }
 	    processGetButtonsFlag = false;
+
+            // Once all the found buttons are registered, register buttons that may have been added while the above was running.
             
             if (ProcessGetButtonsPostProcessAction != null)
             {    
@@ -114,18 +122,13 @@ namespace HPUI.Core
 	    Debug.Log("Got heaps of buttons "  +  btns.Count);
 	}
 
+        /// <summary>
+        /// Used by ButtonController to set the distance (value) to the trigger.
+        /// This will be used to resolve race conditions in InteractionPreProcess.
+        /// </summary>
 	void SetValue(float value, ButtonController btn)
 	{
-	    values.Add(new ButtonPair(btn, value));
-	}
-
-	void PostContactCallback(ButtonController btn)
-	{
-	    if (contactEventTriggerd && ProcessPostContactEventCallback)
-	    {
-		contactEventTriggerd = false;
-		btn.SetSelectionHighlight(false);
-	    }
+	    buttonStateValues.Add(new ButtonPair(btn, value));
 	}
 
 	void SetButtonState(ButtonController btn, ButtonController.State state)
@@ -139,10 +142,13 @@ namespace HPUI.Core
 
 	void LateUpdate()
 	{
-            // The Get Buttons routine needs to run in case there is an update to the scene
+            // The GetButtons routine needs to run in case there is an update to the scene
 	    if (processGetButtonsFlag)
 		ProcessGetButtons();
-	    InteractionPreProcess();
+
+            // This method is called outside the executeProcess condition so that the actual intractions will get updated in game time.
+            // The executeProcess was added (maybe) to handle race conditions?
+            InteractionPreProcess();
 	    if (executeProcess)
 	    {
 		executeProcess = false;
@@ -183,18 +189,22 @@ namespace HPUI.Core
 		catch (InvalidOperationException)
 		{}
 	    }
-	    values.Clear();
+	    buttonStateValues.Clear();
 	}
 
+        /// <summary>
+        /// This method processes multiple ButtonController's being triggered. It first runs the processUpdate method for each registered ButtonController
+        /// then adjusts the results if there are multiple buttons that report contact.
+        /// </summary>
 	private void InteractionPreProcess()
 	{
 	    foreach(var btn in btns)
 	    {
-		btn.processUpdate();
+		btn.ProcessUpdate();
 	    }
 	    winningBtn = null;
 	    winningValue = 1000;
-	    foreach (ButtonPair entry in values)
+	    foreach (ButtonPair entry in buttonStateValues)
 	    {
 		if (entry.value < winningValue)
 		{
@@ -211,9 +221,8 @@ namespace HPUI.Core
 		}
 	    }
 
-	    if (winningBtn && winningBtn.contactDataValid())
+	    if (winningBtn && winningBtn.ContactDataValid())
 	    {
-		// Debug.Log("!!!!!!!  " + winningBtn.buttonParentName + winningBtn.fingerParentName + "  " + winningValue + "  " + btns.Contains(winningBtn));
 		SetButtonState(winningBtn, ButtonController.State.contact);
 	    }
 	}
@@ -226,7 +235,6 @@ namespace HPUI.Core
 	protected void InvokeContact(ButtonController btn)
 	{
 	    btn.InvokeContact();
-	    contactEventTriggerd = true;
 	}
 
         // NOTE: If I remember correctly this was added to avoid race conditions?
