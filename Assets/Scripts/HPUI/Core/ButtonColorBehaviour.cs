@@ -9,6 +9,17 @@ namespace HPUI.Core
 	// public Color sucessHighlightColor;
 	// public Color selectionColor;
 	private Color defaultColor;
+        public Color DefaultColor {
+            get
+            {
+                return defaultColor;
+            }
+            set
+            {
+                defaultColor = value;
+                ResetColor();
+            }
+        }
 	//private Color secondaryDefaultColor;
 	public SpriteRenderer spriteRenderer;
 	public bool externalSpriteRender {get; private set;}
