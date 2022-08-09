@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine.Events;
 
 namespace HPUI.Core
@@ -8,5 +9,12 @@ namespace HPUI.Core
     /// </summary>
     [Serializable]
     public class ButtonControllerEvent : UnityEvent<ButtonController>
-    {}   
+    {}
+
+    /// <summary>
+    /// Event containing a List of ButtonControllers as a parameter 
+    /// </summary>
+    [Serializable]
+    public class ButtonControllersEvent : UnityEvent<IEnumerable<ButtonController>>
+    {}
 }

@@ -18,14 +18,15 @@ namespace HPUI.Core
 	public ButtonControllerEvent contactAction = new ButtonControllerEvent();
 	public ButtonControllerEvent defaultAction = new ButtonControllerEvent();
 
+        // Handled/set by InteractionManger
 	public SetValue SetValueCallback { private get; set; }
 
+        // Handled/set by InteractionManger
 	[System.NonSerialized]
 	public bool stateChanged = false;
 
 	private State _state;
 	public State previousState { get; private set; }
-
 
 	// [System.NonSerialized]
 	public int id = -1;
@@ -82,6 +83,9 @@ namespace HPUI.Core
 	    initialized = true;
 	}
 
+        /// <summary>
+        /// Set the state of the buttons to it's default
+        /// </summary>
 	public void ResetStates()
 	{
 	    _state = State.outside;
@@ -119,8 +123,17 @@ namespace HPUI.Core
 	    }
 	}
 
+        /// <summary>
+        /// Used to validate the contact with the contact surface. Used by InteractionManager.
+        /// </summary>
 	public bool ContactDataValid()
 	{
+            // condition1: the distance from the collider's center to the point on the collider which touched the contact is smaller than
+            //             the distance from the collider's center the contact point projected on the contact surface.
+            //             it's a sanity check.
+            // condition2: The collider's center projected on the contact surface is withing a 2.5 range of the contac surface's center.
+            //             To ensure the contact is not triggered too far from the button itself.
+            //             the 2.5f is a magic number?
 	    var r = (contactZone.colliderSurfacePoint - contactZone.colliderPosition).magnitude;
 	    var p = (contactZone.contactPlanePoint - contactZone.colliderPosition).magnitude;
 	    var condition1 = (r * 0.99f) > p;
@@ -132,6 +145,7 @@ namespace HPUI.Core
 	    return condition1 && condition2;
 	}
 
+        // Used for testing purposes
 	public void replicateObject(string suffix)
 	{
 	    contactZone.replicateObject(suffix);
@@ -174,12 +188,18 @@ namespace HPUI.Core
 	//     colbe.setSelectionHighlight(selection);
 	// }
 
+        /// <summary>
+        /// Hide the button element.
+        /// </summary>
         public void Hide()
         {
 	    ResetStates();
             transform.parent.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// Display the button element.
+        /// </summary>
         public void Show()
         {
             transform.parent.gameObject.SetActive(true);

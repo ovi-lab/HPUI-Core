@@ -27,6 +27,9 @@ namespace HPUI.Core
         [SerializeField]
         [Tooltip("Event called before any button is processed during a step.")]
         UnityEvent ButtonsPreProcessEvent = new UnityEvent();
+        [SerializeField]
+        [Tooltip("Event called after GetButtons routine runs.")]
+        ButtonControllersEvent PostGetButtonsEvent = new ButtonControllersEvent();
 
         private ButtonController[] buttons;
 	private List<ButtonPair> buttonStateValues;
@@ -112,14 +115,15 @@ namespace HPUI.Core
 	    processGetButtonsFlag = false;
 
             // Once all the found buttons are registered, register buttons that may have been added while the above was running.
-            
             if (ProcessGetButtonsPostProcessAction != null)
             {    
                 ProcessGetButtonsPostProcessAction();
                 // Clearing out the missed calls so that they don't get called again
                 ProcessGetButtonsPostProcessAction = null;
             }
-	    Debug.Log("Got heaps of buttons "  +  btns.Count);
+            
+            PostGetButtonsEvent.Invoke(btns);
+            Debug.Log("Got heaps of buttons "  +  btns.Count);
 	}
 
         /// <summary>
@@ -140,6 +144,7 @@ namespace HPUI.Core
 	    }
 	}
 
+        // Unity method
 	void LateUpdate()
 	{
             // The GetButtons routine needs to run in case there is an update to the scene
@@ -245,6 +250,7 @@ namespace HPUI.Core
 	    executeProcess = true;
 	}
 
+        // To save data and use when resolving race conditions.
 	private class ButtonPair
 	{
 	    public ButtonController btn { get; set; }
@@ -255,10 +261,6 @@ namespace HPUI.Core
 		this.btn = btn;
 		this.value = value;
 	    }
-	}
-    
-	void OnDestroy()
-	{
 	}
     }
 }

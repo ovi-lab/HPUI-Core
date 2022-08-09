@@ -24,14 +24,14 @@ namespace HPUI.Core
                     if (!manager)
                         Debug.LogError("Transform linker without `parentName` or `parent` defined alllowed only in decendednts of `HandCoordinateManager`.");
                     else
-                        parent = manager.getLinkedSkeletonTransform(name);
+                        parent = manager.RetLinkedSkeletonTransform(name);
                 }
                 else
                 {
-                    parent = HandsManager.instance.handCoordinateManagers[handIndex].getProxyTrasnform(parentName);
+                    parent = HandsManager.instance.handCoordinateManagers[handIndex].GetProxyTrasnform(parentName);
                     if (!string.IsNullOrEmpty(secondParentName))
                     {
-                        secondParent = HandsManager.instance.handCoordinateManagers[handIndex].getProxyTrasnform(secondParentName);
+                        secondParent = HandsManager.instance.handCoordinateManagers[handIndex].GetProxyTrasnform(secondParentName);
                     }
                 }
             }

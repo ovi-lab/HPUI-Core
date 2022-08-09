@@ -200,8 +200,8 @@ namespace HPUI.Core.DeformableSurfaceDisplay
 
 	    if (calcRotation)
 	    {
-		Vector3 forwardDirectionVector = handCoordinateManager.getManagedCoord(orientationInformation.forwardVectorP2).position - handCoordinateManager.getManagedCoord(orientationInformation.forwardVectorP1).position;
-		Vector3 sidewaysDirectionVector = handCoordinateManager.getManagedCoord(orientationInformation.sideVectorP2).position - handCoordinateManager.getManagedCoord(orientationInformation.sideVectorP1).position;
+		Vector3 forwardDirectionVector = handCoordinateManager.GetManagedCoord(orientationInformation.forwardVectorP2).position - handCoordinateManager.GetManagedCoord(orientationInformation.forwardVectorP1).position;
+		Vector3 sidewaysDirectionVector = handCoordinateManager.GetManagedCoord(orientationInformation.sideVectorP2).position - handCoordinateManager.GetManagedCoord(orientationInformation.sideVectorP1).position;
 		Vector3 upwardDirectionVector = Vector3.Cross(sidewaysDirectionVector, forwardDirectionVector);
 
 		//Debug.DrawLine(HandCoordinateGetter.middle4.transform.position, HandCoordinateGetter.palmBottom.transform.position, Color.white, 200f);

@@ -15,26 +15,38 @@ namespace HPUI.Core
 
         public List<string> managedCoordinates = new List<string>();
         private Dictionary<string, Transform> managedCoordTransforms = new Dictionary<string, Transform>();
-        
-        public Transform getLinkedSkeletonTransform(string proxyName)
+
+        /// <summary>
+        /// Provided the proxy name, return the transform of the skeleton the proxy follows.
+        /// </summary>
+        public Transform RetLinkedSkeletonTransform(string proxyName)
         {
             var items = proxyToSeletonNameMapping.Where(x => x.ProxyName == proxyName).ToList();
             if (items.Count != 1)
                 Debug.LogError("Error: number of proxynames for `" + proxyName + "` is : " + items.Count);
-            return getSkeletonTransform(items[0].SkeletonName);
+            return GetSkeletonTransform(items[0].SkeletonName);
         }
 
-        public Transform getSkeletonTransform(string descendantName)
+        /// <summary>
+        /// Given a name, return the corresponding transform with the name from the skeleton being proxied.
+        /// </summary>
+        public Transform GetSkeletonTransform(string descendantName)
         {
             return skeletonRoot.FindDescendentTransform(descendantName);
         }
 
-        public Transform getProxyTrasnform(string descendentName)
+        /// <summary>
+        /// Given a name, return the corresponding transform of the proxy with the name.
+        /// </summary>
+        public Transform GetProxyTrasnform(string descendentName)
         {
             return this.transform.FindDescendentTransform(descendentName);
         }
 
-        public Transform getManagedCoord(string name)
+        /// <summary>
+        /// Provided a proxy name, return the transform of that proxy.
+        /// </summary>
+        public Transform GetManagedCoord(string name)
         {
             if (managedCoordTransforms.ContainsKey(name))
             {
@@ -43,6 +55,9 @@ namespace HPUI.Core
             return null;
         }
 
+        /// <summary>
+        /// Returns the position in the palms frame of reference from a given position in the world frame of reference.
+        /// </summary>
 	public Vector3 CoordinatesInPalmReferenceFrame(Vector3 worldCoordinates)
 	{
 	    //worldCoordinates = HandCoordinateGetter.HandToWorldCoords(worldCoordinates);
@@ -50,6 +65,9 @@ namespace HPUI.Core
 	    return worldCoordinates;
 	}
 
+        /// <summary>
+        /// Returns the position in the world frame of reference from a given position in the palm frame of reference.
+        /// </summary>
 	public Vector3 PalmToWorldCoords(Vector3 palmCoords)
 	{
 	    return palmBase.transform.TransformPoint(palmCoords);
@@ -59,7 +77,7 @@ namespace HPUI.Core
         {
             foreach (var name in managedCoordinates)
             {
-                managedCoordTransforms[name] = getProxyTrasnform(name);
+                managedCoordTransforms[name] = GetProxyTrasnform(name);
             }
             // Debug.Log(string.Join(",", managedCoordTransforms.Select(kvp => kvp.Key + ": " + kvp.Value)));
         }

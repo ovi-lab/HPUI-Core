@@ -86,7 +86,7 @@ namespace HPUI.Core.DeformableSurfaceDisplay
 
             foreach (var name in keyPointsUsed)
             {
-                keypointObjects.Add(handCoordinateManager.getManagedCoord(name).gameObject);
+                keypointObjects.Add(handCoordinateManager.GetManagedCoord(name).gameObject);
             }
             
 	    startFinished = true;
