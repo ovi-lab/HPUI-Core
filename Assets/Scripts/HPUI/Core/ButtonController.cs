@@ -161,7 +161,7 @@ namespace HPUI.Core
         public void InvokeProximate()
 	{
             proximateAction.Invoke(this);
-            colbe.ResetColor();
+            colbe.InvokeHoverColorBehaviour();
         }
 
         // This method does not check if there was a state change.

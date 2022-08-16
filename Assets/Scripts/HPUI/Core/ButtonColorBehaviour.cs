@@ -5,6 +5,7 @@ namespace HPUI.Core
     public class ButtonColorBehaviour : MonoBehaviour
     {
 	public Color highlightColor;
+        public Color hoverColor;
 	// private Color secondaryHighlightColor;
 	// public Color sucessHighlightColor;
 	// public Color selectionColor;
@@ -46,6 +47,11 @@ namespace HPUI.Core
 	    //Debug.Log("----------------------------------------------------------Color on " + GetComponentInParent<TransformLinker>().parent.name);
 	    spriteRenderer.color = highlightColor;
 	}
+
+        public void InvokeHoverColorBehaviour()
+        {
+            spriteRenderer.color = hoverColor;
+        }
 
 	public void ResetColor()
 	{
