@@ -8,6 +8,9 @@ namespace HPUI.Core
 	public Transform parent;
 	public Transform secondParent;
 
+        [Tooltip("When ParentName/SecondParentName is provided, use this to get the transform to parent." +
+        "If not provided will use the HandIndex to get the HandCoordinateManager from the global HandsManager.")]
+        public HandCoordinateManager handCoordinateManager;
         public int handIndex = 0;
         public string parentName;
         public string secondParentName;
@@ -28,10 +31,14 @@ namespace HPUI.Core
                 }
                 else
                 {
-                    parent = HandsManager.instance.handCoordinateManagers[handIndex].GetProxyTrasnform(parentName);
+                    if (handCoordinateManager == null)
+                    {
+                        handCoordinateManager = HandsManager.instance.handCoordinateManagers[handIndex];
+                    }
+                    parent = handCoordinateManager.GetProxyTrasnform(parentName);
                     if (!string.IsNullOrEmpty(secondParentName))
                     {
-                        secondParent = HandsManager.instance.handCoordinateManagers[handIndex].GetProxyTrasnform(secondParentName);
+                        secondParent = handCoordinateManager.GetProxyTrasnform(secondParentName);
                     }
                 }
             }
