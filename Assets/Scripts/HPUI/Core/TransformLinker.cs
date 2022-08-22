@@ -27,7 +27,7 @@ namespace HPUI.Core
                     if (!manager)
                         Debug.LogError("Transform linker without `parentName` or `parent` defined alllowed only in decendednts of `HandCoordinateManager`.");
                     else
-                        parent = manager.RetLinkedSkeletonTransform(name);
+                        parent = manager.GetLinkedSkeletonTransform(name);
                 }
                 else
                 {

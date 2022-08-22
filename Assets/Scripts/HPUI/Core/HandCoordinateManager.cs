@@ -19,7 +19,7 @@ namespace HPUI.Core
         /// <summary>
         /// Provided the proxy name, return the transform of the skeleton the proxy follows.
         /// </summary>
-        public Transform RetLinkedSkeletonTransform(string proxyName)
+        public Transform GetLinkedSkeletonTransform(string proxyName)
         {
             var items = proxyToSeletonNameMapping.Where(x => x.ProxyName == proxyName).ToList();
             if (items.Count != 1)
