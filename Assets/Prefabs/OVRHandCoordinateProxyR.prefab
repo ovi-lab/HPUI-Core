@@ -3009,6 +3009,10 @@ MonoBehaviour:
     SkeletonName: r_pinky_finger_tip_marker
   palmBase: {fileID: 2719824905010913263}
   managedCoordinates:
+  - R1D1_anchor
+  - R1D2_anchor
+  - R1D3_anchor
+  - R1D4_anchor
   - R2D1_anchor/left
   - R2D1_anchor/right
   - R2D1_anchor

@@ -1752,6 +1752,10 @@ MonoBehaviour:
     SkeletonName: R5D4
   palmBase: {fileID: 7958652110609462865}
   managedCoordinates:
+  - R1D1_anchor
+  - R1D2_anchor
+  - R1D3_anchor
+  - R1D4_anchor
   - R2D1_anchor/left
   - R2D1_anchor/right
   - R2D1_anchor
