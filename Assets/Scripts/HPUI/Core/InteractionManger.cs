@@ -50,7 +50,7 @@ namespace HPUI.Core
 	private bool processGetButtonsFlag = false;
 	
 	// Start is called before the first frame update
-	void Start()
+	protected virtual void Start()
 	{
 	    // Collecting all the button elements that need to be interacted with
 	    // NOTE: Take care with the indirect case as it can collect those elements only meant for displaying.
@@ -145,7 +145,7 @@ namespace HPUI.Core
 	}
 
         // Unity method
-	void LateUpdate()
+	protected virtual void LateUpdate()
 	{
             // The GetButtons routine needs to run in case there is an update to the scene
 	    if (processGetButtonsFlag)
