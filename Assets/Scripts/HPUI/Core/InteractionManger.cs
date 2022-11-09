@@ -55,6 +55,7 @@ namespace HPUI.Core
 	    // Collecting all the button elements that need to be interacted with
 	    // NOTE: Take care with the indirect case as it can collect those elements only meant for displaying.
 	    configurationComplete = false;
+            _instance = this;
 	    buttonStateValues = new List<ButtonPair>();
 
 	    if (feedback != null)
