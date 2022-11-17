@@ -22,21 +22,23 @@ namespace HPUI.Core
             }
         }
 	//private Color secondaryDefaultColor;
-	public SpriteRenderer spriteRenderer;
-	public bool externalSpriteRender {get; private set;}
-	// Start is called before the first frame update
-	void Start()
+	public Renderer buttonRenderer;
+	public bool externalRender {get; private set;}
+
+        public string colorPropertyName = "_Color";
+        // Start is called before the first frame update
+        void Start()
 	{
-	    if (!spriteRenderer)
+	    if (!buttonRenderer)
 	    {
-		spriteRenderer = GetComponent<SpriteRenderer>();
-		externalSpriteRender = false;
+		buttonRenderer = GetComponent<Renderer>();
+		externalRender = false;
 	    }
 	    else
 	    {
-		externalSpriteRender = true;
+		externalRender = true;
 	    }
-	    defaultColor = spriteRenderer.color;
+	    defaultColor = buttonRenderer.material.GetColor(colorPropertyName);
 	    //secondaryDefaultColor = spriteRenderer.color;
 	    //secondaryHighlightColor = highlightColor;
 	}
@@ -45,18 +47,18 @@ namespace HPUI.Core
 	public void InvokeColorBehaviour()
 	{
 	    //Debug.Log("----------------------------------------------------------Color on " + GetComponentInParent<TransformLinker>().parent.name);
-	    spriteRenderer.color = highlightColor;
+	    buttonRenderer.material.SetColor(colorPropertyName, highlightColor);
 	}
 
         public void InvokeHoverColorBehaviour()
         {
-            spriteRenderer.color = hoverColor;
+            buttonRenderer.material.SetColor(colorPropertyName, hoverColor);
         }
 
 	public void ResetColor()
 	{
 	    //Debug.Log("----------------------------------------------------------Color off " + GetComponentInParent<TransformLinker>().parent.name);
-	    spriteRenderer.color = defaultColor;
+	    buttonRenderer.material.SetColor(colorPropertyName, defaultColor);
 	}
     }
 }

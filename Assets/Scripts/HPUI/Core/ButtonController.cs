@@ -53,9 +53,6 @@ namespace HPUI.Core
 
 	ButtonColorBehaviour colbe;
 	ButtonScaleBehaviour scabe;
-
-	[System.NonSerialized]
-	public SpriteRenderer button;
     
 	public enum State
 	{
@@ -75,9 +72,8 @@ namespace HPUI.Core
 	    state = State.outside;
 	    scabe = GetComponent<ButtonScaleBehaviour>();
 	    colbe = GetComponent<ButtonColorBehaviour>();
-	    button = colbe.spriteRenderer;
 
-	    if (!proximalZone.gameObject.activeSelf)
+	    if (proximalZone != null && !proximalZone.gameObject.activeSelf)
 		proximalZone = null;
 	
 	    initialized = true;
@@ -160,22 +156,25 @@ namespace HPUI.Core
         // This method does not check if there was a state change.
         public void InvokeProximate()
 	{
-            proximateAction.Invoke(this);
-            colbe.InvokeHoverColorBehaviour();
+            if (proximalZone != null && proximalZone.state == ButtonZone.State.inside)
+            {
+                proximateAction.Invoke(this);
+                colbe?.InvokeHoverColorBehaviour();
+            }
         }
 
         // This method does not check if there was a state change.
 	public void InvokeDefault()
 	{
             defaultAction.Invoke(this);
-            colbe.ResetColor();
+            colbe?.ResetColor();
         }
 
         // This method does not check if there was a state change.
 	public void InvokeContact()
 	{
             contactAction.Invoke(this);
-            colbe.InvokeColorBehaviour();
+            colbe?.InvokeColorBehaviour();
         }
 
 	// public void SetDefaultStyle()
