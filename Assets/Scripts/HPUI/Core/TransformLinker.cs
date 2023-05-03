@@ -14,6 +14,10 @@ namespace HPUI.Core
         public int handIndex = 0;
         public string parentName;
         public string secondParentName;
+        [Tooltip("If checked, the transform linker would set the localPosition and localRotation.")]
+        public bool setLocalTransform = false;
+        [Tooltip("If setLocalTransform and this is set, the linked transform will be relative to the object set to relativeParent.")]
+        public Transform relativeParent;
 
         // Start is called before the first frame update
         void Start()
@@ -48,21 +52,49 @@ namespace HPUI.Core
 	// Update is called once per frame
 	void Update()
 	{
+            Vector3 newPosition;
+            Quaternion newRotation;
 	    if (secondParent)
 	    {
 		Vector3 interDirection = secondParent.position - parent.position;
 		if (interDirection != Vector3.zero)
 		{
-		    this.transform.position = parent.position + (interDirection) * 0.5f;
-		    // this.transform.rotation = Quaternion.Slerp(parent.rotation, secondParent.rotation, 0.5f);
-		    this.transform.rotation = Quaternion.LookRotation((secondParent.forward - parent.forward)/2 + parent.forward, parent.up);
+                    newPosition = parent.position + (interDirection) * 0.5f;
+                    newRotation = Quaternion.LookRotation((secondParent.forward - parent.forward) / 2 + parent.forward, parent.up);
 		}
+                else
+                {
+                    newPosition = parent.position;
+                    newRotation = parent.rotation;
+                }
 	    }
 	    else
 	    {
-		this.transform.position = parent.position;
-		this.transform.rotation = parent.rotation;
+		newPosition = parent.position;
+		newRotation = parent.rotation;
 	    }
+
+            if (setLocalTransform)
+            {
+                if (relativeParent == null)
+                {
+                    this.transform.localPosition = newPosition;
+                    this.transform.localRotation = newRotation;
+                }
+                else
+                {
+                    if (transform.name == "R1D1_base")
+                        Debug.Log((relativeParent.position + newPosition).ToString("F4"));
+                    this.transform.position = relativeParent.position + newPosition;
+                    this.transform.rotation = relativeParent.rotation * newRotation;
+                }
+            }
+            else
+            {
+                this.transform.position = newPosition;
+                // this.transform.rotation = Quaternion.Slerp(parent.rotation, secondParent.rotation, 0.5f);
+                this.transform.rotation = newRotation;
+            }
 	}
     }
 }
