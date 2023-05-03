@@ -83,8 +83,6 @@ namespace HPUI.Core
                 }
                 else
                 {
-                    if (transform.name == "R1D1_base")
-                        Debug.Log((relativeParent.position + newPosition).ToString("F4"));
                     this.transform.position = relativeParent.position + newPosition;
                     this.transform.rotation = relativeParent.rotation * newRotation;
                 }
