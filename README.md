@@ -1,5 +1,26 @@
 # HPUI-Core
+This is the core package used for the HPUI projects. See https://github.com/ahmed-shariff/SampleHPUI for a sample demo. 
+
+Related publications:
+- [HPUI: Hand Proximate User Interfaces for One-Handed Interactions on Head Mounted Displays](https://ieeexplore.ieee.org/document/9523895)
+- [Evaluating design guidelines for hand proximate user interfaces](#)
+
+## To cite this work
+```
+@article{faleel21_hpui,  
+  author={Faleel, Shariff AM and Gammon, Michael and Fan, Kevin and Huang, Da-Yuan and Li, Wei and Irani, Pourang},  
+  journal={IEEE Transactions on Visualization and Computer Graphics},   
+  title={HPUI: Hand Proximate User Interfaces for One-Handed Interactions on Head Mounted Displays},   
+  year={2021},  
+  volume={27},  
+  number={11},  
+  pages={4215-4225},  
+  doi={10.1109/TVCG.2021.3106493}
+}
+```
+
 ## Usage
+This can be imported as a git package in Unity.
 ### Prefabs
 #### DeformableSurface
 - Set root's `TransformLinker` parent to the `palmbase` of hand
