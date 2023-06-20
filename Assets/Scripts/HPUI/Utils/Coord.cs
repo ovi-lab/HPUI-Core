@@ -1,4 +1,4 @@
-namespace HPUI.Utils
+namespace ubc.ok.ovilab.HPUI.Utils
 {
     public class Coord {
         private int _x, _y = 0;

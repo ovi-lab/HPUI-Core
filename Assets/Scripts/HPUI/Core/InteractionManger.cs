@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 using UnityEngine.Events;
 
-namespace HPUI.Core
+namespace ubc.ok.ovilab.HPUI.Core
 {
     [DefaultExecutionOrder(120)]
     public class InteractionManger : MonoBehaviour

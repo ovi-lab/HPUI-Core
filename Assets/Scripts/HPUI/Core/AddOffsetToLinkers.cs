@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HPUI.Core
+namespace ubc.ok.ovilab.HPUI.Core
 {
     public class AddOffsetToLinkers : MonoBehaviour
     {

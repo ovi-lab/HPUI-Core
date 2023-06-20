@@ -12,7 +12,7 @@ using System;
 using System.Collections.Generic;
 
 
-namespace HPUI.Utils
+namespace ubc.ok.ovilab.HPUI.Utils
 {
     class LowPassFilter 
     {

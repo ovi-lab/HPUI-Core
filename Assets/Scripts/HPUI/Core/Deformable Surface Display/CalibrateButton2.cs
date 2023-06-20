@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-using HPUI.Core.DeformableSurfaceDisplay;
+using ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay;
 
-namespace HPUI.Core
+namespace ubc.ok.ovilab.HPUI.Core
 {
     public class CalibrateButton2 : MonoBehaviour
     {

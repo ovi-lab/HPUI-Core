@@ -6,9 +6,9 @@ using Unity.Jobs;
 using UnityEngine.Jobs;
 using System;
 using System.Linq;
-using HPUI.Utils;
+using ubc.ok.ovilab.HPUI.Utils;
 
-namespace HPUI.Core.DeformableSurfaceDisplay
+namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 {
     public class DeformableSurfaceDisplayManager : MonoBehaviour
     {

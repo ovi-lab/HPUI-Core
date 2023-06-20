@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HPUI.Core
+namespace ubc.ok.ovilab.HPUI.Core
 {
     [DefaultExecutionOrder(-200)]
     public class HandsManager : MonoBehaviour

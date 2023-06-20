@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace HPUI.Core
+namespace ubc.ok.ovilab.HPUI.Core
 {
     [DefaultExecutionOrder(100)]
     public class ButtonScaleBehaviour : MonoBehaviour

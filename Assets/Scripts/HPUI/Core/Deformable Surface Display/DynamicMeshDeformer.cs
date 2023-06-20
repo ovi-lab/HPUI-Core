@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 //using IronPython.Hosting;
 
-namespace HPUI.Core.DeformableSurfaceDisplay
+namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 {
     public class DynamicMeshDeformer : MonoBehaviour
     {

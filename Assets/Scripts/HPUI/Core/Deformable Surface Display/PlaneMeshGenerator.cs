@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HPUI.Core.DeformableSurfaceDisplay
+namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 {
     /*
       Provided the dimensions of a mesh, this class will gerneate the mesh

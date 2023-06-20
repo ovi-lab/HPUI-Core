@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-namespace HPUI.utils
+namespace ubc.ok.ovilab.HPUI.utils
 {
     public static class Extensions
     {

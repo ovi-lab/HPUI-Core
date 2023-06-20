@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HPUI.Core.DeformableSurfaceDisplay
+namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 {
     [RequireComponent(typeof(DeformationCoordinateManager))]
     public class DeformationLimiter : MonoBehaviour

@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static HPUI.utils.Extensions;
+using static ubc.ok.ovilab.HPUI.utils.Extensions;
 using System.Linq;
 using System;
 
-namespace HPUI.Core
+namespace ubc.ok.ovilab.HPUI.Core
 {
     [DefaultExecutionOrder(-140)]
     public class HandCoordinateManager : MonoBehaviour

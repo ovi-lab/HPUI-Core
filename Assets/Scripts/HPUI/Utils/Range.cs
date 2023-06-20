@@ -1,6 +1,6 @@
 using System;
 
-namespace HPUI.Utils
+namespace ubc.ok.ovilab.HPUI.Utils
 {
     [Serializable]
     public class Range

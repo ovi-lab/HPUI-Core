@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.Events;
 
-namespace HPUI.Core
+namespace ubc.ok.ovilab.HPUI.Core
 {
     /// <summary>
     /// Event containing a ButtonController as a parameter 

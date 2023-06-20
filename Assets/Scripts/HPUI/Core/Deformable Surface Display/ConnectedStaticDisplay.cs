@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-namespace HPUI.Core.DeformableSurfaceDisplay
+namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 {
 
     public class ConnectedStaticDisplay : MonoBehaviour

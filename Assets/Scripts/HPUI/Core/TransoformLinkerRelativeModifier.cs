@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace HPUI.Core
+namespace ubc.ok.ovilab.HPUI.Core
 {
     /// <summary>
     /// For all child TransformLinkeres under the object with this script,
