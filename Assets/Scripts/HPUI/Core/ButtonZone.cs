@@ -50,7 +50,6 @@ namespace ubc.ok.ovilab.HPUI.Core
 	// 	}
 	// }
 
-
 	public void replicateObject(string suffix)
 	{
 	    var ob = Instantiate(other.transform.GetChild(0).gameObject, otherPosition, otherRotation);
@@ -69,17 +68,17 @@ namespace ubc.ok.ovilab.HPUI.Core
     
 	void OnTriggerEnter(Collider other)
 	{
-	    triggerBehaviour(other);
+	    TriggerBehaviour(other);
 	}
 
 	void OnTriggerStay(Collider other)
 	{
-	    triggerBehaviour(other);
+	    TriggerBehaviour(other);
 	}
 
-	void triggerBehaviour(Collider other)
+	public void TriggerBehaviour(Collider other)
 	{
-	    if (other.GetComponent<ThumbCollider>() == null)
+	    if (other.GetComponent<ButtonTriggerCollider>() == null)
 		return;
 	    
 	    state = State.inside;
