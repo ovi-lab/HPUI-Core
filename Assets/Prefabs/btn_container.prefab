@@ -509,4 +509,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   highlightColor: {r: 1, g: 0.6308719, b: 0, a: 1}
   hoverColor: {r: 1, g: 0.995753, b: 0.006289184, a: 1}
-  spriteRenderer: {fileID: 0}
+  buttonRenderer: {fileID: 0}
+  colorPropertyName: _Color
