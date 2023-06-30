@@ -60,13 +60,12 @@ namespace ubc.ok.ovilab.HPUI.Core
 		if (interDirection != Vector3.zero)
 		{
                     newPosition = parent.position + (interDirection) * 0.5f;
-                    newRotation = Quaternion.LookRotation((secondParent.forward - parent.forward) / 2 + parent.forward, parent.up);
 		}
                 else
                 {
                     newPosition = parent.position;
-                    newRotation = parent.rotation;
                 }
+                newRotation = Quaternion.LookRotation(parent.forward + secondParent.forward, parent.up + secondParent.up);
 	    }
 	    else
 	    {
