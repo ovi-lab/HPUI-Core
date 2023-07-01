@@ -7,7 +7,7 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "alglib.net.dll"
+        "alglib400gpl_net2.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
