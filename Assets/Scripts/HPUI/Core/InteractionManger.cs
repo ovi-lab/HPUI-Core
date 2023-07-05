@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
 using UnityEngine.Events;
 
 namespace ubc.ok.ovilab.HPUI.Core
@@ -210,11 +211,14 @@ namespace ubc.ok.ovilab.HPUI.Core
 	    }
 	    winningBtn = null;
 	    winningValue = 1000;
-	    foreach (ButtonPair entry in buttonStateValues)
+            foreach (ButtonPair entry in buttonStateValues.GroupBy(x => x.btn,
+                                                                   x => x.value,
+                                                                   (key, values) =>
+                                                                   new ButtonPair(key, values.Min())))
 	    {
 		if (entry.value < winningValue)
 		{
-		    if (winningBtn != null)
+		    if (winningBtn != null && winningBtn != entry.btn)
 		    {
 			SetButtonState(winningBtn, entry.btn.failedState);
 		    }
