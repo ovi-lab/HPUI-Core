@@ -156,7 +156,8 @@ namespace ubc.ok.ovilab.HPUI.Core
             // This method is called outside the executeProcess condition so that the actual intractions will get updated in game time.
             // The executeProcess was added (maybe) to handle race conditions?
             InteractionPreProcess();
-	    if (executeProcess)
+            // FIXME: Make sure this is not an issue
+	    if (true)
 	    {
 		executeProcess = false;
                 // bool did = false;
