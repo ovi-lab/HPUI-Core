@@ -59,7 +59,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             handCoordinateManager = HandsManager.instance.handCoordinateManagers[handIndex];
         }
 
-	public void CreateFlatMesh(float[] dimensions, DeformationCoordinateManager deformationCoordinateManager)
+	public void CreateFlatMesh(float[] dimensions)
 	{
 	    if (y_divisions == 0)
 		return;
@@ -85,7 +85,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    step_size = y_size / y_divisions;
 	    x_divisions = (int)(x_size / step_size);
 
-	    filter.mesh = GenerateMeshBottomMiddleOrigin(deformationCoordinateManager);
+	    filter.mesh = GenerateMeshBottomMiddleOrigin();
             // display.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Transparent/Diffuse"));
             // display.GetComponent<MeshRenderer>().material.shader = Shader.Find("Transparent/Diffuse");
             
@@ -94,7 +94,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             OnMeshGeneratedEvent();
         }
 
-	Mesh GenerateMeshBottomMiddleOrigin(DeformationCoordinateManager deformationCoordinateManager)
+	Mesh GenerateMeshBottomMiddleOrigin()
 	{
 	    Mesh mesh = new Mesh();
 
@@ -142,7 +142,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    mesh.SetUVs(0, uvs);
 	    mesh.SetTriangles(triangles, 0);
 
-	    AlignDisplay(deformationCoordinateManager);
+	    AlignDisplay();
         
 	    return mesh;
 	}
@@ -191,7 +191,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	//    return mesh;
 	//}
 
-	void AlignDisplay(DeformationCoordinateManager deformationCoordinateManager, bool calcRotation=true)
+	void AlignDisplay(bool calcRotation=true)
 	{
 	    //display.transform.position = HandCoordinateGetter.palmBottom.transform.position;
 	    //display.transform.localPosition = new Vector3(0, -x_size / 20, 0);

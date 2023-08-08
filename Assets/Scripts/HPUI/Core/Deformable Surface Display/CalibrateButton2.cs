@@ -22,16 +22,16 @@ namespace ubc.ok.ovilab.HPUI.Core
 	{
             foreach (var manager in managers)
             {
-                if (!manager.deformationCoordinateManager.isCalibrated())
+                if (!manager.coordinateManager.isCalibrated())
                 {
-                    manager.deformationCoordinateManager.Calibrate();
+                    manager.coordinateManager.Calibrate();
                     if (manager.deformableSurfaceDisplayManager != null)
                     {
                         manager.deformableSurfaceDisplayManager.Setup();
                     }
                     else
                     {
-                        manager.deformationCoordinateManager.GetComponent<DeformableSurfaceDisplayManager>().Setup();
+                        manager.coordinateManager.GetComponent<DeformableSurfaceDisplayManager>().Setup();
                     }
                 }
             }
@@ -42,7 +42,7 @@ namespace ubc.ok.ovilab.HPUI.Core
         [Serializable]
         public class Managers
         {
-            public DeformationCoordinateManager deformationCoordinateManager;
+            public CoordinateManager coordinateManager;
             public DeformableSurfaceDisplayManager deformableSurfaceDisplayManager;
         }
     }

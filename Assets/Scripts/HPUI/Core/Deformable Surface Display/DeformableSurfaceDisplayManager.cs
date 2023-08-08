@@ -15,10 +15,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	public GameObject btnPrefab;
 	public Transform planeMeshGeneratorRoot;
         
-        // [RequireInterface(typeof(ICalibrationInterface))]
-	// public UnityEngine.Object calibration;
-
-        public DeformationCoordinateManager calibration;
+        public CoordinateManager calibration;
 
         public float height {get {return calibration.height;} private set {}}
         public float width {get {return calibration.width;} private set {}}
@@ -31,14 +28,12 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	public bool generatedBtns {get; private set;} = false;
 	
 	[SerializeField]
-	public Method method = Method.mulitifingerFOR_dynamic_deformed_spline;
+	public Method method = Method.multifingerFOR_dynamic_deformed_spline;
 
 	public enum Method
 	{
-	    mulitifingerFOR_planer,
-	    mulitifingerFOR_dynamic_deformed_spline,
-            fingerFOR_dynamic_deofrmed,
-	    palmFOR
+	    multifingerFOR_dynamic_deformed_spline,
+            multifingerFOR_dynamic_skinned_mesh
 	}
 
         public UnityEvent SurfaceReadyAction = new UnityEvent();
@@ -107,17 +102,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	// Update is called once per frame
 	void Update()
 	{
-	    switch (method)
-	    {
-		case Method.mulitifingerFOR_dynamic_deformed_spline:
-                    deformableSurfaceHandler();
-		    break;
-		case Method.mulitifingerFOR_planer:
-                case Method.fingerFOR_dynamic_deofrmed:
-                case Method.palmFOR:
-                    throw new NotImplementedException();
-		    // break;
-	    }
+            deformableSurfaceHandler(method);
 	}
 
 	void OnDestroy()
@@ -125,15 +110,17 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    btns.Dispose();
 	}
 
-	void deformableSurfaceHandler()
+	void deformableSurfaceHandler(Method method)
 	{
 	    if (generatedBtns)
 	    {
 		if (!inUse)
 		    return;
-		// var a = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-		meshDeformer.DeformMesh();
-		// var b = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+                if (method == Method.multifingerFOR_dynamic_deformed_spline)
+                {
+                    meshDeformer.DeformMesh();
+                }
 
                 if (vertices.IsCreated)
                     vertices.CopyFrom(planeMeshGenerator.mesh.vertices);
@@ -165,8 +152,6 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 
 		var jobHandle = job.Schedule(btns);
 		jobHandle.Complete();
-		// var c = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-		// Debug.Log(jobHandle.IsCompleted + "------- b-a:  " + (b-a) + "      ------- c-b  " + (c-b) +  "  " + (c-a) + " ---- :"  + ((double)((b-a)/(c-a))).ToString("F6"));
 	    }
 	    else
 	    {
@@ -184,10 +169,6 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
                         SurfaceReadyAction.Invoke();
 			if (inUse)
 			    InteractionManger.instance.GetButtons();
-		    }
-		    else
-		    {
-			// meshDeformer.DeformMesh();
 		    }
 		}
 	    }
@@ -209,6 +190,9 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    processGenerateBtns = true;
 	}
     
+        /// <summary>
+        /// Update the button locations based on the mesh vertices
+        /// </summary>
 	void generateBtns(Vector3[] positions, Vector3[] _normals, Transform parent, out float yCenterOffset, out float xCenterOffset)
 	{
 	    var right = positions[1] - positions[0];
@@ -227,8 +211,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 		// Getting the scale values to set the size of the buttons based on the size of a single square in the generated mesh
 		if (scaleFactor == Vector3.zero)
 		{
-		    Vector3 buttonSize = btn.GetComponentInChildren<MeshRenderer>().bounds.size;//.Where(x => x.Zone == ButtonZone.Type.contact).ToList()[0].GetComponent<Collider>();
-		    // float gridSize = parent.InverseTransformVector(Vector3.up * planeMeshGenerator.step_size).magnitude;
+		    Vector3 buttonSize = btn.GetComponentInChildren<MeshRenderer>().bounds.size;
 		    gridSize = parent.InverseTransformVector(positions[0] - positions[1]).magnitude;
 		
 		    scaleFactor = btn.transform.localScale;
@@ -241,11 +224,10 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 		btn.transform.parent = parent;
 		btn.transform.localPosition = positions[i];
 		btn.transform.localRotation = Quaternion.identity;
-		btn.transform.localScale = scaleFactor;// Vector3.one * 0.06f;
+		btn.transform.localScale = scaleFactor;
 		btnCtrl = btn.GetComponentInChildren<ButtonController>();
 		buttonControllers.Add(btnCtrl);
 		btnCtrl.id = i;
-		// Debug.Log(btnCtrl + "" +  btns + "  " + btnCtrl.transform.parent);
 		_btns[i] = btnCtrl.transform.parent;
 	    
 		btnControllers.Add(btnCtrl);
@@ -257,33 +239,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    yCenterOffset = (yPos.Max() - yPos.Min()) / 2;
 	    xCenterOffset = (xPos.Max() - xPos.Min()) / 2;
 	}
-
-	void OnDrawGizmos()
-	{
-	    // if (planeMeshGenerator.meshGenerated)
-	    // {
-	    //     planeMeshGeneratorRoot.transform.position = basePosition.position;
-	    //     GameObject ob;
-	    //     foreach (var v in planeMeshGenerator.mesh.vertices)
-	    //     {
-	    // 	Gizmos.DrawSphere(v, 0.01f);
-	    //     }
-	    //     Debug.Log(planeMeshGenerator.mesh.vertices.Length);
-	    //     Debug.Break();
-	    // }
-	    if (generatedBtns)
-	    {
-		// Gizmos.DrawRay(btns[922].transform.position, drawUp * 200, Color.green);
-		// Gizmos.DrawRay(btns[922].transform.position, drawRight * 200, Color.red);
-	    }
-	}
-    
-	[Serializable]
-	public class RotatingPair{
-	    public Transform p1;
-	    public Transform p2;
-	}
-
+   
 	struct DeformedBtnLayoutJob: IJobParallelForTransform
 	{
 	    private Vector3 right, up, temppos, _scaleFactor;
@@ -301,39 +257,22 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 		temppos = vertices[i];
 		temppos.z += -0.0002f;
 		btn.localPosition = temppos;
-		if (true)//btn.isSelectionBtn)
-		{
-		    if (i > maxX)
-			up = vertices[i] - vertices[i - maxX];//up = btn.transform.position - btns[i - maxX].transform.position;
-		    else
-			up = vertices[i + maxX] - vertices[i];
-		    
-		    if ( i % maxX == 0)
-			right = vertices[i + 1] - vertices[i];
-		    else
-			right = vertices[i] - vertices[i-1];//right = btn.transform.position - btns[i-1].transform.position;
 
-		    // if (false)//i == 922)
-		    // {
-		    //     drawUp = up;
-		    //     drawRight = right;
-		    //     Debug.DrawRay(btn.transform.position, drawUp * 200, Color.green); 
-		    //     Debug.DrawRay(btn.transform.position, drawRight * 200, Color.red);
-		    //     Debug.Log("------ " + i + "   " + (i + 1));
-		    // }
+                if (i > maxX)
+                    up = vertices[i] - vertices[i - maxX];
+                else
+                    up = vertices[i + maxX] - vertices[i];
 		    
-		    btn.localRotation = Quaternion.LookRotation(normals[i], up);//Vector3.Cross(right, up), up);//-btn.transform.forward, up);
-		    _scaleFactor.x = (right.magnitude / gridSize) * scaleFactor.x;
-		    _scaleFactor.y = (up.magnitude / gridSize) * scaleFactor.y;
-		    _scaleFactor.z = scaleFactor.z;
-		    btn.localScale = _scaleFactor;
-		    // btn.transform.parent.forward = -btn.transform.parent.forward;
-		    // btn.transform.parent.forward = -normals[i];
-		}
-		// else
-		// {
-		//     btn.localRotation = Quaternion.LookRotation(normals[i]);
-		// }
+                if (i % maxX == 0)
+                    right = vertices[i + 1] - vertices[i];
+                else
+                    right = vertices[i] - vertices[i - 1];
+
+                btn.localRotation = Quaternion.LookRotation(normals[i], up);
+                _scaleFactor.x = (right.magnitude / gridSize) * scaleFactor.x;
+                _scaleFactor.y = (up.magnitude / gridSize) * scaleFactor.y;
+                _scaleFactor.z = scaleFactor.z;
+                btn.localScale = _scaleFactor;
 	    }
 	}
     }
