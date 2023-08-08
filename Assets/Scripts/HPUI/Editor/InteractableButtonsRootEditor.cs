@@ -38,7 +38,7 @@ namespace ubc.ok.ovilab.HPUI.Editor
                 EditorGUILayout.PrefixLabel(name);
                 if (GUILayout.Button("Trigger " + name))
                 {
-                    t.TriggerTargetButton(btn);
+                    ButtonController.TriggerTargetButton(btn);
                 }
                 EditorGUILayout.EndHorizontal();
             }
