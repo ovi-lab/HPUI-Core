@@ -196,9 +196,8 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    {
                 int x, y;
 		planeMeshGenerator.idToXY(btn.id, out x, out y);
-                currentCoord.x = x;
-                currentCoord.y = y;
-	    }
+                currentCoord.SetCoord(x, y);
+            }
 	}
     
 	public void Setup()
