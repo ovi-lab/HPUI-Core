@@ -41,8 +41,6 @@ namespace ubc.ok.ovilab.HPUI.Core
 	protected ButtonController winningBtn; 
 	private float winningValue;
 
-	private bool executeProcess = true; // NOTE: See the comments on the `Timer` method
-
 	public SpriteRenderer feedback;
 	public Color sensorTriggerColor = new Color(1, 0.3f, 0.016f, 1);
 	public Color successEventColor = Color.yellow;
@@ -159,7 +157,6 @@ namespace ubc.ok.ovilab.HPUI.Core
             // FIXME: Make sure this is not an issue
 	    if (true)
 	    {
-		executeProcess = false;
                 // bool did = false;
                 ButtonsPreProcessEvent.Invoke();
                 try
@@ -252,8 +249,7 @@ namespace ubc.ok.ovilab.HPUI.Core
         // FIXME: Revisit this
 	IEnumerator Timer()
 	{
-	    yield return new WaitForSeconds(0.1f);
-	    executeProcess = true;
+	    yield return new WaitForSeconds(0.05f);
 	}
 
         // To save data and use when resolving race conditions.

@@ -108,8 +108,19 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 
 	void OnDestroy()
 	{
-	    btns.Dispose();
-	}
+            if (btns.isCreated)
+            {
+                btns.Dispose();
+            }
+            if (vertices.IsCreated)
+            {
+                vertices.Dispose();
+            }
+            if (normals.IsCreated)
+            {
+                normals.Dispose();
+            }
+        }
 
 	void deformableSurfaceHandler(Method method)
 	{
@@ -193,7 +204,12 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	public void Setup()
 	{
 	    processGenerateBtns = true;
-	}
+            generatedBtns = false;
+            if (btns.isCreated)
+            {
+                btns.Dispose();
+            }
+        }
     
         /// <summary>
         /// Update the button locations based on the mesh vertices

@@ -12,8 +12,9 @@ namespace ubc.ok.ovilab.HPUI.Core
         public event Action OnCalibrationCompleteEvent;
 
         public List<Managers> managers = new List<Managers>();
-        
-	private void OnTriggerEnter(Collider other)
+        public bool allowForceCalibrate = false;
+
+        private void OnTriggerEnter(Collider other)
 	{
 	    OnClick();
 	}
@@ -22,7 +23,7 @@ namespace ubc.ok.ovilab.HPUI.Core
 	{
             foreach (var manager in managers)
             {
-                if (!manager.coordinateManager.isCalibrated())
+                if (allowForceCalibrate || !manager.coordinateManager.isCalibrated())
                 {
                     manager.coordinateManager.Calibrate();
                     if (manager.deformableSurfaceDisplayManager != null)

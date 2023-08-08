@@ -71,7 +71,8 @@ MonoBehaviour:
   btnPrefab: {fileID: 8323219010113896373, guid: e0df6ea09b7dcca45ac6b0bba4e8cf20, type: 3}
   planeMeshGeneratorRoot: {fileID: 8398312626503482539}
   calibration: {fileID: 8398312624707303031}
-  method: 0
+  material: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  method: 1
   SurfaceReadyAction:
     m_PersistentCalls:
       m_Calls: []

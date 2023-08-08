@@ -34,6 +34,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 
         public override void Calibrate()
         {
+            calibrationDone = false;
             //0: height, 1: width
             float[] dimensions = new float[2];
                 
@@ -43,9 +44,15 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             Mesh mesh = planeMeshGenerator.mesh;
             mesh.RecalculateNormals();
 
-            SkinnedMeshRenderer renderer = meshRoot.gameObject.AddComponent<SkinnedMeshRenderer>();
+
+            SkinnedMeshRenderer renderer = meshRoot.gameObject.GetComponent<SkinnedMeshRenderer>();
+            if (renderer == null)
+            {
+                renderer = meshRoot.gameObject.AddComponent<SkinnedMeshRenderer>();
+            }
 
             ComputeMeshBoneWeights(mesh, renderer);
+            calibrationDone = true;
         }
         #endregion
 
