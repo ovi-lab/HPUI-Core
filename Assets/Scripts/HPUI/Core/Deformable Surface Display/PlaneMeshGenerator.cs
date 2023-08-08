@@ -11,7 +11,6 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
     public class PlaneMeshGenerator : MonoBehaviour
     {
 	private MeshFilter filter;
-	private Texture tex;
 	public Mesh mesh
 	{
 	    get { return filter.mesh; }
@@ -80,7 +79,6 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    x_size = xsf*(dimensions[1]);
 
 	    filter = display.GetComponent<MeshFilter>();
-	    tex = display.GetComponent<MeshRenderer>().material.mainTexture;
 
 	    step_size = y_size / y_divisions;
 	    x_divisions = (int)(x_size / step_size);

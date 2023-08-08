@@ -26,8 +26,9 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	public List<ButtonController> buttonControllers {get; private set;} = new List<ButtonController>();
 
 	public bool generatedBtns {get; private set;} = false;
-	
-	[SerializeField]
+        public Material material;
+
+        [SerializeField]
 	public Method method = Method.multifingerFOR_dynamic_deformed_spline;
 
 	public enum Method
@@ -166,6 +167,10 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 			inUse = inUse; // This will make the surface display either show or hide based onthe "inUse" status
                         currentCoord.maxX = planeMeshGenerator.x_divisions;
                         currentCoord.maxY = planeMeshGenerator.y_divisions;
+                        if (material != null)
+                        {
+                            planeMeshGenerator.GetComponent<Renderer>().material = material;
+                        }
                         SurfaceReadyAction.Invoke();
 			if (inUse)
 			    InteractionManger.instance.GetButtons();
