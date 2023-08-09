@@ -87,6 +87,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             // display.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Transparent/Diffuse"));
             // display.GetComponent<MeshRenderer>().material.shader = Shader.Find("Transparent/Diffuse");
             
+	    filter.mesh.MarkDynamic();
 	    Debug.Log("mesh generated");
 	    meshGenerated = true;
             OnMeshGeneratedEvent();

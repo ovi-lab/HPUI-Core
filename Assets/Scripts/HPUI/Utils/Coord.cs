@@ -37,7 +37,7 @@ namespace ubc.ok.ovilab.HPUI.Utils
         {
             _x = x;
             _y = y;
-            OnStateChanged(_x, _y);
+            OnStateChanged?.Invoke(_x, _y);
         }
     }
 }

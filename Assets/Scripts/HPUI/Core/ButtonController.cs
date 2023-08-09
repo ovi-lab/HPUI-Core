@@ -215,6 +215,9 @@ namespace ubc.ok.ovilab.HPUI.Core
                 dummyObject.transform.localScale = Vector3.one * 0.02f;
                 dummyObject.GetComponent<MeshRenderer>().enabled = false;
                 dummyObject.AddComponent<ButtonTriggerCollider>();
+                Rigidbody rb = dummyObject.AddComponent<Rigidbody>();
+                rb.useGravity = false;
+                rb.isKinematic = true;
             }
             if (targetButton == null)
             {
@@ -227,7 +230,10 @@ namespace ubc.ok.ovilab.HPUI.Core
             {
                 dummyObject.transform.position = btn.transform.position - btn.transform.forward.normalized * 0.01f;
                 btn.contactZone.state = ButtonZone.State.outside;
-                btn.proximalZone.state = ButtonZone.State.outside;
+                if (btn.proximalZone != null)
+                {
+                    btn.proximalZone.state = ButtonZone.State.outside;
+                }
             });
         }
 #endif

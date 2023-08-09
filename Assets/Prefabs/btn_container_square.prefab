@@ -76,15 +76,15 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: b27805dc858046e40a4a3ecf6162e51d, type: 3}
-  m_Color: {r: 0.93350255, g: 1, b: 0, a: 0}
+  m_Sprite: {fileID: 21300000, guid: 401cddfcf704f4c4c92c6513cb069352, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 0.64, y: 0.64}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1558160863
@@ -149,6 +149,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1704859357912365313, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7436014446011257703, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
       propertyPath: m_Name
       value: btn_container_square
@@ -226,10 +230,30 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7436014447172359008, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
+      propertyPath: m_Name
+      value: unused
+      objectReference: {fileID: 0}
+    - target: {fileID: 7436014447172359008, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 7436014447172359010, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7436014447172359011, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7436014447172359012, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 7436014447172359012, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
+    - {fileID: 7436014447172359011, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
+    - {fileID: 7436014447172359010, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
+    - {fileID: 1704859357912365313, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: fffe4b9b67453614186705a7f457c2fe, type: 3}
 --- !u!114 &8323219008664660175 stripped
 MonoBehaviour:

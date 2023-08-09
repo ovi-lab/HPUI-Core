@@ -47,8 +47,12 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	private int maxX, maxY;
 	private float gridSize;
 	private Vector3 scaleFactor, _scaleFactor;
+        private SkinnedMeshRenderer skinnedMeshRenderer;
+        private Mesh tempMesh;
+        private List<Vector3> _vertices;
+        private List<Vector3> _normals;
 
-	private List<ButtonController> btnControllers = new List<ButtonController>();
+        private List<ButtonController> btnControllers = new List<ButtonController>();
 
 	public Coord currentCoord = new Coord();
 
@@ -129,20 +133,30 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 		if (!inUse)
 		    return;
 
-                if (method == Method.multifingerFOR_dynamic_deformed_spline)
+                switch(method)
                 {
-                    meshDeformer.DeformMesh();
+                    case Method.multifingerFOR_dynamic_deformed_spline:
+                        meshDeformer.DeformMesh();
+                        planeMeshGenerator.mesh.GetVertices(_vertices);
+                        planeMeshGenerator.mesh.GetNormals(_normals);
+                        break;
+                    case Method.multifingerFOR_dynamic_skinned_mesh:
+                        // See https://forum.unity.com/threads/get-skinned-vertices-in-real-time.15685/
+                        skinnedMeshRenderer.BakeMesh(tempMesh, true);
+                        tempMesh.GetVertices(_vertices);
+                        tempMesh.GetNormals(_normals);
+                        break;
                 }
 
                 if (vertices.IsCreated)
-                    vertices.CopyFrom(planeMeshGenerator.mesh.vertices);
+                    vertices.CopyFrom(_vertices.ToArray());
                 else
-                    vertices = new NativeArray<Vector3>(planeMeshGenerator.mesh.vertices, Allocator.Persistent);
+                    vertices = new NativeArray<Vector3>(_vertices.ToArray(), Allocator.Persistent);
 
                 if (normals.IsCreated)
-                    normals.CopyFrom(planeMeshGenerator.mesh.normals);
+                    normals.CopyFrom(_normals.ToArray());
                 else
-                    normals = new NativeArray<Vector3>(planeMeshGenerator.mesh.normals, Allocator.Persistent);
+                    normals = new NativeArray<Vector3>(_normals.ToArray(), Allocator.Persistent);
 
 		right = vertices[10] - vertices[1];
 		maxY = vertices.Length - planeMeshGenerator.x_divisions;
@@ -172,7 +186,20 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 		    if(processGenerateBtns)
 		    {
 			Debug.Log("Generating mesh");
-			float yCenterOffset, xCenterOffset;
+                        if (skinnedMeshRenderer == null)
+                        {
+                            skinnedMeshRenderer = planeMeshGenerator.GetComponent<SkinnedMeshRenderer>();
+                        }
+                        if (tempMesh == null)
+                        {
+                            tempMesh = new Mesh();
+                        }
+
+                        int vertexCount = planeMeshGenerator.mesh.vertexCount;
+                        _vertices = new List<Vector3>();
+                        _normals = new List<Vector3>();
+
+                        float yCenterOffset, xCenterOffset;
 			generateBtns(planeMeshGenerator.mesh.vertices, planeMeshGenerator.mesh.normals, planeMeshGenerator.transform, out yCenterOffset, out xCenterOffset);
 			generatedBtns = true;
 			inUse = inUse; // This will make the surface display either show or hide based onthe "inUse" status
@@ -204,6 +231,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	{
 	    processGenerateBtns = true;
             generatedBtns = false;
+            skinnedMeshRenderer = null;
             if (btns.isCreated)
             {
                 btns.Dispose();

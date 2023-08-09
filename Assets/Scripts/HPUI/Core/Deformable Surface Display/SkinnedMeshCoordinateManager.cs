@@ -44,7 +44,6 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             Mesh mesh = planeMeshGenerator.mesh;
             mesh.RecalculateNormals();
 
-
             SkinnedMeshRenderer renderer = meshRoot.gameObject.GetComponent<SkinnedMeshRenderer>();
             if (renderer == null)
             {
