@@ -55,7 +55,11 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	{
 	    if (display == null)
 		display = GameObject.Find("DeformableDisplay");
-            handCoordinateManager = HandsManager.instance.handCoordinateManagers[handIndex];
+
+            if (orientationInformation.useStrings)
+            {
+                handCoordinateManager = HandsManager.instance.handCoordinateManagers[handIndex];
+            }
         }
 
 	public void CreateFlatMesh(float[] dimensions)
@@ -199,8 +203,17 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 
 	    if (calcRotation)
 	    {
-		Vector3 forwardDirectionVector = handCoordinateManager.GetManagedCoord(orientationInformation.forwardVectorP2).position - handCoordinateManager.GetManagedCoord(orientationInformation.forwardVectorP1).position;
-		Vector3 sidewaysDirectionVector = handCoordinateManager.GetManagedCoord(orientationInformation.sideVectorP2).position - handCoordinateManager.GetManagedCoord(orientationInformation.sideVectorP1).position;
+                Vector3 forwardDirectionVector, sidewaysDirectionVector;
+                if (orientationInformation.useStrings)
+                {
+                    forwardDirectionVector = handCoordinateManager.GetManagedCoord(orientationInformation.forwardVectorNameP2).position - handCoordinateManager.GetManagedCoord(orientationInformation.forwardVectorNameP1).position;
+                    sidewaysDirectionVector = handCoordinateManager.GetManagedCoord(orientationInformation.sideVectorNameP2).position - handCoordinateManager.GetManagedCoord(orientationInformation.sideVectorNameP1).position;
+                }
+                else
+                {
+                    forwardDirectionVector = orientationInformation.forwardVectorTransformP2.position - orientationInformation.forwardVectorTransformP1.position;
+                    sidewaysDirectionVector = orientationInformation.sideVectorTransformP2.position - orientationInformation.sideVectorTransformP1.position;
+                }
 		Vector3 upwardDirectionVector = Vector3.Cross(sidewaysDirectionVector, forwardDirectionVector);
 
 		//Debug.DrawLine(HandCoordinateGetter.middle4.transform.position, HandCoordinateGetter.palmBottom.transform.position, Color.white, 200f);
@@ -271,10 +284,15 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
         [Serializable]
         public class OrientationInformation
         {
-            public string sideVectorP1;
-            public string sideVectorP2;
-            public string forwardVectorP1;
-            public string forwardVectorP2;
+            public bool useStrings = true;
+            public string sideVectorNameP1;
+            public string sideVectorNameP2;
+            public string forwardVectorNameP1;
+            public string forwardVectorNameP2;
+            public Transform sideVectorTransformP1;
+            public Transform sideVectorTransformP2;
+            public Transform forwardVectorTransformP1;
+            public Transform forwardVectorTransformP2;
         }
     }
 }

@@ -73,6 +73,7 @@ MonoBehaviour:
   calibration: {fileID: 8398312624707303031}
   material: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
   method: 1
+  noDynamic: 0
   SurfaceReadyAction:
     m_PersistentCalls:
       m_Calls: []
@@ -303,10 +304,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   y_divisions: 10
   orientationInformation:
-    sideVectorP1: R5D1_anchor
-    sideVectorP2: R2D1_anchor
-    forwardVectorP1: R2D1_anchor
-    forwardVectorP2: R2D4_anchor
+    useStrings: 1
+    sideVectorNameP1: R5D1_anchor
+    sideVectorNameP2: R2D1_anchor
+    forwardVectorNameP1: R2D1_anchor
+    forwardVectorNameP2: R2D4_anchor
+    sideVectorTransformP1: {fileID: 0}
+    sideVectorTransformP2: {fileID: 0}
+    forwardVectorTransformP1: {fileID: 0}
+    forwardVectorTransformP2: {fileID: 0}
   handIndex: 0
   transformAnchor: {fileID: 8398312625583867324}
   display: {fileID: 8398312626503482538}

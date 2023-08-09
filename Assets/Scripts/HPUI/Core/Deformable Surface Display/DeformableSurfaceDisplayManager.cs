@@ -37,6 +37,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             multifingerFOR_dynamic_skinned_mesh
 	}
 
+        public bool noDynamic = false;
         public UnityEvent SurfaceReadyAction = new UnityEvent();
 
 	private bool processGenerateBtns = false;
@@ -107,7 +108,10 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	// Update is called once per frame
 	void Update()
 	{
-            deformableSurfaceHandler(method);
+            if (!noDynamic)
+            {
+                deformableSurfaceHandler(method);
+            }
 	}
 
 	void OnDestroy()
@@ -126,59 +130,92 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             }
         }
 
-	void deformableSurfaceHandler(Method method)
+        public void SetButtonLocations(Method method)
+        {
+            switch(method)
+            {
+                case Method.multifingerFOR_dynamic_deformed_spline:
+                    meshDeformer?.DeformMesh();
+                    planeMeshGenerator.mesh.GetVertices(_vertices);
+                    planeMeshGenerator.mesh.GetNormals(_normals);
+                    break;
+                case Method.multifingerFOR_dynamic_skinned_mesh:
+                    // See https://forum.unity.com/threads/get-skinned-vertices-in-real-time.15685/
+                    skinnedMeshRenderer.BakeMesh(tempMesh, true);
+                    tempMesh.GetVertices(_vertices);
+                    tempMesh.GetNormals(_normals);
+                    break;
+            }
+
+            if (vertices.IsCreated)
+                vertices.CopyFrom(_vertices.ToArray());
+            else
+                vertices = new NativeArray<Vector3>(_vertices.ToArray(), Allocator.Persistent);
+
+            if (normals.IsCreated)
+                normals.CopyFrom(_normals.ToArray());
+            else
+                normals = new NativeArray<Vector3>(_normals.ToArray(), Allocator.Persistent);
+
+            right = vertices[10] - vertices[1];
+            maxY = vertices.Length - planeMeshGenerator.x_divisions;
+            maxX = planeMeshGenerator.x_divisions;
+
+            currentCoord.maxX = maxX;
+            currentCoord.maxY = planeMeshGenerator.y_divisions;
+
+            // Once the mesh has been deformed, update the locations of the buttons to match the mesh
+            var job = new DeformedBtnLayoutJob()
+            {
+                scaleFactor = scaleFactor,
+                gridSize = gridSize,
+                maxX = maxX,
+                maxY = maxY,
+                normals = normals,
+                vertices = vertices
+            };
+
+            var jobHandle = job.Schedule(btns);
+            jobHandle.Complete();
+        }
+
+        public void SetupButtons()
+        {
+            if (skinnedMeshRenderer == null)
+            {
+                skinnedMeshRenderer = planeMeshGenerator.GetComponent<SkinnedMeshRenderer>();
+            }
+            if (tempMesh == null)
+            {
+                tempMesh = new Mesh();
+            }
+
+            int vertexCount = planeMeshGenerator.mesh.vertexCount;
+            _vertices = new List<Vector3>();
+            _normals = new List<Vector3>();
+
+            float yCenterOffset, xCenterOffset;
+            generateBtns(planeMeshGenerator.mesh.vertices, planeMeshGenerator.mesh.normals, planeMeshGenerator.transform, out yCenterOffset, out xCenterOffset);
+            inUse = inUse; // This will make the surface display either show or hide based onthe "inUse" status
+            currentCoord.maxX = planeMeshGenerator.x_divisions;
+            currentCoord.maxY = planeMeshGenerator.y_divisions;
+            if (material != null)
+            {
+                planeMeshGenerator.GetComponent<Renderer>().material = material;
+            }
+            SurfaceReadyAction.Invoke();
+            if (inUse)
+                InteractionManger.instance.GetButtons();
+        }
+
+	public void deformableSurfaceHandler(Method method)
 	{
 	    if (generatedBtns)
 	    {
 		if (!inUse)
 		    return;
-
-                switch(method)
-                {
-                    case Method.multifingerFOR_dynamic_deformed_spline:
-                        meshDeformer.DeformMesh();
-                        planeMeshGenerator.mesh.GetVertices(_vertices);
-                        planeMeshGenerator.mesh.GetNormals(_normals);
-                        break;
-                    case Method.multifingerFOR_dynamic_skinned_mesh:
-                        // See https://forum.unity.com/threads/get-skinned-vertices-in-real-time.15685/
-                        skinnedMeshRenderer.BakeMesh(tempMesh, true);
-                        tempMesh.GetVertices(_vertices);
-                        tempMesh.GetNormals(_normals);
-                        break;
-                }
-
-                if (vertices.IsCreated)
-                    vertices.CopyFrom(_vertices.ToArray());
-                else
-                    vertices = new NativeArray<Vector3>(_vertices.ToArray(), Allocator.Persistent);
-
-                if (normals.IsCreated)
-                    normals.CopyFrom(_normals.ToArray());
-                else
-                    normals = new NativeArray<Vector3>(_normals.ToArray(), Allocator.Persistent);
-
-		right = vertices[10] - vertices[1];
-		maxY = vertices.Length - planeMeshGenerator.x_divisions;
-		maxX = planeMeshGenerator.x_divisions;
-
-		currentCoord.maxX = maxX;
-		currentCoord.maxY = planeMeshGenerator.y_divisions;
-
-                // Once the mesh has been deformed, update the locations of the buttons to match the mesh
-		var job = new DeformedBtnLayoutJob()
-		    {
-			scaleFactor = scaleFactor,
-			gridSize = gridSize,
-			maxX = maxX,
-			maxY = maxY,
-                        normals = normals,
-                        vertices = vertices
-		    };
-
-		var jobHandle = job.Schedule(btns);
-		jobHandle.Complete();
-	    }
+                SetButtonLocations(method);
+            }
 	    else
 	    {
 		if (calibration.isCalibrated() && planeMeshGenerator.meshGenerated)
@@ -186,33 +223,9 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 		    if(processGenerateBtns)
 		    {
 			Debug.Log("Generating mesh");
-                        if (skinnedMeshRenderer == null)
-                        {
-                            skinnedMeshRenderer = planeMeshGenerator.GetComponent<SkinnedMeshRenderer>();
-                        }
-                        if (tempMesh == null)
-                        {
-                            tempMesh = new Mesh();
-                        }
-
-                        int vertexCount = planeMeshGenerator.mesh.vertexCount;
-                        _vertices = new List<Vector3>();
-                        _normals = new List<Vector3>();
-
-                        float yCenterOffset, xCenterOffset;
-			generateBtns(planeMeshGenerator.mesh.vertices, planeMeshGenerator.mesh.normals, planeMeshGenerator.transform, out yCenterOffset, out xCenterOffset);
-			generatedBtns = true;
-			inUse = inUse; // This will make the surface display either show or hide based onthe "inUse" status
-                        currentCoord.maxX = planeMeshGenerator.x_divisions;
-                        currentCoord.maxY = planeMeshGenerator.y_divisions;
-                        if (material != null)
-                        {
-                            planeMeshGenerator.GetComponent<Renderer>().material = material;
-                        }
-                        SurfaceReadyAction.Invoke();
-			if (inUse)
-			    InteractionManger.instance.GetButtons();
-		    }
+                        SetupButtons();
+                        generatedBtns = true;
+                    }
 		}
 	    }
 	}
