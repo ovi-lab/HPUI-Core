@@ -157,7 +157,6 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             else
                 normals = new NativeArray<Vector3>(_normals.ToArray(), Allocator.Persistent);
 
-            right = vertices[10] - vertices[1];
             maxY = vertices.Length - planeMeshGenerator.x_divisions;
             maxX = planeMeshGenerator.x_divisions;
 
@@ -193,6 +192,15 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
             int vertexCount = planeMeshGenerator.mesh.vertexCount;
             _vertices = new List<Vector3>();
             _normals = new List<Vector3>();
+
+            if (vertices.IsCreated)
+            {
+                vertices.Dispose();
+            }
+            if (normals.IsCreated)
+            {
+                normals.Dispose();
+            }
 
             float yCenterOffset, xCenterOffset;
             generateBtns(planeMeshGenerator.mesh.vertices, planeMeshGenerator.mesh.normals, planeMeshGenerator.transform, out yCenterOffset, out xCenterOffset);
@@ -261,7 +269,15 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    ButtonController btnCtrl;
 	    scaleFactor = Vector3.zero;
 
-	    Transform[] _btns = new Transform[positions.Length];
+            for (int i = 0; i < planeMeshGenerator.transform.childCount; i++)
+            {
+                Destroy(planeMeshGenerator.transform.GetChild(i).gameObject);
+            }
+            if (btns.isCreated)
+            {
+                btns.Dispose();
+            }
+            Transform[] _btns = new Transform[positions.Length];
 
 	    btnControllers.Clear();
 	

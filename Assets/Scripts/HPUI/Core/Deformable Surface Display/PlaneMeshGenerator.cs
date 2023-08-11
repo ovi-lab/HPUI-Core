@@ -64,6 +64,11 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 
 	public void CreateFlatMesh(float[] dimensions)
 	{
+	    filter = display.GetComponent<MeshFilter>();
+            if (mesh != null)
+            {
+                Destroy(mesh);
+            }
 	    if (y_divisions == 0)
 		return;
 	    //zVerticesOffset = -0.7f;
@@ -81,8 +86,6 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    //sizes based on calibration distances on hand model
 	    y_size = ysf*(dimensions[0]);
 	    x_size = xsf*(dimensions[1]);
-
-	    filter = display.GetComponent<MeshFilter>();
 
 	    step_size = y_size / y_divisions;
 	    x_divisions = (int)(x_size / step_size);

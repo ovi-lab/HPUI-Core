@@ -11,7 +11,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
         public Transform meshRoot;
 
         private bool calibrationDone = false;
-        private byte numberOfBonesPerVertex = 6;
+        public byte numberOfBonesPerVertex = 3;
 
         #region unity functions
         void Start()
@@ -77,7 +77,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 
             for (int i = 0; i < planeMeshGenerator.vertices.Count; i++)
             {
-                Vector3 vertexPos = new Vector3(planeMeshGenerator.vertices[i].x, planeMeshGenerator.vertices[i].y, planeMeshGenerator.vertices[i].z);
+                Vector3 vertexPos = planeMeshGenerator.transformAnchor.TransformPoint(planeMeshGenerator.vertices[i]);
 
                 // The weights are the inverse of the distance from the vertex to a bone (1/dist)
                 List<(int idx, float weight)> vals = bones
@@ -86,6 +86,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
                     .Reverse()
                     .Take(numberOfBonesPerVertex)
                     .ToList();
+
                 float normalizingFactor = vals.Select(x => x.weight).Sum();
 
                 foreach ((int idx, float weight) item in vals)
