@@ -253,6 +253,7 @@ namespace ubc.ok.ovilab.HPUI.Core.DeformableSurfaceDisplay
 	    processGenerateBtns = true;
             generatedBtns = false;
             skinnedMeshRenderer = null;
+            buttonControllers.Clear();
             if (btns.isCreated)
             {
                 btns.Dispose();
