@@ -1,6 +1,6 @@
 {
-    "name": "HPUI",
-    "rootNamespace": "HPUI",
+    "name": "ubc.ok.ovilab.HPUI",
+    "rootNamespace": "ubc.ok.ovilab.HPUI",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
