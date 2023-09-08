@@ -112,6 +112,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Zone: 1
+  makeSureEnterFromPositiveSide: 0
 --- !u!1 &7436014446011257703
 GameObject:
   m_ObjectHideFlags: 0
@@ -258,6 +259,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Zone: 1
+  makeSureEnterFromPositiveSide: 1
 --- !u!1 &7436014447027064951
 GameObject:
   m_ObjectHideFlags: 0
@@ -369,6 +371,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Zone: 0
+  makeSureEnterFromPositiveSide: 0
 --- !u!1 &7436014447172359008
 GameObject:
   m_ObjectHideFlags: 0

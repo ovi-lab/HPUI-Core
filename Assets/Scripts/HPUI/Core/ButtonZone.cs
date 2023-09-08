@@ -6,6 +6,7 @@ namespace ubc.ok.ovilab.HPUI.Core
     {
 	[SerializeField]
 	public Type Zone;
+        public bool makeSureEnterFromPositiveSide = false;
 	public State state { get; set; }
 	public Vector3 colliderPosition { get; private set; }
 	public Vector3 selfPosition { get; private set; }
@@ -21,6 +22,7 @@ namespace ubc.ok.ovilab.HPUI.Core
 	private Collider other;
 	private Vector3 _selfPosition, otherPosition;
 	private Quaternion _selfRotation, otherRotation;
+        private bool enteredOnPositiveSide;
 
 	public enum Type
 	{
@@ -68,6 +70,10 @@ namespace ubc.ok.ovilab.HPUI.Core
     
 	void OnTriggerEnter(Collider other)
 	{
+            if (makeSureEnterFromPositiveSide && other.GetComponent<ButtonTriggerCollider>() != null)
+            {
+                enteredOnPositiveSide = new Plane(this.transform.forward, selfPosition).GetSide(other.transform.position);
+            }
 	    TriggerBehaviour(other);
 	}
 
@@ -80,6 +86,11 @@ namespace ubc.ok.ovilab.HPUI.Core
 	{
 	    if (other.GetComponent<ButtonTriggerCollider>() == null)
 		return;
+
+            if (makeSureEnterFromPositiveSide && !enteredOnPositiveSide)
+            {
+                return;
+            }
 	    
 	    state = State.inside;
 	    if (Zone == Type.contact){
@@ -118,6 +129,7 @@ namespace ubc.ok.ovilab.HPUI.Core
 	void OnTriggerExit(Collider other)
 	{
 	    state = State.outside;
-	}
+            enteredOnPositiveSide = false;
+        }
     }
 }
