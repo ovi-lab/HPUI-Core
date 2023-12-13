@@ -10,6 +10,8 @@ namespace ubco.ovi.HPUI.Core
     /// </summary>
     public class HandJointData: MonoBehaviour
     {
+        public static HandJointData Instance;
+
         private XRHandSubsystem handSubsystem;
         private List<JointDataEventHandler> jointDataEvents;
 
@@ -30,6 +32,22 @@ namespace ubco.ovi.HPUI.Core
         /// <summary>
         /// See <see cref="MonoBehaviour"/>.
         /// </summary>
+        protected void OnEnable()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else
+            {
+                Debug.LogError("HandJointDta.Instance already set. Destorying this object.");
+                Destroy(this);
+            }
+        }
+
+        /// <summary>
+        /// See <see cref="MonoBehaviour"/>.
+        /// </summary>
         protected void OnDisable()
         {
             if (handSubsystem != null)
@@ -38,6 +56,11 @@ namespace ubco.ovi.HPUI.Core
                 handSubsystem.trackingLost -= OnTrackingLost;
                 handSubsystem.updatedHands -= OnUpdatedHands;
                 handSubsystem = null;
+            }
+
+            if (Instance == this)
+            {
+                Instance = null;
             }
         }
 
@@ -149,11 +172,11 @@ namespace ubco.ovi.HPUI.Core
         /// <summary>
         /// Subscribe to a joint on a hand
         /// </summary>
-        public void SubscribeToJointDataEvent(Handedness handedness, XRHandJointID joinID, EventHandler<JointDataEventArgs> callback)
+        public void SubscribeToJointDataEvent(Handedness handedness, XRHandJointID jointID, EventHandler<JointDataEventArgs> callback)
         {
             foreach(JointDataEventHandler handler in jointDataEvents)
             {
-                if (handler.handedness == handedness && handler.jointID == joinID)
+                if (handler.handedness == handedness && handler.jointID == jointID)
                 {
                     handler.jointDataEventHandler += callback;
                 }
