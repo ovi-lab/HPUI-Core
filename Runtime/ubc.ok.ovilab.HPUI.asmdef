@@ -1,7 +1,9 @@
 {
     "name": "ubc.ok.ovilab.HPUI",
     "rootNamespace": "ubc.ok.ovilab.HPUI",
-    "references": [],
+    "references": [
+        "Unity.XR.Hands"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
