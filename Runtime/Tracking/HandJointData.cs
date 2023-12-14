@@ -10,10 +10,27 @@ namespace ubco.ovi.HPUI.Core
     /// </summary>
     public class HandJointData: MonoBehaviour
     {
-        public static HandJointData Instance;
+        private static HandJointData instance;
+
+        public static HandJointData Instance {
+            get {
+                if (instance == null)
+                {
+                    HandJointData obj = FindObjectOfType<HandJointData>();
+                    if (obj == null)
+                    {
+                        throw new InvalidOperationException("There are no valid `HandJointData` setup in the scene!");
+                    }
+                    instance = obj;
+                }
+                return instance;
+            }
+            set => instance = value;
+        }
 
         private XRHandSubsystem handSubsystem;
         private List<JointDataEventHandler> jointDataEvents;
+        private bool initialized;
 
         #region Unity events
         /// <summary>
@@ -21,11 +38,9 @@ namespace ubco.ovi.HPUI.Core
         /// </summary>
         protected void Start()
         {
-            // Initializing all the hand joint events
-            for (int i = XRHandJointIDUtility.ToIndex(XRHandJointID.BeginMarker); i < XRHandJointIDUtility.ToIndex(XRHandJointID.EndMarker); i++)
+            if (!initialized)
             {
-                jointDataEvents.Add(new JointDataEventHandler(XRHandJointIDUtility.FromIndex(i), Handedness.Left));
-                jointDataEvents.Add(new JointDataEventHandler(XRHandJointIDUtility.FromIndex(i), Handedness.Right));
+                Initialize();
             }
         }
 
@@ -38,7 +53,7 @@ namespace ubco.ovi.HPUI.Core
             {
                 Instance = this;
             }
-            else
+            else if (Instance != this)
             {
                 Debug.LogError("HandJointDta.Instance already set. Destorying this object.");
                 Destroy(this);
@@ -56,11 +71,6 @@ namespace ubco.ovi.HPUI.Core
                 handSubsystem.trackingLost -= OnTrackingLost;
                 handSubsystem.updatedHands -= OnUpdatedHands;
                 handSubsystem = null;
-            }
-
-            if (Instance == this)
-            {
-                Instance = null;
             }
         }
 
@@ -99,6 +109,20 @@ namespace ubco.ovi.HPUI.Core
         #endregion
 
         #region event handling
+        private void Initialize()
+        {
+            // Initializing all the hand joint events
+            jointDataEvents = new List<JointDataEventHandler>();
+
+            for (int i = XRHandJointIDUtility.ToIndex(XRHandJointID.BeginMarker); i < XRHandJointIDUtility.ToIndex(XRHandJointID.EndMarker); i++)
+            {
+                jointDataEvents.Add(new JointDataEventHandler(XRHandJointIDUtility.FromIndex(i), Handedness.Left));
+                jointDataEvents.Add(new JointDataEventHandler(XRHandJointIDUtility.FromIndex(i), Handedness.Right));
+            }
+
+            initialized = true;
+        }
+
         /// <summary>
         /// Subscribe to events on the <see cref="XRHandSubsystem"/>
         /// </summary>
@@ -174,6 +198,11 @@ namespace ubco.ovi.HPUI.Core
         /// </summary>
         public void SubscribeToJointDataEvent(Handedness handedness, XRHandJointID jointID, EventHandler<JointDataEventArgs> callback)
         {
+            if (!initialized)
+            {
+                Initialize();
+            }
+
             foreach(JointDataEventHandler handler in jointDataEvents)
             {
                 if (handler.handedness == handedness && handler.jointID == jointID)
@@ -188,6 +217,11 @@ namespace ubco.ovi.HPUI.Core
         /// </summary>
         public void UnsubscribeToJointDataEvent(Handedness handedness, XRHandJointID joinID, EventHandler<JointDataEventArgs> callback)
         {
+            if (!initialized)
+            {
+                Initialize();
+            }
+
             foreach(JointDataEventHandler handler in jointDataEvents)
             {
                 if (handler.handedness == handedness && handler.jointID == joinID)
