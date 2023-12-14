@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
+using Unity.XR.CoreUtils;
 
 namespace ubco.ovi.HPUI.Core
 {
@@ -27,6 +28,9 @@ namespace ubco.ovi.HPUI.Core
             }
             set => instance = value;
         }
+
+        [Tooltip("The XR Origin")][SerializeField]
+        private XROrigin xrOrigin;
 
         private XRHandSubsystem handSubsystem;
         private List<JointDataEventHandler> jointDataEvents;
@@ -111,6 +115,16 @@ namespace ubco.ovi.HPUI.Core
         #region event handling
         private void Initialize()
         {
+            if (xrOrigin == null)
+            {
+                XROrigin[] objs = FindObjectsOfType<XROrigin>();
+                if (objs.Length != 1)
+                {
+                    throw new InvalidOperationException($"Got {objs.Length} `XROrigin`s. Expected only 1. Perhaps assign it in inspector.");
+                }
+                xrOrigin = objs[0];
+            }
+
             // Initializing all the hand joint events
             jointDataEvents = new List<JointDataEventHandler>();
 
@@ -166,11 +180,11 @@ namespace ubco.ovi.HPUI.Core
                     {
                         if (handler.handedness == Handedness.Left)
                         {
-                            handler.ProcessEvent(subsystem.leftHand);
+                            handler.ProcessEvent(subsystem.leftHand, xrOrigin.transform);
                         }
                         else if (handler.handedness == Handedness.Right)
                         {
-                            handler.ProcessEvent(subsystem.rightHand);
+                            handler.ProcessEvent(subsystem.rightHand, xrOrigin.transform);
                         }
                     }
                     break;
@@ -239,14 +253,20 @@ namespace ubco.ovi.HPUI.Core
     public class JointDataEventArgs: EventArgs
     {
         public Pose pose;
+        public float radius;
+        public bool poseSuccess;
+        public bool radiusSuccess;
         public Handedness handedness;
         public XRHandJointID jointID;
 
-        public JointDataEventArgs(Pose pose, Handedness handedness, XRHandJointID jointID)
+        public JointDataEventArgs(Handedness handedness, XRHandJointID jointID, Pose pose, float radius, bool poseSuccess, bool radiusSuccess)
         {
             this.pose = pose;
             this.handedness = handedness;
             this.jointID = jointID;
+            this.radius = radius;
+            this.poseSuccess = poseSuccess;
+            this.radiusSuccess = radiusSuccess;
         }
     }
 
@@ -265,17 +285,23 @@ namespace ubco.ovi.HPUI.Core
             this.handedness = handedness;
         }
 
-        public void ProcessEvent(XRHand hand)
+        /// <summary>
+        /// Gets the pose in world space and the radius.
+        /// </summary>
+        public void ProcessEvent(XRHand hand, Transform origin)
         {
             EventHandler<JointDataEventArgs> handler = jointDataEventHandler;
             if (handler != null)
             {
                 XRHandJoint joint = hand.GetJoint(jointID);
-                
-                if (joint.TryGetPose(out Pose resultingPose))
+
+                bool poseSuccess = joint.TryGetPose(out Pose pose);
+                bool radiusSuccess = joint.TryGetRadius(out float radius);
+                if (poseSuccess)
                 {
-                    handler(this, new JointDataEventArgs(resultingPose, handedness, jointID));
+                    pose = pose.GetTransformedBy(origin);
                 }
+                handler(this, new JointDataEventArgs(handedness, jointID, pose, radius, poseSuccess, radiusSuccess));
             }
         }
     }
