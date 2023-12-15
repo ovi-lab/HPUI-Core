@@ -17,47 +17,13 @@ namespace ubco.ovi.HPUI.Core
         public float defaultJointRadius = 0.01f;
 
         [Tooltip("The offset angle.")][SerializeField]
-        private float offsetAngle = 0f;
-        /// <summary>
-        /// The offset angle.
-        /// </summary>
-        public float OffsetAngle {
-            get => offsetAngle;
-            set {
-                offsetAngle = value;
-                OnValidate();
-            }
-        }
-
+        public float offsetAngle = 0f;
         [Tooltip("The offset as a ratio of the joint radius.")][SerializeField]
-        private float offsetAsRatioToRadius = 1f;
-        /// <summary>
-        /// The offset as a ratio of the joint radius.
-        /// </summary>
-        public float OffsetAsRatioToRadius {
-            get => offsetAsRatioToRadius;
-            set {
-                offsetAsRatioToRadius = value;
-                OnValidate();
-            }
-        }
+        public float offsetAsRatioToRadius = 1f;
         [Tooltip("The offset along joint (the joint's up). In unity units.")][SerializeField]
-        private float offsetAlongJoint = 0f;
-        /// <summary>
-        /// The offset along joint (the joint's up). In unity units.
-        /// </summary>
-        public float OffsetAlongJoint {
-            get => offsetAlongJoint;
-            set {
-                offsetAlongJoint = value;
-                OnValidate();
-            }
-        }
+        public float offsetAlongJoint = 0f;
 
         private EventHandler<JointDataEventArgs> handler = null;
-        private Vector3 jointPlaneOffset = Vector3.zero;
-        private Vector3 jointLongitudianlOffset = Vector3.zero;
-        private Quaternion rotationOffset = Quaternion.identity;
         private float cachedRadius = 0f;
 
         private void OnUpdate(object _, JointDataEventArgs args)
@@ -73,10 +39,15 @@ namespace ubco.ovi.HPUI.Core
 
             if (args.poseSuccess)
             {
+                Vector3 poseForward = args.pose.forward;
+                Quaternion rotationOffset = Quaternion.AngleAxis(offsetAngle, poseForward);
+
+                Vector3 jointPlaneOffset = rotationOffset * args.pose.up * offsetAsRatioToRadius;
+                Vector3 jointLongitudianlOffset = poseForward * offsetAlongJoint;
+
+                transform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
                 transform.position = args.pose.position;
                 transform.localPosition += jointPlaneOffset * cachedRadius + jointLongitudianlOffset;
-                transform.rotation = args.pose.rotation;
-                transform.localRotation *= rotationOffset;
             }
         }
 
@@ -90,7 +61,6 @@ namespace ubco.ovi.HPUI.Core
                 handler = new EventHandler<JointDataEventArgs>(OnUpdate);
             }
             HandJointData.Instance.SubscribeToJointDataEvent(handedness, jointID, handler);
-            OnValidate();
         }
 
         /// <summary>
@@ -104,14 +74,12 @@ namespace ubco.ovi.HPUI.Core
             }
         }
 
-        /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
-        /// </summary>
-        protected void OnValidate()
+        // NOTE: for testing
+        public Transform testGameObject;
+        private void Update()
         {
-            rotationOffset = Quaternion.AngleAxis(offsetAngle, Vector3.up);
-            jointPlaneOffset = rotationOffset * Vector3.up * offsetAsRatioToRadius;
-            jointLongitudianlOffset = Vector3.up * offsetAlongJoint;
+            if (testGameObject != null)
+                OnUpdate(null, new JointDataEventArgs(handedness, jointID, new Pose(testGameObject.position, testGameObject.rotation), 0.01f, true, false));
         }
     }
 }
