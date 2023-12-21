@@ -70,7 +70,7 @@ namespace ubco.ovi.HPUI.Core
         {
             if (handler != null)
             {
-                HandJointData.Instance.UnsubscribeToJointDataEvent(handedness, jointID, handler);
+                HandJointData.Instance?.UnsubscribeToJointDataEvent(handedness, jointID, handler);
             }
         }
 

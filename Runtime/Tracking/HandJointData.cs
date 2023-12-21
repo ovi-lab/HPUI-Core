@@ -20,7 +20,8 @@ namespace ubco.ovi.HPUI.Core
                     HandJointData obj = FindObjectOfType<HandJointData>();
                     if (obj == null)
                     {
-                        throw new InvalidOperationException("There are no valid `HandJointData` setup in the scene!");
+                        Debug.LogWarning("There are no valid `HandJointData` setup in the scene!");
+                        return null;
                     }
                     instance = obj;
                 }
