@@ -14,6 +14,7 @@ namespace ubco.ovi.HPUI.Core
         [Tooltip("The joint to follow.")]
         public XRHandJointID jointID;
         [Tooltip("(optional) Second joint to use as reference. If not set to invalid, offsetAlongJoint behaves differently.")]
+        [ConditionalField("secondJointID")]
         public XRHandJointID secondJointID;
         [Tooltip("Default joint radius to use when joint radius is not provided by XR Hands. In unity units.")]
         public float defaultJointRadius = 0.01f;
