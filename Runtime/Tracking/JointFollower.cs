@@ -13,6 +13,8 @@ namespace ubco.ovi.HPUI.Core
         public Handedness handedness;
         [Tooltip("The joint to follow.")]
         public XRHandJointID jointID;
+        [Tooltip("(optional) Second joint to use as reference. If not set to invalid, offsetAlongJoint behaves differently.")]
+        public XRHandJointID secondJointID;
         [Tooltip("Default joint radius to use when joint radius is not provided by XR Hands. In unity units.")]
         public float defaultJointRadius = 0.01f;
 
@@ -20,13 +22,19 @@ namespace ubco.ovi.HPUI.Core
         public float offsetAngle = 0f;
         [Tooltip("The offset as a ratio of the joint radius.")][SerializeField]
         public float offsetAsRatioToRadius = 1f;
-        [Tooltip("The offset along joint (the joint's up). In unity units.")][SerializeField]
-        public float offsetAlongJoint = 0f;
+        [Tooltip("The offset along joint (the joint's up) if no secondJoint is set. Otherwise, the position along joint as a ratio to the distance between jointID and secondJointID. In unity units.")]
+        [SerializeField]
+        public float longitudinalOffset = 0f;
 
         private EventHandler<JointDataEventArgs> handler = null;
         private float cachedRadius = 0f;
+        private bool joinPoseRecieved, secondJointPoseRecieved;
+        private Pose jointPose, secondJointPose;
 
-        private void OnUpdate(object _, JointDataEventArgs args)
+        /// <summary>
+        /// The callback used to get joint data from <see cref="HandJointData"/>
+        /// </summary>
+        protected void OnUpdate(object _, JointDataEventArgs args)
         {
             if (args.radiusSuccess)
             {
@@ -39,15 +47,32 @@ namespace ubco.ovi.HPUI.Core
 
             if (args.poseSuccess)
             {
-                Vector3 poseForward = args.pose.forward;
-                Quaternion rotationOffset = Quaternion.AngleAxis(offsetAngle, poseForward);
+                if (args.jointID == jointID)
+                {
+                    jointPose = args.pose;
+                    joinPoseRecieved = true;
+                }
+                else if (args.jointID == secondJointID)
+                {
+                    secondJointPose = args.pose;
+                    secondJointPoseRecieved = true;
+                }
 
-                Vector3 jointPlaneOffset = rotationOffset * args.pose.up * offsetAsRatioToRadius;
-                Vector3 jointLongitudianlOffset = poseForward * offsetAlongJoint;
+                if (joinPoseRecieved && (secondJointID == XRHandJointID.Invalid || secondJointPoseRecieved))
+                {
+                    Vector3 poseForward = jointPose.forward;
+                    Quaternion rotationOffset = Quaternion.AngleAxis(offsetAngle, poseForward);
 
-                transform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
-                transform.position = args.pose.position;
-                transform.localPosition += jointPlaneOffset * cachedRadius + jointLongitudianlOffset;
+                    Vector3 jointPlaneOffset = rotationOffset * jointPose.up * offsetAsRatioToRadius;
+                    Vector3 jointLongitudianlOffset = secondJointPoseRecieved ? (secondJointPose.position - jointPose.position) * longitudinalOffset : poseForward * longitudinalOffset;
+
+                    transform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
+                    transform.position = jointPose.position;
+                    transform.localPosition += jointPlaneOffset * cachedRadius + jointLongitudianlOffset;
+
+                    joinPoseRecieved = false;
+                    secondJointPoseRecieved = false;
+                }
             }
         }
 
@@ -72,14 +97,6 @@ namespace ubco.ovi.HPUI.Core
             {
                 HandJointData.Instance?.UnsubscribeToJointDataEvent(handedness, jointID, handler);
             }
-        }
-
-        // NOTE: for testing
-        public Transform testGameObject;
-        private void Update()
-        {
-            if (testGameObject != null)
-                OnUpdate(null, new JointDataEventArgs(handedness, jointID, new Pose(testGameObject.position, testGameObject.rotation), 0.01f, true, false));
         }
     }
 }
