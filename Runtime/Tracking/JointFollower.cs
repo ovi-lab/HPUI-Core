@@ -29,7 +29,7 @@ namespace ubco.ovi.HPUI.Core
 
         private EventHandler<JointDataEventArgs> handler = null;
         private float cachedRadius = 0f;
-        private bool joinPoseRecieved, secondJointPoseRecieved;
+        private bool jointPoseRecieved, secondJointPoseRecieved;
         private Pose jointPose, secondJointPose;
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace ubco.ovi.HPUI.Core
                 if (args.jointID == jointID)
                 {
                     jointPose = args.pose;
-                    joinPoseRecieved = true;
+                    jointPoseRecieved = true;
                 }
                 else if (args.jointID == secondJointID)
                 {
@@ -59,7 +59,7 @@ namespace ubco.ovi.HPUI.Core
                     secondJointPoseRecieved = true;
                 }
 
-                if (joinPoseRecieved && (secondJointID == XRHandJointID.Invalid || secondJointPoseRecieved))
+                if (jointPoseRecieved && (secondJointID == XRHandJointID.Invalid || secondJointPoseRecieved))
                 {
                     Vector3 poseForward = jointPose.forward;
                     Quaternion rotationOffset = Quaternion.AngleAxis(offsetAngle, poseForward);
@@ -71,7 +71,7 @@ namespace ubco.ovi.HPUI.Core
                     transform.position = jointPose.position;
                     transform.localPosition += jointPlaneOffset * cachedRadius + jointLongitudianlOffset;
 
-                    joinPoseRecieved = false;
+                    jointPoseRecieved = false;
                     secondJointPoseRecieved = false;
                 }
             }
@@ -82,11 +82,16 @@ namespace ubco.ovi.HPUI.Core
         /// </summary>
         protected void OnEnable()
         {
+            // TODO: Do this if the values for the joints are updated during runtime
             if (handler == null)
             {
                 handler = new EventHandler<JointDataEventArgs>(OnUpdate);
             }
             HandJointData.Instance.SubscribeToJointDataEvent(handedness, jointID, handler);
+            if (secondJointID != XRHandJointID.Invalid)
+            {
+                HandJointData.Instance.SubscribeToJointDataEvent(handedness, secondJointID, handler);
+            }
         }
 
         /// <summary>
@@ -94,9 +99,14 @@ namespace ubco.ovi.HPUI.Core
         /// </summary>
         protected void OnDisable()
         {
+            // TODO: Do this if the values for the joints are updated during runtime
             if (handler != null)
             {
                 HandJointData.Instance?.UnsubscribeToJointDataEvent(handedness, jointID, handler);
+                if (secondJointID != XRHandJointID.Invalid)
+                {
+                    HandJointData.Instance?.SubscribeToJointDataEvent(handedness, secondJointID, handler);
+                }
             }
         }
     }
