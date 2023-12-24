@@ -13,8 +13,10 @@ namespace ubco.ovi.HPUI.Core
         public Handedness handedness;
         [Tooltip("The joint to follow.")]
         public XRHandJointID jointID;
-        [Tooltip("(optional) Second joint to use as reference. If not set to invalid, offsetAlongJoint behaves differently.")]
-        [ConditionalField("secondJointID")]
+        [Tooltip("Should a second joint be used. If `useSecondJointID` is true, offsetAlongJoint behaves differently.")]
+        public bool useSecondJointID;
+        [Tooltip("Second joint to use as reference. If `useSecondJointID` is true, offsetAlongJoint behaves differently.")]
+        [ConditionalField("useSecondJointID")]
         public XRHandJointID secondJointID;
         [Tooltip("Default joint radius to use when joint radius is not provided by XR Hands. In unity units.")]
         public float defaultJointRadius = 0.01f;
@@ -59,7 +61,7 @@ namespace ubco.ovi.HPUI.Core
                     secondJointPoseRecieved = true;
                 }
 
-                if (jointPoseRecieved && (secondJointID == XRHandJointID.Invalid || secondJointPoseRecieved))
+                if (jointPoseRecieved && (!useSecondJointID || secondJointPoseRecieved))
                 {
                     Vector3 poseForward = jointPose.forward;
                     Quaternion rotationOffset = Quaternion.AngleAxis(offsetAngle, poseForward);
@@ -88,7 +90,7 @@ namespace ubco.ovi.HPUI.Core
                 handler = new EventHandler<JointDataEventArgs>(OnUpdate);
             }
             HandJointData.Instance.SubscribeToJointDataEvent(handedness, jointID, handler);
-            if (secondJointID != XRHandJointID.Invalid)
+            if (useSecondJointID)
             {
                 HandJointData.Instance.SubscribeToJointDataEvent(handedness, secondJointID, handler);
             }
@@ -103,9 +105,9 @@ namespace ubco.ovi.HPUI.Core
             if (handler != null)
             {
                 HandJointData.Instance?.UnsubscribeToJointDataEvent(handedness, jointID, handler);
-                if (secondJointID != XRHandJointID.Invalid)
+                if (useSecondJointID)
                 {
-                    HandJointData.Instance?.SubscribeToJointDataEvent(handedness, secondJointID, handler);
+                    HandJointData.Instance?.UnsubscribeToJointDataEvent(handedness, secondJointID, handler);
                 }
             }
         }

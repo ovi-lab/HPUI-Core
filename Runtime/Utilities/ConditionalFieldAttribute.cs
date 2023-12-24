@@ -10,11 +10,11 @@ namespace ubco.ovi.HPUI
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class ConditionalFieldAttribute : PropertyAttribute
     {
-        public string label;
+        public string conditionalProp;
 
-        public ConditionalFieldAttribute(string label)
+        public ConditionalFieldAttribute(string conditionalProp)
         {
-            this.label = label;
+            this.conditionalProp = conditionalProp;
         }
     }
 }
