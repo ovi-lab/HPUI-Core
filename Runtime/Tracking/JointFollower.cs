@@ -111,5 +111,21 @@ namespace ubco.ovilab.HPUI.Core
                 }
             }
         }
+
+        /// <summary>
+        /// Set the parameters of this JointFollower.
+        /// </summary>
+        public void SetParams(Handedness handedness, XRHandJointID jointID, float offsetAngle, float offsetAsRationToRadius, float longitudinalOffset)
+        {
+            this.handedness = handedness;
+            this.jointID = jointID;
+            this.offsetAngle = offsetAngle;
+            this.offsetAsRatioToRadius = offsetAsRationToRadius;
+            this.longitudinalOffset = longitudinalOffset;
+
+            // Making sure the hooks are correctly registered
+            OnDisable();
+            OnEnable();
+        }
     }
 }
