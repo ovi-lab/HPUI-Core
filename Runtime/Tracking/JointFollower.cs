@@ -64,14 +64,20 @@ namespace ubco.ovilab.HPUI.Core
                 if (jointPoseRecieved && (!useSecondJointID || secondJointPoseRecieved))
                 {
                     Vector3 poseForward = jointPose.forward;
-                    Quaternion rotationOffset = Quaternion.AngleAxis(offsetAngle, poseForward);
+                    Vector3 jointPlaneOffset;
+                    if (offsetAngle == 0 || offsetAsRatioToRadius == 0)
+                    {
+                        jointPlaneOffset = -jointPose.up;
+                    }
+                    else
+                    {
+                        jointPlaneOffset = Quaternion.AngleAxis(offsetAngle, poseForward) * -jointPose.up * offsetAsRatioToRadius;
+                    }
 
-                    Vector3 jointPlaneOffset = rotationOffset * jointPose.up * offsetAsRatioToRadius;
                     Vector3 jointLongitudianlOffset = secondJointPoseRecieved ? (secondJointPose.position - jointPose.position) * longitudinalOffset : poseForward * longitudinalOffset;
 
                     transform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
-                    transform.position = jointPose.position;
-                    transform.localPosition += jointPlaneOffset * cachedRadius + jointLongitudianlOffset;
+                    transform.position = jointPose.position + jointPlaneOffset * cachedRadius + jointLongitudianlOffset;
 
                     jointPoseRecieved = false;
                     secondJointPoseRecieved = false;
@@ -110,6 +116,15 @@ namespace ubco.ovilab.HPUI.Core
                     HandJointData.Instance?.UnsubscribeToJointDataEvent(handedness, secondJointID, handler);
                 }
             }
+        }
+
+        /// <summary>
+        /// See <see cref="MonoBehaviour"/>.
+        /// </summary>
+        protected void OnValidate()
+        {
+            // Reset cachedradius when anything changes on the editor
+            cachedRadius = 0;
         }
 
         /// <summary>

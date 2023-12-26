@@ -55,19 +55,14 @@ namespace ubco.ovilab.HPUI.Core
                 jointFollower.SetParams(handedness, jointID, 0, 0, 0);
 
                 Transform keypoint = obj.transform;
-                if (surfaceRoot == null)
-                {
-                    surfaceRoot = obj;
-                    keypoint.parent = this.transform;
-                }
-                else
-                {
-                    keypoint.parent = surfaceRoot.transform;
-                }
-
+                keypoint.parent = this.transform;
                 keypointTransforms.Add(keypoint);
             }
 
+            if (surfaceRoot == null)
+            {
+                surfaceRoot = keypointTransforms[0].gameObject;
+            }
 	    filter = surfaceRoot.GetComponent<MeshFilter>();
             if (filter == null)
             {
@@ -92,7 +87,6 @@ namespace ubco.ovilab.HPUI.Core
         private void ExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
         {
             List<Vector3> vertices = CreateFlatMesh(x_size, y_size);
-            mesh.RecalculateNormals();
 
             SkinnedMeshRenderer renderer = surfaceRoot.transform.gameObject.GetComponent<SkinnedMeshRenderer>();
             if (renderer == null)
@@ -246,7 +240,10 @@ namespace ubco.ovilab.HPUI.Core
 	    mesh.SetUVs(0, uvs);
 	    mesh.SetTriangles(triangles, 0);
 
-	    AlignDisplay();
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+
+            AlignDisplay();
 	}
 
 	void AlignDisplay(bool calcRotation=true)
@@ -269,7 +266,7 @@ namespace ubco.ovilab.HPUI.Core
 	    //     surface.transform.rotation = Quaternion.LookRotation(upwardDirectionVector, forwardDirectionVector);
 	    // }
             // TODO: Set the rotation
-	    surfaceRoot.transform.position = surfaceRoot.transform.position;
+	    // surfaceRoot.transform.position = surfaceRoot.transform.position;
 	}
     }
 }
