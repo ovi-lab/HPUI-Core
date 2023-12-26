@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ubco.ovi.HPUI
+namespace ubco.ovilab.HPUI
 {
     // Based on https://github.com/Deadcows/MyBox/blob/master/Attributes/ConditionalFieldAttribute.cs
     /// <summary>

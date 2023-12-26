@@ -1,18 +1,12 @@
 {
     "name": "ubc.ok.ovilab.HPUI",
     "rootNamespace": "ubc.ok.ovilab.HPUI",
-    "references": [
-        "Unity.XR.Hands",
-        "Unity.XR.CoreUtils",
-        "Unity.XR.Interaction.Toolkit"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "alglib400gpl_net2.dll"
-    ],
+    "overrideReferences": false,
+    "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

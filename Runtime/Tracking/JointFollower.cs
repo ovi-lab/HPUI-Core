@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
-namespace ubco.ovi.HPUI.Core
+namespace ubco.ovilab.HPUI.Core
 {
     /// <summary>
     /// A component that makes the object follow a hand joint

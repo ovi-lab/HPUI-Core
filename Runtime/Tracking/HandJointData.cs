@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;
 
-namespace ubco.ovi.HPUI.Core
+namespace ubco.ovilab.HPUI.Core
 {
     /// <summary>
     /// Utility class to expose joint data accessible.

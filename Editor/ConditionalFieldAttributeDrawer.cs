@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace ubco.ovi.HPUI.Editor
+namespace ubco.ovilab.HPUI.Editor
 {
     [CustomPropertyDrawer(typeof(ConditionalFieldAttribute))]
     public class ConditionalFieldAttributeDrawer : PropertyDrawer

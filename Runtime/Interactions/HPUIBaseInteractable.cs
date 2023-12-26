@@ -3,7 +3,7 @@ using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Filtering;
 
-namespace ubco.ovi.HPUI.Core
+namespace ubco.ovilab.HPUI.Core
 {
     /// <summary>
     /// Base HPUI interactable.
