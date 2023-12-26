@@ -1,118 +1,68 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI.Core
 {
     /// <summary>
+    /// Main class to generate deformable meshes that use Unity's <see cref="SkinnedMeshRenderer"/>.
     /// </summary>
-    public class DeformableSurface: MonoBehaviour
+    public static class DeformableSurface
     {
-	private MeshFilter filter;
-	public Mesh mesh
-	{
-	    get { return filter.mesh; }
-	}
-        private GameObject surfaceRoot;
-
-	public int x_divisions { get; private set; }
-	public int y_divisions = 35;
-
-	public float zVerticesOffset = -0.0005f;
-
-        public float x_size;
-        public float y_size;
-        public float step_size { get; private set; }
-
-        public byte numberOfBonesPerVertex = 3;
-
-        public Handedness handedness;
-        public List<XRHandJointID> keypointJoints;
-
-        public Material defaultMaterial;
-
-        #region unity functions
-        void Start()
+        /// <summary>
+        /// The main method to generate mesh. This will generate a
+        /// mesh to match the parameters passed and setup the <see
+        /// cref="SkinnedMeshRenderer"/>.
+        /// </summary>
+        /// <param name="x_size">
+        /// The size along the abduction-adduction axis of the fingers (x-axis of joints).</param>
+        /// <param name="y_size">
+        /// The size along the flexion-extension axis of the fingers (z-axis of joints).</param>
+        /// <param name="y_divisions">
+        /// The number of subdivisions along the flexion-extension
+        /// axis of the fingers. The subdivisions along the
+        /// abduction-adduction axis will be computed from this such
+        /// that the resulting subdivisions are squares.</param>
+        /// <param name="surfaceOffset">
+        /// Offset from the center of the joints (as reported by <see
+        /// cref="XRHands"/>) towards the palmer side of the
+        /// hand.</param>
+        /// <param name="filter">
+        /// The mesh filter to which the new mesh will be added
+        /// to. The gameObject of this should also have a
+        /// <see cref="SkinnedMeshRenderer"/> attached to it; if not, a new
+        /// SkinnedMeshRenderer will be added. The SkinnedMeshRenderer
+        /// will be using the generated mesh.</param>
+        /// <param name="bones">
+        /// The bones that will be used for the <see cref="SkinnedMeshRenderer"/>.</param>
+        /// <param name="numberOfBonesPerVertex">
+        /// The number of bones to use per vertex in the <see cref="SkinnedMeshRenderer"/>.</param>
+        public static void GenerateMesh(float x_size, float y_size, int y_divisions, float surfaceOffset, MeshFilter filter, List<Transform> bones, byte numberOfBonesPerVertex)
         {
+            Mesh mesh;
+            List<Vector3> vertices;
+            Transform surfaceRootTransform = filter.transform;
+            float step_size = y_size / y_divisions;
+	    int x_divisions = (int)(x_size / step_size);
 
-        }
+            GenerateMeshBottomMiddleOrigin(x_size,y_size, surfaceOffset, x_divisions, y_divisions, out mesh, out vertices);
+            filter.mesh = mesh;
+            filter.mesh.MarkDynamic();
 
-        void Update()
-        {
-        }
-        #endregion
-
-        private List<Transform> SetupKeypoints()
-        {
-            List<Transform> keypointTransforms = new List<Transform>();
-            foreach (XRHandJointID jointID in keypointJoints)
-            {
-                GameObject obj = new GameObject($"{handedness}_{jointID}");
-                JointFollower jointFollower = obj.AddComponent<JointFollower>();
-                jointFollower.SetParams(handedness, jointID, 0, 0, 0);
-
-                Transform keypoint = obj.transform;
-                keypoint.parent = this.transform;
-                keypointTransforms.Add(keypoint);
-            }
-
-            if (surfaceRoot == null)
-            {
-                surfaceRoot = keypointTransforms[0].gameObject;
-            }
-	    filter = surfaceRoot.GetComponent<MeshFilter>();
-            if (filter == null)
-            {
-                filter = surfaceRoot.AddComponent<MeshFilter>();
-            }
-
-            return keypointTransforms;
-        }
-
-        public void Calibrate()
-        {
-            List<Transform> keypoints = SetupKeypoints();
-            StartCoroutine(DelayedExecuteCalibration(x_size, y_size, keypoints));
-        }
-
-        private IEnumerator DelayedExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
-        {
-            yield return new WaitForSeconds(1);
-            ExecuteCalibration(x_size, y_size, keypoints);
-        }
-
-        private void ExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
-        {
-            List<Vector3> vertices = CreateFlatMesh(x_size, y_size);
-
-            SkinnedMeshRenderer renderer = surfaceRoot.transform.gameObject.GetComponent<SkinnedMeshRenderer>();
+            SkinnedMeshRenderer renderer = surfaceRootTransform.gameObject.GetComponent<SkinnedMeshRenderer>();
             if (renderer == null)
             {
-                renderer = surfaceRoot.transform.gameObject.AddComponent<SkinnedMeshRenderer>();
+                renderer = surfaceRootTransform.gameObject.AddComponent<SkinnedMeshRenderer>();
             }
 
-            if (defaultMaterial != null)
-            {
-                renderer.material = defaultMaterial;
-            }
-
-            ComputeMeshBoneWeights(mesh, renderer, vertices, keypoints);
-        }
-
-        private void ComputeMeshBoneWeights(Mesh mesh, SkinnedMeshRenderer renderer, List<Vector3> vertices, List<Transform> keypoints)
-        {
             // Create a Transform and bind pose for two bones
-            List<Transform> bones = new List<Transform>();
             List<Matrix4x4> bindPoses = new List<Matrix4x4>();
 
             // Setting up bones and bindPose
-            foreach (Transform t in keypoints)
+            foreach (Transform t in bones)
             {
-                bones.Add(t);
-                bindPoses.Add(t.worldToLocalMatrix * surfaceRoot.transform.localToWorldMatrix);
+                bindPoses.Add(t.worldToLocalMatrix * surfaceRootTransform.localToWorldMatrix);
             }
 
             // Create an array that describes the number of bone weights per vertex
@@ -123,7 +73,7 @@ namespace ubco.ovilab.HPUI.Core
 
             for (int i = 0; i < vertices.Count; i++)
             {
-                Vector3 vertexPos = surfaceRoot.transform.TransformPoint(vertices[i]);
+                Vector3 vertexPos = surfaceRootTransform.TransformPoint(vertices[i]);
 
                 // The weights are the inverse of the distance from the vertex to a bone (1/dist)
                 List<(int idx, float weight)> vals = bones
@@ -147,8 +97,8 @@ namespace ubco.ovilab.HPUI.Core
             }
 
             // Create NativeArray versions of the two arrays
-            var bonesPerVertexArray = new NativeArray<byte>(bonesPerVertex, Allocator.Temp);
-            var weightsArray = new NativeArray<BoneWeight1>(weights.ToArray(), Allocator.Temp);
+            NativeArray<byte> bonesPerVertexArray = new NativeArray<byte>(bonesPerVertex, Allocator.Temp);
+            NativeArray<BoneWeight1> weightsArray = new NativeArray<BoneWeight1>(weights.ToArray(), Allocator.Temp);
 
             // Set the bone weights on the mesh
             mesh.SetBoneWeights(bonesPerVertexArray, weightsArray);
@@ -163,110 +113,53 @@ namespace ubco.ovilab.HPUI.Core
             renderer.sharedMesh = mesh;
         }
 
-        public List<Vector3> CreateFlatMesh(float x_size, float y_size)
-	{
-            if (mesh != null)
-            {
-                Destroy(mesh);
-            }
-	    if (y_divisions == 0)
-            {
-                return null;
-            }
-
-            // FIXME: Where are these magic values coming from?
-	    //x/y scaling factors
-	    // float xsf = 1.5f;
-	    // float ysf = 1.5f;
-
-	    // xsf /= surface.transform.lossyScale.x;
-	    // ysf /= surface.transform.lossyScale.x;
-
-	    // //sizes based on calibration distances on hand model
-	    // y_size = ysf*(y_size);
-	    // x_size = xsf*(x_size);
-
-	    step_size = y_size / y_divisions;
-	    x_divisions = (int)(x_size / step_size);
-
-            Mesh newMesh;
-            List<Vector3> vertices;
-            GenerateMeshBottomMiddleOrigin(x_divisions, y_divisions, out newMesh, out vertices);
-            filter.mesh = newMesh;
-
-            filter.mesh.MarkDynamic();
-            return vertices;
-        }
-
-	private void GenerateMeshBottomMiddleOrigin(int x_divisions, int y_divisions, out Mesh mesh, out List<Vector3> vertices)
-	{
-	    mesh = new Mesh();
+        /// <summary>
+        /// Generate a mesh anchored at the bottom middle of the mesh.
+        /// </summary>
+        public static void GenerateMeshBottomMiddleOrigin(float x_size, float y_size, float surfaceOffset, int x_divisions, int y_divisions, out Mesh mesh, out List<Vector3> vertices)
+        {
+            mesh = new Mesh();
 
             vertices = new List<Vector3>();
-	    List<Vector3> normals = new List<Vector3>();
-	    List<Vector2> uvs = new List<Vector2>();
+            List<Vector3> normals = new List<Vector3>();
+            List<Vector2> uvs = new List<Vector2>();
 
-	    for (int k = 0; k < y_divisions; k++)
-	    {
+            for (int k = 0; k < y_divisions; k++)
+            {
 
-		//for (int i = -x_divisions/2; i < x_divisions/2; i++)
-		for (int i = 0; i < x_divisions ; i++)
-		{
-		    vertices.Add(new Vector3(x_size * ((i- ((float)x_divisions / 2.0f)) / (float)x_divisions), zVerticesOffset,y_size * (k / (float)y_divisions)));
-		    normals.Add(Vector3.forward);
+                //for (int i = -x_divisions/2; i < x_divisions/2; i++)
+                for (int i = 0; i < x_divisions; i++)
+                {
+                    vertices.Add(new Vector3(x_size * ((i - ((float)x_divisions / 2.0f)) / (float)x_divisions), surfaceOffset, y_size * (k / (float)y_divisions)));
+                    normals.Add(Vector3.forward);
 
-		    uvs.Add(new Vector2(1 - k / (float)(y_divisions-1), i / (float)(x_divisions-1)));
-		}
-	    }
+                    uvs.Add(new Vector2(1 - k / (float)(y_divisions - 1), i / (float)(x_divisions - 1)));
+                }
+            }
 
-	    var triangles = new List<int>();
+            var triangles = new List<int>();
 
-	    for (int i = 0; i < (y_divisions-1) * (x_divisions) - 1; i++)
-	    {
-		if ((i + 1) % (x_divisions) == 0)
-		{
-		    continue;
-		}
+            for (int i = 0; i < (y_divisions - 1) * (x_divisions) - 1; i++)
+            {
+                if ((i + 1) % (x_divisions) == 0)
+                {
+                    continue;
+                }
 
-		triangles.AddRange(new List<int>()
+                triangles.AddRange(new List<int>()
                 {
                     i,i+x_divisions,i+x_divisions+1,
                     i,i+x_divisions+1,i+1
                 });
-	    }
+            }
 
-	    mesh.SetVertices(vertices);
-	    mesh.SetNormals(normals);
-	    mesh.SetUVs(0, uvs);
-	    mesh.SetTriangles(triangles, 0);
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(normals);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(triangles, 0);
 
             mesh.RecalculateNormals();
             mesh.RecalculateTangents();
-
-            AlignDisplay();
-	}
-
-	void AlignDisplay(bool calcRotation=true)
-	{
-	    // if (calcRotation)
-	    // {
-            //     Vector3 forwardDirectionVector, sidewaysDirectionVector;
-            //     if (orientationInformation.useStrings)
-            //     {
-            //         forwardDirectionVector = handCoordinateManager.GetManagedCoord(orientationInformation.forwardVectorNameP2).position - handCoordinateManager.GetManagedCoord(orientationInformation.forwardVectorNameP1).position;
-            //         sidewaysDirectionVector = handCoordinateManager.GetManagedCoord(orientationInformation.sideVectorNameP2).position - handCoordinateManager.GetManagedCoord(orientationInformation.sideVectorNameP1).position;
-            //     }
-            //     else
-            //     {
-            //         forwardDirectionVector = orientationInformation.forwardVectorTransformP2.position - orientationInformation.forwardVectorTransformP1.position;
-            //         sidewaysDirectionVector = orientationInformation.sideVectorTransformP2.position - orientationInformation.sideVectorTransformP1.position;
-            //     }
-	    //     Vector3 upwardDirectionVector = Vector3.Cross(sidewaysDirectionVector, forwardDirectionVector);
-
-	    //     surface.transform.rotation = Quaternion.LookRotation(upwardDirectionVector, forwardDirectionVector);
-	    // }
-            // TODO: Set the rotation
-	    // surfaceRoot.transform.position = surfaceRoot.transform.position;
-	}
+        }
     }
 }
