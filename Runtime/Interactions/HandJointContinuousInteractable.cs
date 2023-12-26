@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,6 +22,8 @@ namespace ubco.ovilab.HPUI.Core
         public List<XRHandJointID> keypointJoints;
 
         public Material defaultMaterial;
+
+        private List<Transform> keypointsCache;
 
         private List<Transform> SetupKeypoints()
         {
@@ -48,8 +51,15 @@ namespace ubco.ovilab.HPUI.Core
 
         public void Calibrate()
         {
-            List<Transform> keypoints = SetupKeypoints();
-            StartCoroutine(DelayedExecuteCalibration(x_size, y_size, keypoints));
+            if (keypointsCache != null)
+            {
+                for (int i = 0; i < keypointsCache.Count; ++i)
+                {
+                    Destroy(keypointsCache[i].gameObject);
+                }
+            }
+            keypointsCache = SetupKeypoints();
+            StartCoroutine(DelayedExecuteCalibration(x_size, y_size, keypointsCache));
         }
 
         private IEnumerator DelayedExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
