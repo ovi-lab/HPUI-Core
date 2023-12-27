@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
-using UnityEngine.XR.Interaction.Toolkit.Filtering;
 
 namespace ubco.ovilab.HPUI.Core
 {
