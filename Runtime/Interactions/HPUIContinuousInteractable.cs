@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
 
 namespace ubco.ovilab.HPUI.Core
 {
@@ -29,6 +30,15 @@ namespace ubco.ovilab.HPUI.Core
 
         private List<Transform> keypointsCache;
 	private MeshFilter filter;
+
+        /// <summary>
+        /// See <see cref="MonoBehaviour"/>.
+        /// </summary>
+        protected override void Awake()
+        {
+            base.Awake();
+            gameObject.SetActive(false);
+        }
 
         /// <summary>
         /// Setup and return the list of keypoints to be used for the <see cref="SkinnedMeshRenderer"/>.
@@ -62,6 +72,8 @@ namespace ubco.ovilab.HPUI.Core
         /// </summary>
         public void Calibrate()
         {
+            colliders.Clear();
+
             if (keypointsCache != null)
             {
                 for (int i = 0; i < keypointsCache.Count; ++i)
@@ -70,6 +82,7 @@ namespace ubco.ovilab.HPUI.Core
                 }
             }
             keypointsCache = SetupKeypoints();
+            gameObject.SetActive(true);
             StartCoroutine(DelayedExecuteCalibration(x_size, y_size, keypointsCache));
         }
 
@@ -78,7 +91,7 @@ namespace ubco.ovilab.HPUI.Core
         /// </summary>
         private IEnumerator DelayedExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
         {
-            yield return new WaitForSeconds(1);
+            yield return new WaitForSeconds(0.5f);
             if (filter.mesh != null)
             {
                 Destroy(filter.mesh);
@@ -90,7 +103,17 @@ namespace ubco.ovilab.HPUI.Core
             {
                 filter.GetComponent<Renderer>().material = defaultMaterial;
             }
-        }
 
+            Collider collider = filter.GetComponent<Collider>();
+            if (collider == null)
+            {
+                collider = filter.gameObject.AddComponent<MeshCollider>();
+            }
+
+            colliders.Add(collider);
+            XRPokeFilter pokeFilter = GetComponent<XRPokeFilter>();
+            pokeFilter.pokeCollider = collider;
+            pokeFilter.enabled = true;
+        }
     }
 }

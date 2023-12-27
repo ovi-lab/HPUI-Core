@@ -241,7 +241,7 @@ namespace ubco.ovilab.HPUI.Core
             {
                 if (handler.handedness == handedness && handler.jointID == joinID)
                 {
-                    handler.jointDataEventHandler += callback;
+                    handler.jointDataEventHandler -= callback;
                 }
             }
         }
