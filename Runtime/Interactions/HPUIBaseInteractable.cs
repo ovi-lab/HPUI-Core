@@ -8,22 +8,15 @@ namespace ubco.ovilab.HPUI.Core
     /// <summary>
     /// Base HPUI interactable.
     /// </summary>
-    [RequireComponent(typeof(JointFollower))]
     [RequireComponent(typeof(XRPokeFilter))]
     public class HPUIBaseInteractable: XRSimpleInteractable
     {
-        private JointFollower jointFollower;
+        [SerializeField]
         private Handedness handedness;
         public Handedness Handedness
         {
-            get {
-                if (jointFollower == null)
-                {
-                    jointFollower = GetComponent<JointFollower>();
-                }
-                handedness = jointFollower.handedness;
-                return handedness;
-            }
+            get => handedness;
+            set => handedness = value;
         }
     }
 }

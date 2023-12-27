@@ -8,7 +8,7 @@ namespace ubco.ovilab.HPUI.Core
 {
     /// <summary>
     /// </summary>
-    public class HandJointContinuousInteractable: MonoBehaviour
+    public class HPUIContinuousInteractable: HPUIBaseInteractable
     {
 	private MeshFilter filter;
 
@@ -18,7 +18,6 @@ namespace ubco.ovilab.HPUI.Core
         public float y_size;
         public byte numberOfBonesPerVertex = 3;
 
-        public Handedness handedness;
         public List<XRHandJointID> keypointJoints;
 
         public Material defaultMaterial;
@@ -30,9 +29,9 @@ namespace ubco.ovilab.HPUI.Core
             List<Transform> keypointTransforms = new List<Transform>();
             foreach (XRHandJointID jointID in keypointJoints)
             {
-                GameObject obj = new GameObject($"{handedness}_{jointID}");
+                GameObject obj = new GameObject($"{Handedness}_{jointID}");
                 JointFollower jointFollower = obj.AddComponent<JointFollower>();
-                jointFollower.SetParams(handedness, jointID, 0, 0, 0);
+                jointFollower.SetParams(Handedness, jointID, 0, 0, 0);
 
                 Transform keypoint = obj.transform;
                 keypoint.parent = this.transform;

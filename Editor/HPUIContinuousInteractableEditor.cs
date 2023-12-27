@@ -8,14 +8,14 @@ using ubco.ovilab.HPUI.Core;
 
 namespace ubco.ovilab.HPUI.Editor
 {
-    [CustomEditor(typeof(HandJointContinuousInteractable), true)]
-    public class HandJointContinuousInteractableEditor: UnityEditor.Editor
+    [CustomEditor(typeof(HPUIContinuousInteractable), true)]
+    public class HPUIContinuousInteractableEditor: UnityEditor.Editor
     {
-        private HandJointContinuousInteractable t;
+        private HPUIContinuousInteractable t;
 
         void OnEnable()
         {
-            t = target as HandJointContinuousInteractable;
+            t = target as HPUIContinuousInteractable;
         }
 
         public override void OnInspectorGUI()
