@@ -19,11 +19,12 @@ namespace ubco.ovilab.HPUI.Core
         /// The size along the abduction-adduction axis of the fingers (x-axis of joints).</param>
         /// <param name="y_size">
         /// The size along the flexion-extension axis of the fingers (z-axis of joints).</param>
+        /// <param name="x_divisions">
+        /// The number of subdivisions along the abduction-adduction
+        /// axis of the fingers.</param>
         /// <param name="y_divisions">
         /// The number of subdivisions along the flexion-extension
-        /// axis of the fingers. The subdivisions along the
-        /// abduction-adduction axis will be computed from this such
-        /// that the resulting subdivisions are squares.</param>
+        /// axis of the fingers. </param>
         /// <param name="surfaceOffset">
         /// Offset from the center of the joints (as reported by <see
         /// cref="XRHands"/>) towards the palmer side of the
@@ -38,13 +39,11 @@ namespace ubco.ovilab.HPUI.Core
         /// The bones that will be used for the <see cref="SkinnedMeshRenderer"/>.</param>
         /// <param name="numberOfBonesPerVertex">
         /// The number of bones to use per vertex in the <see cref="SkinnedMeshRenderer"/>.</param>
-        public static void GenerateMesh(float x_size, float y_size, int y_divisions, float surfaceOffset, MeshFilter filter, List<Transform> bones, byte numberOfBonesPerVertex)
+        public static void GenerateMesh(float x_size, float y_size, int x_divisions, int y_divisions, float surfaceOffset, MeshFilter filter, List<Transform> bones, byte numberOfBonesPerVertex)
         {
             Mesh mesh;
             List<Vector3> vertices;
             Transform surfaceRootTransform = filter.transform;
-            float step_size = y_size / y_divisions;
-	    int x_divisions = (int)(x_size / step_size);
 
             GenerateMeshBottomMiddleOrigin(x_size,y_size, surfaceOffset, x_divisions, y_divisions, out mesh, out vertices);
             filter.mesh = mesh;

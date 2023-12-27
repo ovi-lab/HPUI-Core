@@ -26,8 +26,8 @@ namespace ubco.ovilab.HPUI.Core
         public List<XRHandJointID> keypointJoints;
         [Tooltip("(Optional) The default material to use for the surface.")]
         public Material defaultMaterial;
-        [Space()]
 
+        public int x_divisions { get; private set; }
         private List<Transform> keypointsCache;
 	private MeshFilter filter;
 
@@ -97,23 +97,25 @@ namespace ubco.ovilab.HPUI.Core
                 Destroy(filter.mesh);
             }
 
-            DeformableSurface.GenerateMesh(x_size, y_size, y_divisions, offset, filter, keypoints, numberOfBonesPerVertex);
+            float step_size = y_size / y_divisions;
+	    x_divisions = (int)(x_size / step_size);
+
+            DeformableSurface.GenerateMesh(x_size, y_size, x_divisions, y_divisions, offset, filter, keypoints, numberOfBonesPerVertex);
 
             if (defaultMaterial != null)
             {
                 filter.GetComponent<Renderer>().material = defaultMaterial;
             }
 
-            Collider collider = filter.GetComponent<Collider>();
-            if (collider == null)
+            DeformableSurfaceCollidersManager surfaceCollidersManager = filter.GetComponent<DeformableSurfaceCollidersManager>();
+            if (surfaceCollidersManager == null)
             {
-                collider = filter.gameObject.AddComponent<MeshCollider>();
+                surfaceCollidersManager = filter.gameObject.AddComponent<DeformableSurfaceCollidersManager>();
             }
 
-            colliders.Add(collider);
-            XRPokeFilter pokeFilter = GetComponent<XRPokeFilter>();
-            pokeFilter.pokeCollider = collider;
-            pokeFilter.enabled = true;
+            List<Collider> generatedColliders = surfaceCollidersManager.SetupColliders();
+
+            colliders.AddRange(generatedColliders);
         }
     }
 }
