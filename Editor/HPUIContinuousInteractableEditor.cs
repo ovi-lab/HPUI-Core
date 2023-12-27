@@ -1,26 +1,24 @@
-using System;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using ubco.ovilab.HPUI.Core;
+using UnityEditor.XR.Interaction.Toolkit;
 
 namespace ubco.ovilab.HPUI.Editor
 {
     [CustomEditor(typeof(HPUIContinuousInteractable), true)]
-    public class HPUIContinuousInteractableEditor: UnityEditor.Editor
+    public class HPUIContinuousInteractableEditor: XRBaseInteractableEditor
     {
         private HPUIContinuousInteractable t;
 
-        void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             t = target as HPUIContinuousInteractable;
         }
 
         public override void OnInspectorGUI()
         {
-            base.DrawDefaultInspector();
+            base.OnInspectorGUI();
             GUI.enabled = EditorApplication.isPlaying;
             if (GUILayout.Button("Run calibration"))
             {

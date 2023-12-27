@@ -3,7 +3,8 @@
     "rootNamespace": "ubco.ovilab.HPUI.Editor",
     "references": [
         "ubco.ovilab.HPUI",
-        "Unity.XR.Interaction.Toolkit"
+        "Unity.XR.Interaction.Toolkit",
+        "Unity.XR.Interaction.Toolkit.Editor"
     ],
     "includePlatforms": [
         "Editor"

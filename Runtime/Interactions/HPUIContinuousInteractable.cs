@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,20 +9,30 @@ namespace ubco.ovilab.HPUI.Core
     /// </summary>
     public class HPUIContinuousInteractable: HPUIBaseInteractable
     {
-	private MeshFilter filter;
-
-	public int y_divisions = 35;
-	public float offset = 0.0005f;
+        [Space()]
+        [Header("Continuous surface configuration")]
+        [Tooltip("The size along the abduction-adduction axis of the fingers (x-axis of joints).")]
         public float x_size;
+        [Tooltip("The size along the flexion-extension axis of the fingers (z-axis of joints).")]
         public float y_size;
+        [Tooltip("The number of subdivisions along the flexion-extension axis of the fingers. The subdivisions along the abduction-adduction axis will be computed from this such that the resulting subdivisions are squares.")]
+	public int y_divisions = 35;
+        [Tooltip("Offset from the center of the joints (as reported by XRHands) towards the palmer side of the hand.")]
+	public float offset = 0.0005f;
+        [Tooltip("The number of bones to use per vertex in the SkinnedMeshRenderer.")]
         public byte numberOfBonesPerVertex = 3;
-
+        [Tooltip("The joints that will be used for the SkinnedMeshRenderer.")]
         public List<XRHandJointID> keypointJoints;
-
+        [Tooltip("(Optional) The default material to use for the surface.")]
         public Material defaultMaterial;
+        [Space()]
 
         private List<Transform> keypointsCache;
+	private MeshFilter filter;
 
+        /// <summary>
+        /// Setup and return the list of keypoints to be used for the <see cref="SkinnedMeshRenderer"/>.
+        /// </summary>
         private List<Transform> SetupKeypoints()
         {
             List<Transform> keypointTransforms = new List<Transform>();
@@ -48,6 +57,9 @@ namespace ubco.ovilab.HPUI.Core
             return keypointTransforms;
         }
 
+        /// <summary>
+        /// Configure the continuous surface.
+        /// </summary>
         public void Calibrate()
         {
             if (keypointsCache != null)
@@ -61,6 +73,9 @@ namespace ubco.ovilab.HPUI.Core
             StartCoroutine(DelayedExecuteCalibration(x_size, y_size, keypointsCache));
         }
 
+        /// <summary>
+        /// Generate the mesh after a short wait.
+        /// </summary>
         private IEnumerator DelayedExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
         {
             yield return new WaitForSeconds(1);
