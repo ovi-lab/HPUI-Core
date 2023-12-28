@@ -7,6 +7,8 @@ namespace ubco.ovilab.HPUI.Core
 {
     /// <summary>
     /// </summary>
+    [SelectionBase]
+    [DisallowMultipleComponent]
     public class HPUIContinuousInteractable: HPUIBaseInteractable
     {
         [Space()]
