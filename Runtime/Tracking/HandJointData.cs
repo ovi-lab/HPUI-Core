@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;
+using UnityEngine.Pool;
 
 namespace ubco.ovilab.HPUI.Core
 {
@@ -260,7 +261,7 @@ namespace ubco.ovilab.HPUI.Core
         public Handedness handedness;
         public XRHandJointID jointID;
 
-        public JointDataEventArgs(Handedness handedness, XRHandJointID jointID, Pose pose, float radius, bool poseSuccess, bool radiusSuccess)
+        public JointDataEventArgs SetValues(Handedness handedness, XRHandJointID jointID, Pose pose, float radius, bool poseSuccess, bool radiusSuccess)
         {
             this.pose = pose;
             this.handedness = handedness;
@@ -268,6 +269,7 @@ namespace ubco.ovilab.HPUI.Core
             this.radius = radius;
             this.poseSuccess = poseSuccess;
             this.radiusSuccess = radiusSuccess;
+            return this;
         }
     }
 
@@ -280,10 +282,13 @@ namespace ubco.ovilab.HPUI.Core
         public Handedness handedness;
         public EventHandler<JointDataEventArgs> jointDataEventHandler;
 
+        private LinkedPool<JointDataEventArgs> jointDataEventArgsPool;
+
         public JointDataEventHandler(XRHandJointID jointID, Handedness handedness)
         {
             this.jointID = jointID;
             this.handedness = handedness;
+            this.jointDataEventArgsPool = new LinkedPool<JointDataEventArgs>(() => new JointDataEventArgs());
         }
 
         /// <summary>
@@ -302,7 +307,10 @@ namespace ubco.ovilab.HPUI.Core
                 {
                     pose = pose.GetTransformedBy(origin);
                 }
-                handler(this, new JointDataEventArgs(handedness, jointID, pose, radius, poseSuccess, radiusSuccess));
+                using(jointDataEventArgsPool.Get(out JointDataEventArgs args))
+                {
+                    handler(this, args.SetValues(handedness, jointID, pose, radius, poseSuccess, radiusSuccess));
+                }
             }
         }
     }
