@@ -11,6 +11,7 @@ namespace ubco.ovilab.HPUI.Core
     [DisallowMultipleComponent]
     public class HPUIContinuousInteractable: HPUIBaseInteractable
     {
+        //TODO: make following configs an asset
         [Space()]
         [Header("Continuous surface configuration")]
         [Tooltip("The size along the abduction-adduction axis of the fingers (x-axis of joints).")]

@@ -6,7 +6,7 @@ using UnityEditor.XR.Interaction.Toolkit;
 namespace ubco.ovilab.HPUI.Editor
 {
     [CustomEditor(typeof(HPUIContinuousInteractable), true)]
-    public class HPUIContinuousInteractableEditor: XRBaseInteractableEditor
+    public class HPUIContinuousInteractableEditor: HPUIBaseInteractableEditor
     {
         private HPUIContinuousInteractable t;
 

@@ -15,6 +15,8 @@ namespace ubco.ovilab.HPUI.Core
     [DisallowMultipleComponent]
     public class HPUIBaseInteractable: XRBaseInteractable
     {
+        [Space()]
+        [Header("HPUI Configurations")]
         [SerializeField]
         private Handedness handedness;
         public Handedness Handedness
@@ -23,6 +25,7 @@ namespace ubco.ovilab.HPUI.Core
             set => handedness = value;
         }
 
+        //TODO: make following configs an asset
         [Tooltip("If true, would process gestures on the interactable.")]
         public bool allowSurfaceGestures = false;
 
