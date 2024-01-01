@@ -130,8 +130,8 @@ namespace ubco.ovilab.HPUI.Core
 		    scaleFactor = colliderObj.transform.localScale;
 		    // making them slightly larger to remove the spaces between the pixels
 		    scaleFactor.x = (gridSize / buttonSize.x) * 1.05f * rootTransform.lossyScale.x;
-		    scaleFactor.y = (gridSize / buttonSize.y) * 1.05f * rootTransform.lossyScale.y;
-                    scaleFactor.z = 0.00001f;
+		    scaleFactor.z = (gridSize / buttonSize.y) * 1.05f * rootTransform.lossyScale.y;
+                    scaleFactor.y = 0.00001f;
                     gridSize = (positions[0] - positions[1]).magnitude;
 		}
 		colliderObj.transform.parent = rootTransform;
@@ -184,7 +184,7 @@ namespace ubco.ovilab.HPUI.Core
         /// </summary>
         struct DeformedCollidersJob: IJobParallelForTransform
         {
-            private Vector3 right, up, temppos, _scaleFactor;
+            private Vector3 right, forward, temppos, _scaleFactor;
             public Vector3 scaleFactor;
             public float gridSize; 
             public int maxX, maxY;
@@ -201,18 +201,18 @@ namespace ubco.ovilab.HPUI.Core
                 btn.localPosition = temppos;
 
                 if (i > maxX)
-                    up = vertices[i] - vertices[i - maxX];
+                    forward = vertices[i] - vertices[i - maxX];
                 else
-                    up = vertices[i + maxX] - vertices[i];
+                    forward = vertices[i + maxX] - vertices[i];
 		    
                 if (i % maxX == 0)
                     right = vertices[i + 1] - vertices[i];
                 else
                     right = vertices[i] - vertices[i - 1];
 
-                btn.localRotation = Quaternion.LookRotation(normals[i], up);
+                btn.localRotation = Quaternion.LookRotation(forward, normals[i]);
                 _scaleFactor.x = (right.magnitude / gridSize) * scaleFactor.x;
-                _scaleFactor.y = (up.magnitude / gridSize) * scaleFactor.y;
+                _scaleFactor.y = (forward.magnitude / gridSize) * scaleFactor.y;
                 _scaleFactor.z = scaleFactor.z;
                 btn.localScale = _scaleFactor;
             }
