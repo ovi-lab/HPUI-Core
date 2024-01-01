@@ -5,6 +5,7 @@ using UnityEngine.Events;
 using UnityEngine.Pool;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Utilities;
 
 namespace ubco.ovilab.HPUI.Core
 {
@@ -67,6 +68,13 @@ namespace ubco.ovilab.HPUI.Core
 
         #region overrides
         /// <inheritdoc />
+        protected override void Awake()
+        {
+            base.Awake();
+            getDistanceOverride = GetDistanceOverride;
+        }
+
+        /// <inheritdoc />
         protected override void OnSelectEntering(SelectEnterEventArgs args)
         {
             base.OnSelectEntering(args);
@@ -99,7 +107,6 @@ namespace ubco.ovilab.HPUI.Core
                 GenericPool<HPUIInteractionState>.Release(state);
             }
         }
-        #endregion
 
         /// <inheritdoc />
         protected override void OnEnable()
@@ -107,6 +114,7 @@ namespace ubco.ovilab.HPUI.Core
             base.OnEnable();
             previousTime = Time.time;
         }
+        #endregion
 
         /// <inheritdoc />
         protected void Update()
@@ -152,15 +160,26 @@ namespace ubco.ovilab.HPUI.Core
             previousTime = currentTime;
         }
 
+        protected DistanceInfo GetDistance(IXRInteractor interactor)
+        {
+            return GetDistanceOverride(this, interactor.GetAttachTransform(this).transform.position);
+        }
+
+        protected DistanceInfo GetDistanceOverride(IXRInteractable interactable, Vector3 position)
+        {
+            XRInteractableUtility.TryGetClosestPointOnCollider(interactable, position, out DistanceInfo info);
+            return info;
+        }
+
         protected HPUIInteractionState InitializeState(HPUIInteractionState state, IXRInteractor interactor)
         {
-            return state.SetParams(HPUIGestureState.Tap, Time.time, ComputeInteractorPostion(interactor));
+            return state.SetParams(HPUIGestureState.Tap, Time.time, ComputeInteractorPostion(interactor), GetDistance(interactor));
         }
 
         protected Vector2 ComputeInteractorPostion(IXRInteractor interactor)
         {
-            //TODO: Properly compute this
-            return Vector2.zero;
+            // TODO: Properly compute it ont he surface of the interactable
+            return GetDistance(interactor).point;
         }
 
         protected float ComputeVelocity(Vector2 directionVector, float timeDiff)
@@ -174,13 +193,15 @@ namespace ubco.ovilab.HPUI.Core
             public float startTime;
             public Vector2 startPosition;
             public Vector2 previousPosition;
+            public DistanceInfo distanceInfo;
 
-            public HPUIInteractionState SetParams(HPUIGestureState gestureState, float startTime, Vector2 startPosition)
+            public HPUIInteractionState SetParams(HPUIGestureState gestureState, float startTime, Vector2 startPosition, DistanceInfo distanceInfo)
             {
                 this.gestureState = gestureState;
                 this.startTime = startTime;
                 this.startPosition = startPosition;
                 this.previousPosition = startPosition;
+                this.distanceInfo = distanceInfo;
                 return this;
             }
         }

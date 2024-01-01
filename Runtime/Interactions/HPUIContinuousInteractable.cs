@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Utilities;
 
 namespace ubco.ovilab.HPUI.Core
 {
@@ -40,6 +42,13 @@ namespace ubco.ovilab.HPUI.Core
         {
             base.Awake();
             gameObject.SetActive(false);
+        }
+
+        /// <inheritdoc />
+        public override Transform GetAttachTransform(IXRInteractor interactor)
+        {
+            // NOTE: This also should allow the XRPokeFilter to work with ContinuousInteractable, I think!
+            return GetDistance(interactor).collider.transform;
         }
 
         /// <summary>
