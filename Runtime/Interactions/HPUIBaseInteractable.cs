@@ -176,10 +176,27 @@ namespace ubco.ovilab.HPUI.Core
             return state.SetParams(HPUIGestureState.Tap, Time.time, ComputeInteractorPostion(interactor), GetDistance(interactor));
         }
 
+        /// <summary>
+        /// Return the point on the XZPlane of the interactable.
+        /// </summary>
         protected Vector2 ComputeInteractorPostion(IXRInteractor interactor)
         {
-            // TODO: Properly compute it ont he surface of the interactable
-            return GetDistance(interactor).point;
+            return ComputeTargetPointOnInteractablePlane(this, GetAttachTransform(interactor), interactor.GetAttachTransform(this));
+        }
+
+        /// <summary>
+        /// Get the projection of the targets position on the xz plane of the interactable transform.
+        /// the returned Vector2 - (x, z) on the xz-plane.
+        /// </summary>
+        protected Vector2 ComputeTargetPointOnInteractablePlane(IXRInteractable interactable, Transform interactableTransform, Transform target)
+        {
+            Vector3 closestPointOnCollider = GetDistanceOverride(interactable, target.position).point;
+
+            Plane xzPlane = new Plane(interactableTransform.up, interactableTransform.position);
+
+            Vector3 pointOnXZPlane = xzPlane.ClosestPointOnPlane(closestPointOnCollider);
+            pointOnXZPlane = transform.InverseTransformPoint(pointOnXZPlane);
+            return new Vector2(pointOnXZPlane.x, pointOnXZPlane.z);
         }
 
         protected float ComputeVelocity(Vector2 directionVector, float timeDiff)
