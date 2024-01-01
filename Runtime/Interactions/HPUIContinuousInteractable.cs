@@ -127,6 +127,9 @@ namespace ubco.ovilab.HPUI.Core
             List<Collider> generatedColliders = surfaceCollidersManager.SetupColliders();
 
             colliders.AddRange(generatedColliders);
+            // Forcing regsitration of interactable to run
+            OnDisable();
+            OnEnable();
         }
     }
 }
