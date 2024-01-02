@@ -35,6 +35,8 @@ namespace ubco.ovilab.HPUI.Core
         public float swipeTimeThreshold = 0.4f;
         public float swipeVelocityThreshold = 0.4f;
 
+        public Collider boundsCollider;
+
         [SerializeField]
         private HPUITapEvent tapEvent = new HPUITapEvent();
 
@@ -65,6 +67,8 @@ namespace ubco.ovilab.HPUI.Core
 
         private Dictionary<IXRInteractor, HPUIInteractionState> states = new Dictionary<IXRInteractor, HPUIInteractionState>();
         private float previousTime;
+
+        private Vector2 surfaceBounds, surfaceOrigin;
 
         #region overrides
         /// <inheritdoc />
@@ -113,8 +117,34 @@ namespace ubco.ovilab.HPUI.Core
         {
             base.OnEnable();
             previousTime = Time.time;
+
+            ComputeSurfaceBounds();
         }
         #endregion
+
+        /// <summary>
+        /// Compute and store the surface bounds to compute point on surface
+        /// </summary>
+        private void ComputeSurfaceBounds()
+        {
+            if (boundsCollider == null)
+            {
+                boundsCollider = colliders[0];
+                Debug.LogWarning($"boundsCollider is not set. Using {boundsCollider.name}'s collider.");
+            }
+
+            Bounds colliderBounds = boundsCollider.bounds;
+            Transform interactableTransform = GetAttachTransform(null);
+            surfaceOrigin = ComputeTargetPointOnInteractablePlane(colliderBounds.center
+                                                           - interactableTransform.right.normalized * colliderBounds.extents.x
+                                                           - interactableTransform.forward.normalized * colliderBounds.extents.z,
+                                                           interactableTransform);
+
+            surfaceBounds = ComputeTargetPointOnInteractablePlane(colliderBounds.center
+                                                           + interactableTransform.right.normalized * colliderBounds.extents.x
+                                                           + interactableTransform.forward.normalized * colliderBounds.extents.z,
+                                                           interactableTransform) - surfaceOrigin;
+        }
 
         /// <inheritdoc />
         protected void Update()
@@ -177,24 +207,27 @@ namespace ubco.ovilab.HPUI.Core
         }
 
         /// <summary>
-        /// Return the point on the XZPlane of the interactable.
+        /// Get the projection of the interactors position on the xz plane of this interactable, normalized.
+        /// the returned Vector2 - (x, z) on the xz-plane.
+        /// (0, 0) would be the bounds min on the surface & (1, 1) the bounds max on the surface.
         /// </summary>
-        protected Vector2 ComputeInteractorPostion(IXRInteractor interactor)
+        protected virtual Vector2 ComputeInteractorPostion(IXRInteractor interactor)
         {
-            return ComputeTargetPointOnInteractablePlane(this, GetAttachTransform(interactor), interactor.GetAttachTransform(this));
+            Vector3 closestPointOnCollider = GetDistanceOverride(this, interactor.GetAttachTransform(this).position).point;
+            Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
+            return (pointOnPlane - surfaceOrigin) / surfaceBounds;
         }
 
         /// <summary>
-        /// Get the projection of the targets position on the xz plane of the interactable transform.
+        /// Compute the projection of the target point on the XZ plane of the a given transform.
         /// the returned Vector2 - (x, z) on the xz-plane.
         /// </summary>
-        protected Vector2 ComputeTargetPointOnInteractablePlane(IXRInteractable interactable, Transform interactableTransform, Transform target)
+        protected Vector2 ComputeTargetPointOnInteractablePlane(Vector3 targetPoint, Transform interactableTransform)
         {
-            Vector3 closestPointOnCollider = GetDistanceOverride(interactable, target.position).point;
 
             Plane xzPlane = new Plane(interactableTransform.up, interactableTransform.position);
 
-            Vector3 pointOnXZPlane = xzPlane.ClosestPointOnPlane(closestPointOnCollider);
+            Vector3 pointOnXZPlane = xzPlane.ClosestPointOnPlane(targetPoint);
             pointOnXZPlane = transform.InverseTransformPoint(pointOnXZPlane);
             return new Vector2(pointOnXZPlane.x, pointOnXZPlane.z);
         }
