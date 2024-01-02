@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine.Jobs;
+using System;
 
 namespace ubco.ovilab.HPUI.Core
 {
@@ -21,8 +22,11 @@ namespace ubco.ovilab.HPUI.Core
         private List<GameObject> collidersCache;
         private Vector3 scaleFactor;
         private int maxY, maxX;
+        private Vector2 surfaceBounds;
         private float gridSize;
         private TransformAccessArray colliderObjects;
+
+        private Dictionary<Collider, Vector2> colliderCoords;
 
         /// <inheritdoc />
         private void OnDestroy()
@@ -89,8 +93,26 @@ namespace ubco.ovilab.HPUI.Core
             maxX = continuousInteractable.x_divisions;
 
             List<Collider> colliders = GenerateColliders(vertices, normals, transform, continuousInteractable.x_divisions);
+
+            surfaceBounds = new Vector2(gridSize * (continuousInteractable.x_divisions - 1), gridSize * (continuousInteractable.y_divisions - 1));
+
             generatedColliders = true;
             return colliders;
+        }
+
+        /// <summary>
+        /// Return the (appoximate) point on the surface of where the collider is.
+        /// The returned Vector2 - (x, z) on the xz-plane.
+        /// (0, 0) would be the bounds min on the surface & (1, 1) the bounds max on the surface.
+        /// </summary>
+        public Vector2 GetSurfacePointForCollider(Collider collider)
+        {
+            if (!colliderCoords.ContainsKey(collider))
+            {
+                throw new ArgumentException("Unknown {collider.name}");
+            }
+
+            return colliderCoords[collider]/surfaceBounds;
         }
 
         /// <summary>
@@ -115,12 +137,16 @@ namespace ubco.ovilab.HPUI.Core
             Transform[] colliderTransforms = new Transform[positions.Count];
             List<Collider> colliders = new List<Collider>();
 
+            colliderCoords = new Dictionary<Collider, Vector2>();
+
             for(var i = 0; i < positions.Count; i ++)
 	    {
                 colliderObj = new GameObject();
                 Collider collider = colliderObj.AddComponent<BoxCollider>();
                 colliders.Add(collider);
-                colliderObj.transform.name = "X" + (int) i % x_divisions + "-Y" + (int) i / x_divisions;
+                int x = (int)i % x_divisions;
+                int y = (int)i / x_divisions;
+                colliderObj.transform.name = "X" + x + "-Y" + y;
 		// Getting the scale values to set the size of the buttons based on the size of a single square in the generated mesh
 		if (scaleFactor == Vector3.zero)
 		{
@@ -139,7 +165,10 @@ namespace ubco.ovilab.HPUI.Core
 		colliderObj.transform.localRotation = Quaternion.identity;
 		colliderObj.transform.localScale = scaleFactor;
                 colliderTransforms[i] = colliderObj.transform;
+
+                colliderCoords.Add(collider, new Vector2(gridSize * x, gridSize * y));
             }
+
 	    colliderObjects = new TransformAccessArray(colliderTransforms);
             return colliders;
         }

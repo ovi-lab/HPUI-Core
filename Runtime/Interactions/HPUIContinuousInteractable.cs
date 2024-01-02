@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Utilities;
 
 namespace ubco.ovilab.HPUI.Core
 {
@@ -34,6 +33,7 @@ namespace ubco.ovilab.HPUI.Core
         public int x_divisions { get; private set; }
         private List<Transform> keypointsCache;
 	private MeshFilter filter;
+        private DeformableSurfaceCollidersManager surfaceCollidersManager;
 
         /// <summary>
         /// See <see cref="MonoBehaviour"/>.
@@ -49,6 +49,20 @@ namespace ubco.ovilab.HPUI.Core
         {
             // NOTE: This also should allow the XRPokeFilter to work with ContinuousInteractable, I think!
             return GetDistance(interactor).collider.transform;
+        }
+
+        /// <inheritdoc />
+        protected override void ComputeSurfaceBounds()
+        {}
+
+        /// <inheritdoc />
+        protected override Vector2 ComputeInteractorPostion(IXRInteractor interactor)
+        {
+            // TODO: add value from pointOnPlane (the point on the collider)
+            DistanceInfo distanceInfo = GetDistanceOverride(this, interactor.GetAttachTransform(this).position);
+            // Vector3 closestPointOnCollider = distanceInfo.point;
+            // Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
+            return surfaceCollidersManager.GetSurfacePointForCollider(distanceInfo.collider);
         }
 
         /// <summary>
@@ -118,7 +132,7 @@ namespace ubco.ovilab.HPUI.Core
                 filter.GetComponent<Renderer>().material = defaultMaterial;
             }
 
-            DeformableSurfaceCollidersManager surfaceCollidersManager = filter.GetComponent<DeformableSurfaceCollidersManager>();
+            surfaceCollidersManager = filter.GetComponent<DeformableSurfaceCollidersManager>();
             if (surfaceCollidersManager == null)
             {
                 surfaceCollidersManager = filter.gameObject.AddComponent<DeformableSurfaceCollidersManager>();

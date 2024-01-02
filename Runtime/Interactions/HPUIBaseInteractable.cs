@@ -125,7 +125,7 @@ namespace ubco.ovilab.HPUI.Core
         /// <summary>
         /// Compute and store the surface bounds to compute point on surface
         /// </summary>
-        private void ComputeSurfaceBounds()
+        protected virtual void ComputeSurfaceBounds()
         {
             if (boundsCollider == null)
             {
