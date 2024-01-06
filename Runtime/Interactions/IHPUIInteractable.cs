@@ -1,8 +1,9 @@
-using ubco.ovilab.HPUI.Core;
+using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 
-namespace UnityEngine.XR.Interaction.Toolkit
+namespace ubco.ovilab.HPUI.Core 
 {
-    public interface IHPUIInteractable : IXRInteractable
+    public interface IHPUIInteractable : IXRInteractable, IXRSelectInteractable
     {
         /// <summary>
         /// Get the projection of the interactors position on the xz plane of this interactable, normalized.

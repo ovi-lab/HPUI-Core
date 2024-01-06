@@ -17,12 +17,12 @@ namespace ubco.ovilab.HPUI.Core
         private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(() => new HPUITapEventArgs());
         private LinkedPool<HPUISwipeEventArgs> hpuiSwipeEventArgsPool = new LinkedPool<HPUISwipeEventArgs>(() => new HPUISwipeEventArgs());
         private float tapTimeThreshold, tapDistanceThreshold;
-        private XRBaseInteractor interactor;
+        private IHPUIInteractor interactor;
 
         /// <summary>
         /// Initializes a new instance of the with the thrshold values.
         /// </summary>
-        public HPUIGestureLogic(XRBaseInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold)
+        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold)
         {
             this.interactor = interactor;
             this.tapTimeThreshold = tapTimeThreshold;
@@ -33,8 +33,13 @@ namespace ubco.ovilab.HPUI.Core
         /// <summary>
         /// To be called by <see cref="IXRSelectInteractor.OnSelectEntering"/> controlling this <see cref="HPUIGestureLogic"/>
         /// </summary>
-        public void OnSelectEntering(IXRInteractor interactor, IHPUIInteractable interactable)
+        public void OnSelectEntering(IHPUIInteractable interactable)
         {
+            if (interactable == null)
+            {
+                return;
+            }
+
             HPUIInteractionState state = GenericPool<HPUIInteractionState>.Get();
             state.SetParams(HPUIGestureState.Tap,
                             Time.time,
@@ -47,6 +52,11 @@ namespace ubco.ovilab.HPUI.Core
         /// </summary>
         public void OnSelectExiting(IHPUIInteractable interactable)
         {
+            if (interactable == null)
+            {
+                return;
+            }
+
             if (states.Remove(interactable, out HPUIInteractionState state))
             {
                 switch (state.gestureState)
@@ -56,6 +66,7 @@ namespace ubco.ovilab.HPUI.Core
                         {
                             tapEventArgs.SetParams(interactor, interactable);
                             interactable.OnTap(tapEventArgs);
+                            interactor.OnTap(tapEventArgs);
                         }
                         break;
                     case HPUIGestureState.Swipe:
@@ -65,6 +76,8 @@ namespace ubco.ovilab.HPUI.Core
                                                      HPUISwipeState.Stopped, Time.time - state.startTime, state.startTime, state.startPosition,
                                                      state.previousPosition, state.previousPosition, state.previousPosition - state.startPosition);
                             interactable.OnSwipe(swipeEventArgs);
+                            interactor.OnSwipe(swipeEventArgs);
+
                         }
                         break;
                 }
@@ -100,6 +113,7 @@ namespace ubco.ovilab.HPUI.Core
                                                              HPUISwipeState.Started, timeDelta, state.startTime, state.startPosition, state.previousPosition,
                                                              currentPosition, direction);
                                     hpuiInteractable.OnSwipe(swipeEventArgs);
+                                    interactor.OnSwipe(swipeEventArgs);
                                 }
                             }
                             break;
@@ -110,6 +124,7 @@ namespace ubco.ovilab.HPUI.Core
                                                          HPUISwipeState.Updated, timeDelta, state.startTime, state.startPosition, state.previousPosition,
                                                          currentPosition, direction);
                                 hpuiInteractable.OnSwipe(swipeEventArgs);
+                                interactor.OnSwipe(swipeEventArgs);
                             }
                             break;
                         case HPUIGestureState.Custom:

@@ -30,7 +30,7 @@ namespace ubco.ovilab.HPUI.Core
         /// </summary>
         public new IXRSelectInteractor interactorObject
         {
-            get => (IXRSelectInteractor)base.interactorObject;
+            get => (IHPUIInteractor)base.interactorObject;
             set => base.interactorObject = value;
         }
 
@@ -43,7 +43,7 @@ namespace ubco.ovilab.HPUI.Core
             set => base.interactableObject = value;
         }
 
-        public virtual void SetParams(XRBaseInteractor interactor, IHPUIInteractable interactable)
+        public virtual void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable)
         {
             interactorObject = interactor;
             interactableObject = interactable;
@@ -78,12 +78,12 @@ namespace ubco.ovilab.HPUI.Core
         public Vector3 Direction { get; private set; }
         public Vector3 DeltaDirection { get => CurrentPosition - PreviousPosition; }
 
-        public override void SetParams(XRBaseInteractor interactor, IHPUIInteractable interactable)
+        public override void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable)
         {
             throw new InvalidOperationException("Call overloaded method!");
         }
 
-        public void SetParams(XRBaseInteractor interactor, IHPUIInteractable interactable, HPUISwipeState state, float timeDelta, float startTime, Vector3 startPosition, Vector3 previousPosition, Vector3 currentPosition, Vector3 direction)
+        public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUISwipeState state, float timeDelta, float startTime, Vector3 startPosition, Vector3 previousPosition, Vector3 currentPosition, Vector3 direction)
         {
             base.SetParams(interactor, interactable);
             State = state;
