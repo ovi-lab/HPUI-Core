@@ -48,7 +48,7 @@ namespace ubco.ovilab.HPUI.Core
         public override Transform GetAttachTransform(IXRInteractor interactor)
         {
             // NOTE: This also should allow the XRPokeFilter to work with ContinuousInteractable, I think!
-            return GetDistance(interactor).collider.transform;
+            return GetDistance(interactor.GetAttachTransform(this).transform.position).collider.transform;
         }
 
         /// <inheritdoc />
@@ -56,7 +56,7 @@ namespace ubco.ovilab.HPUI.Core
         {}
 
         /// <inheritdoc />
-        protected override Vector2 ComputeInteractorPostion(IXRInteractor interactor)
+        public override Vector2 ComputeInteractorPostion(IXRInteractor interactor)
         {
             // TODO: add value from pointOnPlane (the point on the collider)
             DistanceInfo distanceInfo = GetDistanceOverride(this, interactor.GetAttachTransform(this).position);
