@@ -17,12 +17,14 @@ namespace ubco.ovilab.HPUI.Core
         private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(() => new HPUITapEventArgs());
         private LinkedPool<HPUISwipeEventArgs> hpuiSwipeEventArgsPool = new LinkedPool<HPUISwipeEventArgs>(() => new HPUISwipeEventArgs());
         private float tapTimeThreshold, tapDistanceThreshold;
+        private XRBaseInteractor interactor;
 
         /// <summary>
         /// Initializes a new instance of the with the thrshold values.
         /// </summary>
-        public HPUIGestureLogic(float tapTimeThreshold, float tapDistanceThreshold)
+        public HPUIGestureLogic(XRBaseInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold)
         {
+            this.interactor = interactor;
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
             this.previousTime = Time.time;
@@ -35,8 +37,8 @@ namespace ubco.ovilab.HPUI.Core
         {
             HPUIInteractionState state = GenericPool<HPUIInteractionState>.Get();
             state.SetParams(HPUIGestureState.Tap,
-                                   Time.time,
-                                   interactable.ComputeInteractorPostion(interactor));
+                            Time.time,
+                            interactable.ComputeInteractorPostion(interactor));
             states.Add(interactable, state);
         }
 
@@ -52,13 +54,16 @@ namespace ubco.ovilab.HPUI.Core
                     case HPUIGestureState.Tap:
                         using (hpuiTapEventArgsPool.Get(out HPUITapEventArgs tapEventArgs))
                         {
+                            tapEventArgs.SetParams(interactor, interactable);
                             interactable.OnTap(tapEventArgs);
                         }
                         break;
                     case HPUIGestureState.Swipe:
                         using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                         {
-                            // TODO set params?
+                            swipeEventArgs.SetParams(interactor, interactable,
+                                                     HPUISwipeState.Stopped, Time.time - state.startTime, state.startTime, state.startPosition,
+                                                     state.previousPosition, state.previousPosition, state.previousPosition - state.startPosition);
                             interactable.OnSwipe(swipeEventArgs);
                         }
                         break;
@@ -71,7 +76,7 @@ namespace ubco.ovilab.HPUI.Core
         /// Updat method to be called from an interactor. Updates the states of the <see cref="IHPUIInteractable"/> selected by
         /// the <see cref="IXRInteractor"/> that was passed when initializing this <see cref="HPUIGestureLogic"/>.
         /// </summary>
-        public void Update(XRBaseInteractor interactor)
+        public void Update()
         {
             float currentTime = Time.time;
             foreach (var interactable in interactor.interactablesSelected)
@@ -80,23 +85,30 @@ namespace ubco.ovilab.HPUI.Core
                 {
                     Vector2 currentPosition = hpuiInteractable.ComputeInteractorPostion(interactor);
                     HPUIInteractionState state = states[hpuiInteractable];
-                    float timeDiff = currentTime - state.startTime;
-                    Vector2 direction = -state.startPosition;
+                    float timeDelta = currentTime - state.startTime;
+                    Vector2 direction = currentPosition - state.startPosition;
 
                     switch (state.gestureState)
                     {
                         case HPUIGestureState.Tap:
-                            if (timeDiff > tapTimeThreshold || direction.magnitude > tapDistanceThreshold)
+                            if (timeDelta > tapTimeThreshold || direction.magnitude > tapDistanceThreshold)
                             {
                                 state.gestureState = HPUIGestureState.Swipe;
-                                goto case HPUIGestureState.Swipe;
+                                using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
+                                {
+                                    swipeEventArgs.SetParams(interactor, hpuiInteractable,
+                                                             HPUISwipeState.Started, timeDelta, state.startTime, state.startPosition, state.previousPosition,
+                                                             currentPosition, direction);
+                                    hpuiInteractable.OnSwipe(swipeEventArgs);
+                                }
                             }
                             break;
                         case HPUIGestureState.Swipe:
-                            // TODO move event
                             using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                             {
-                                // TODO set params?
+                                swipeEventArgs.SetParams(interactor, hpuiInteractable,
+                                                         HPUISwipeState.Updated, timeDelta, state.startTime, state.startPosition, state.previousPosition,
+                                                         currentPosition, direction);
                                 hpuiInteractable.OnSwipe(swipeEventArgs);
                             }
                             break;
