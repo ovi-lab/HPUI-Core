@@ -77,5 +77,8 @@ crashlytics-build.properties
 *~
 *#
 
+!Documentation~/
+
 # vscode
 .vscode
+/Documentation~/pages/

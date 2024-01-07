@@ -1,13 +1,13 @@
 {
     "name": "ubc.ok.ovilab.hpui-core",
-    "version": "0.1.0",
+    "version": "0.2.0-pre",
     "displayName": "HPUI Core",
     "description": "Core functionality of HPUI",
-    "unity": "2019.1",
+    "unity": "2021.3",
     "dependencies": {
     },
     "author": {
-        "name": "MFA Shariff",
+        "name": "Shariff Faleel",
         "email": "shariff.mfa@outlook.com"
     },
     "scopedRegistries": [
