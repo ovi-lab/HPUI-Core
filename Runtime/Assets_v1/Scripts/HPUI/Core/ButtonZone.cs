@@ -72,7 +72,7 @@ namespace ubc.ok.ovilab.HPUI.CoreV1
 	{
             if (makeSureEnterFromPositiveSide && other.GetComponent<ButtonTriggerCollider>() != null)
             {
-                enteredOnPositiveSide = new Plane(this.transform.forward, selfPosition).GetSide(other.transform.position);
+                enteredOnPositiveSide = new Plane(this.transform.forward, this.transform.position).GetSide(other.transform.position);
             }
 	    TriggerBehaviour(other);
 	}
