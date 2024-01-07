@@ -11,9 +11,8 @@ This can be imported as a git package in Unity. The package is built to use [Uni
 ## Interactables
 TODO
 
-# Usage of V1 (legacy)
-The following is the documentation of the oldder version of HPUI which did not use the XRI/XR-Hands.
-This can be imported as a git package in Unity (with https://github.com/ovi-lab/HPUI-Core#0.1.0 ).
+# Usage of V1 (Legacy)
+The following is the documentation of the Legacy version of HPUI (the `Legacy` namespace) which did not use the XRI/XR-Hands.
 
 A sample demo with v1 is available here: https://github.com/ahmed-shariff/SampleHPUI
 
