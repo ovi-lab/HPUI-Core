@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEditor;
 using ubco.ovilab.HPUI.Core;
-using UnityEditor.XR.Interaction.Toolkit;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ubco.ovilab.HPUI.Editor
 {
@@ -9,6 +10,7 @@ namespace ubco.ovilab.HPUI.Editor
     public class HPUIContinuousInteractableEditor: HPUIBaseInteractableEditor
     {
         private HPUIContinuousInteractable t;
+        protected override List<string> EventPropertyNames => base.EventPropertyNames.Union(new List<string>() { "continuousSurfaceCreatedEvent" }).ToList();
 
         protected override void OnEnable()
         {
@@ -22,7 +24,7 @@ namespace ubco.ovilab.HPUI.Editor
             GUI.enabled = EditorApplication.isPlaying;
             if (GUILayout.Button("Run calibration"))
             {
-                t.Calibrate();
+                t.Configure();
             }
             GUI.enabled = true;
         }

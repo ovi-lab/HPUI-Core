@@ -30,6 +30,18 @@ namespace ubco.ovilab.HPUI.Core
         [Tooltip("(Optional) The default material to use for the surface.")]
         public Material defaultMaterial;
 
+        [SerializeField]
+        private HPUIContinuousSurfaceEvent continuousSurfaceCreatedEvent = new HPUIContinuousSurfaceEvent();
+
+        /// <summary>
+        /// Event triggered when surface gets created.
+        /// </summary>
+        public HPUIContinuousSurfaceEvent ContinuousSurfaceEvent
+        {
+            get => continuousSurfaceCreatedEvent;
+            set => continuousSurfaceCreatedEvent = value;
+        }
+
         public int x_divisions { get; private set; }
         private List<Transform> keypointsCache;
 	private MeshFilter filter;
@@ -95,7 +107,7 @@ namespace ubco.ovilab.HPUI.Core
         /// <summary>
         /// Configure the continuous surface.
         /// </summary>
-        public void Calibrate()
+        public void Configure()
         {
             colliders.Clear();
 
@@ -116,7 +128,7 @@ namespace ubco.ovilab.HPUI.Core
         /// </summary>
         private IEnumerator DelayedExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.1f);
             if (filter.mesh != null)
             {
                 Destroy(filter.mesh);
@@ -144,6 +156,8 @@ namespace ubco.ovilab.HPUI.Core
             // Forcing regsitration of interactable to run
             OnDisable();
             OnEnable();
+
+            continuousSurfaceCreatedEvent?.Invoke(new HPUIContinuousSurfaceCreatedEventArgs(this));
         }
     }
 }

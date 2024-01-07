@@ -95,5 +95,32 @@ namespace ubco.ovilab.HPUI.Core
             Direction = direction;
         }
     }
+
+    /// <summary>
+    /// Event related to deformable continuous surface.
+    /// <seealso cref="HPUIContinuousInteractable"/>
+    /// <seealso cref="DeformableSurface"/>
+    /// <seealso cref="DeformableSurfaceCollidersManager"/>
+    /// </summary>
+    [Serializable]
+    public class HPUIContinuousSurfaceEvent: UnityEvent<HPUIContinuousSurfaceCreatedEventArgs>
+    {}
+
+    /// <summary>
+    /// Event args for HPUIContinuousSurfaceEvent
+    /// </summary>
+    public class HPUIContinuousSurfaceCreatedEventArgs
+    {
+        /// <summary>
+        /// The interactable object related to the continuous surface
+        /// </summary>
+        public IHPUIInteractable interactableObject;
+
+        public HPUIContinuousSurfaceCreatedEventArgs(IHPUIInteractable interactableObject)
+        {
+            this.interactableObject = interactableObject;
+        }
+    }
+
     #endregion
 }

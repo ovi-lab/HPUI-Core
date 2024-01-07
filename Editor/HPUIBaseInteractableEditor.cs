@@ -10,7 +10,7 @@ namespace ubco.ovilab.HPUI.Editor
     {
         private HPUIBaseInteractable t;
         protected List<SerializedProperty> eventProperties;
-        protected List<string> eventPropertyNames = new List<string>() { "tapEvent", "swipeEvent"};
+        protected virtual List<string> EventPropertyNames => new List<string>() { "tapEvent", "swipeEvent" };
 
         protected bool hpuiInteractablesExpanded;
 
@@ -19,12 +19,9 @@ namespace ubco.ovilab.HPUI.Editor
         {
             base.OnEnable();
             t = target as HPUIBaseInteractable;
-            // tapEvent = serializedObject.FindProperty("tapEvent");
-            // swipeEvent = serializedObject.FindProperty("swipeEvent");
-            // slideEvent = serializedObject.FindProperty("slideEvent");
 
             eventProperties = new List<SerializedProperty>();
-            foreach (string eventName in eventPropertyNames)
+            foreach (string eventName in EventPropertyNames)
             {
                 eventProperties.Add(serializedObject.FindProperty(eventName));
             }
@@ -54,7 +51,7 @@ namespace ubco.ovilab.HPUI.Editor
         protected override List<string> GetDerivedSerializedPropertyNames()
         {
             List<string> props = base.GetDerivedSerializedPropertyNames();
-            props.AddRange(eventPropertyNames);
+            props.AddRange(EventPropertyNames);
             return props;
         }
     }
