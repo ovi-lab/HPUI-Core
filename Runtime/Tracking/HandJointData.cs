@@ -5,7 +5,7 @@ using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;
 using UnityEngine.Pool;
 
-namespace ubco.ovilab.HPUI.Core
+namespace ubco.ovilab.HPUI.Tracking
 {
     /// <summary>
     /// Utility class to expose joint data accessible.

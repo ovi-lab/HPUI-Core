@@ -1,15 +1,15 @@
 {
-    "name": "ubco.ovilab.HPUI",
-    "rootNamespace": "ubco.ovilab.HPUI",
+    "name": "ubco.ovilab.HPUI.Legacy.Editor",
+    "rootNamespace": "ubco.ovilab.HPUI.Legacy.Editor",
     "references": [
-        "Unity.XR.Hands",
-        "Unity.XR.CoreUtils",
-        "Unity.XR.Interaction.Toolkit"
+        "ubco.ovilab.HPUI.Legacy"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": true,
+    "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],

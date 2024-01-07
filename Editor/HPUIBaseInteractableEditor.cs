@@ -1,5 +1,5 @@
 using UnityEditor;
-using ubco.ovilab.HPUI.Core;
+using ubco.ovilab.HPUI.Interaction;
 using UnityEditor.XR.Interaction.Toolkit;
 using System.Collections.Generic;
 

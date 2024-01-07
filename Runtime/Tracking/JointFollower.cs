@@ -1,8 +1,9 @@
 using System;
+using ubco.ovilab.HPUI.Utils;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
-namespace ubco.ovilab.HPUI.Core
+namespace ubco.ovilab.HPUI.Tracking
 {
     /// <summary>
     /// A component that makes the object follow a hand joint
