@@ -54,5 +54,9 @@ namespace ubco.ovilab.HPUI.Editor
             props.AddRange(EventPropertyNames);
             return props;
         }
+
+        /// <inheritdoc />
+        protected override void DrawSelectionConfiguration()
+        {}
     }
 }

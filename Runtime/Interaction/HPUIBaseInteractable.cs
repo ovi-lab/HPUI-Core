@@ -25,6 +25,12 @@ namespace ubco.ovilab.HPUI.Interaction
         public Collider boundsCollider;
 
         [SerializeField]
+        private int _zOrder;
+
+        /// <inheritdoc />
+        public int zOrder { get => _zOrder; set => _zOrder = value; }
+
+        [SerializeField]
         private HPUITapEvent tapEvent = new HPUITapEvent();
 
         /// <summary>
@@ -48,6 +54,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             base.Awake();
             getDistanceOverride = GetDistanceOverride;
+            selectMode = InteractableSelectMode.Single;
         }
 
         /// <inheritdoc />

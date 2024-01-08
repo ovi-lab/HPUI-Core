@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.XR.Hands;
@@ -14,7 +15,7 @@ namespace ubco.ovilab.HPUI.Interaction
     [DisallowMultipleComponent]
     public class HPUIInteractor: XRPokeInteractor, IHPUIInteractor
     {
-        public Handedness handedness;
+        public new Handedness handedness;
 
         // TODO move these to an asset?
         [SerializeField]
@@ -87,15 +88,20 @@ namespace ubco.ovilab.HPUI.Interaction
             List<IXRInteractable> recievedTargets = ListPool<IXRInteractable>.Get();
             recievedTargets.AddRange(targets);
 
-            foreach(IXRInteractable target in recievedTargets)
+            targets.Clear();
+            foreach(IXRInteractable target in recievedTargets.Select(t => t as IHPUIInteractable).Where(ht => ht != null).OrderBy(ht => ht.zOrder))
             {
-                if (!(target is HPUIBaseInteractable hpuiTarget) || hpuiTarget.Handedness != handedness)
-                {
-                    targets.Remove(target);
-                }
+                targets.Add(target);
             }
             ListPool<IXRInteractable>.Release(recievedTargets);
         }
+
+        /// <inheritdoc />
+        public override bool CanSelect(IXRSelectInteractable interactable)
+        {
+            return ProcessSelectFilters(interactable);
+        }
+
 
         #region IHPUIInteractor interface
         /// <inheritdoc />
