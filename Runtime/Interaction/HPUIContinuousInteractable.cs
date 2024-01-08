@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using ubco.ovilab.HPUI.Tracking;
-using ubco.ovilab.HPUI.Utils;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -31,6 +30,8 @@ namespace ubco.ovilab.HPUI.Interaction
         public List<XRHandJointID> keypointJoints;
         [Tooltip("(Optional) The default material to use for the surface.")]
         public Material defaultMaterial;
+        [Tooltip("(Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.")]
+	public MeshFilter filter;
 
         [SerializeField]
         private HPUIContinuousSurfaceEvent continuousSurfaceCreatedEvent = new HPUIContinuousSurfaceEvent();
@@ -46,8 +47,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
         public int x_divisions { get; private set; }
         private List<Transform> keypointsCache;
-	private MeshFilter filter;
         private DeformableSurfaceCollidersManager surfaceCollidersManager;
+        private GameObject collidersRoot;
 
         /// <summary>
         /// See <see cref="MonoBehaviour"/>.
@@ -96,11 +97,13 @@ namespace ubco.ovilab.HPUI.Interaction
                 keypointTransforms.Add(keypoint);
             }
 
-            GameObject surfaceRoot = keypointTransforms[0].gameObject;
-	    filter = surfaceRoot.GetComponent<MeshFilter>();
             if (filter == null)
             {
-                filter = surfaceRoot.AddComponent<MeshFilter>();
+                GameObject skinNode = new GameObject("SkinNode");
+                skinNode.transform.parent = this.transform;
+                filter = skinNode.AddComponent<MeshFilter>();
+                skinNode.transform.localPosition = Vector3.zero;
+                skinNode.transform.localRotation = Quaternion.identity;
             }
 
             return keypointTransforms;
@@ -117,7 +120,10 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 for (int i = 0; i < keypointsCache.Count; ++i)
                 {
-                    Destroy(keypointsCache[i].gameObject);
+                    if (keypointsCache[i] != transform)
+                    {
+                        Destroy(keypointsCache[i].gameObject);
+                    }
                 }
             }
             keypointsCache = SetupKeypoints();
@@ -136,6 +142,11 @@ namespace ubco.ovilab.HPUI.Interaction
                 Destroy(filter.mesh);
             }
 
+            if (collidersRoot != null)
+            {
+                Destroy(collidersRoot);
+            }
+
             float step_size = y_size / y_divisions;
 	    x_divisions = (int)(x_size / step_size);
 
@@ -146,15 +157,21 @@ namespace ubco.ovilab.HPUI.Interaction
                 filter.GetComponent<Renderer>().material = defaultMaterial;
             }
 
+            collidersRoot = new GameObject("CollidersRoot");
+            collidersRoot.transform.parent = this.transform;
+            collidersRoot.transform.localPosition = Vector3.zero;
+            collidersRoot.transform.localRotation = Quaternion.identity;
+
             surfaceCollidersManager = filter.GetComponent<DeformableSurfaceCollidersManager>();
             if (surfaceCollidersManager == null)
             {
                 surfaceCollidersManager = filter.gameObject.AddComponent<DeformableSurfaceCollidersManager>();
             }
 
-            List<Collider> generatedColliders = surfaceCollidersManager.SetupColliders();
+            List<Collider> generatedColliders = surfaceCollidersManager.SetupColliders(collidersRoot.transform);
 
             colliders.AddRange(generatedColliders);
+
             // Forcing regsitration of interactable to run
             OnDisable();
             OnEnable();

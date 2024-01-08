@@ -130,7 +130,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 for (int i = 0; i < x_divisions; i++)
                 {
                     vertices.Add(new Vector3(x_size * ((i - ((float)x_divisions / 2.0f)) / (float)x_divisions), surfaceOffset, y_size * (k / (float)y_divisions)));
-                    normals.Add(Vector3.forward);
+                    normals.Add(Vector3.down);
 
                     uvs.Add(new Vector2(1 - k / (float)(y_divisions - 1), i / (float)(x_divisions - 1)));
                 }

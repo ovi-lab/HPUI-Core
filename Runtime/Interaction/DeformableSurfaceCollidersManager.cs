@@ -19,7 +19,6 @@ namespace ubco.ovilab.HPUI.Interaction
         private SkinnedMeshRenderer skinnedMeshRenderer;
         private Mesh tempMesh;
 
-        private List<GameObject> collidersCache;
         private Vector3 scaleFactor;
         private int maxY, maxX;
         private Vector2 surfaceBounds;
@@ -58,7 +57,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Setup and return colliders. A collider will be placed on each vertice of the <see cref="SkinnedMeshRenderer"/>.
         /// </summary>
-        public List<Collider> SetupColliders()
+        public List<Collider> SetupColliders(Transform collidersRootTransform)
         {
             generatedColliders = false;
             if (skinnedMeshRenderer == null)
@@ -92,7 +91,7 @@ namespace ubco.ovilab.HPUI.Interaction
             maxY = vertices_native.Length - continuousInteractable.x_divisions;
             maxX = continuousInteractable.x_divisions;
 
-            List<Collider> colliders = GenerateColliders(vertices, normals, transform, continuousInteractable.x_divisions);
+            List<Collider> colliders = GenerateColliders(vertices, normals, collidersRootTransform, continuousInteractable.x_divisions);
 
             surfaceBounds = new Vector2(gridSize * (continuousInteractable.x_divisions - 1), gridSize * (continuousInteractable.y_divisions - 1));
 
@@ -125,15 +124,6 @@ namespace ubco.ovilab.HPUI.Interaction
 	    GameObject colliderObj;
 	    scaleFactor = Vector3.zero;
 
-            if (collidersCache == null)
-            {
-                collidersCache = new List<GameObject>();
-            }
-
-            foreach(GameObject obj in collidersCache)
-            {
-                Destroy(obj);
-            }
             Transform[] colliderTransforms = new Transform[positions.Count];
             List<Collider> colliders = new List<Collider>();
 
