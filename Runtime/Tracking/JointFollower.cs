@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using ubco.ovilab.HPUI.Utils;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
@@ -22,6 +24,9 @@ namespace ubco.ovilab.HPUI.Tracking
         [Tooltip("Default joint radius to use when joint radius is not provided by XR Hands. In unity units.")]
         public float defaultJointRadius = 0.01f;
 
+        [Tooltip("(optional) The target transform to use. If not set, use this transform.")]
+        public Transform targetTransform;
+
         [Tooltip("The offset angle.")][SerializeField]
         public float offsetAngle = 0f;
         [Tooltip("The offset as a ratio of the joint radius.")][SerializeField]
@@ -30,77 +35,58 @@ namespace ubco.ovilab.HPUI.Tracking
         [SerializeField]
         public float longitudinalOffset = 0f;
 
-        private EventHandler<JointDataEventArgs> handler = null;
+        [Tooltip("(optional) The XR Origin. If not set, will be automatically set.")][SerializeField]
+        private XROrigin xrOrigin;
+
         private float cachedRadius = 0f;
-        private bool jointPoseRecieved, secondJointPoseRecieved;
-        private Pose jointPose, secondJointPose;
+        private XRHandSubsystem handSubsystem;
+        private bool initialized;
 
-        /// <summary>
-        /// The callback used to get joint data from <see cref="HandJointData"/>
-        /// </summary>
-        protected void OnUpdate(object _, JointDataEventArgs args)
+        /// <inheritdoc />
+        protected void Update()
         {
-            if (args.radiusSuccess)
+            if (handSubsystem != null && handSubsystem.running)
             {
-                cachedRadius = args.radius;
-            }
-            else if (cachedRadius == 0)
-            {
-                cachedRadius = defaultJointRadius;
+                return;
             }
 
-            if (args.poseSuccess)
+            List<XRHandSubsystem> handSubsystems = new List<XRHandSubsystem>();
+            SubsystemManager.GetSubsystems(handSubsystems);
+            bool foundRunningHandSubsystem = false;
+            for (var i = 0; i < handSubsystems.Count; ++i)
             {
-                if (args.jointID == jointID)
+                XRHandSubsystem handSubsystem = handSubsystems[i];
+                if (handSubsystem.running)
                 {
-                    jointPose = args.pose;
-                    jointPoseRecieved = true;
-                }
-                else if (args.jointID == secondJointID)
-                {
-                    secondJointPose = args.pose;
-                    secondJointPoseRecieved = true;
-                }
-
-                if (jointPoseRecieved && (!useSecondJointID || secondJointPoseRecieved))
-                {
-                    Vector3 poseForward = jointPose.forward;
-                    Vector3 jointPlaneOffset;
-                    if (offsetAngle == 0 || offsetAsRatioToRadius == 0)
-                    {
-                        jointPlaneOffset = -jointPose.up;
-                    }
-                    else
-                    {
-                        jointPlaneOffset = Quaternion.AngleAxis(offsetAngle, poseForward) * -jointPose.up * offsetAsRatioToRadius;
-                    }
-
-                    Vector3 jointLongitudianlOffset = secondJointPoseRecieved ? (secondJointPose.position - jointPose.position) * longitudinalOffset : poseForward * longitudinalOffset;
-
-                    transform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
-                    transform.position = jointPose.position + jointPlaneOffset * cachedRadius + jointLongitudianlOffset;
-
-                    jointPoseRecieved = false;
-                    secondJointPoseRecieved = false;
+                    UnsubscribeHandSubsystem();
+                    this.handSubsystem = handSubsystem;
+                    foundRunningHandSubsystem = true;
+                    break;
                 }
             }
+
+            if (!foundRunningHandSubsystem)
+            {
+                return;
+            }
+
+            SubscribeHandSubsystem();
         }
 
-        /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
-        /// </summary>
+        /// <inheritdoc />
         protected void OnEnable()
         {
-            // TODO: Do this if the values for the joints are updated during runtime
-            if (handler == null)
+            if (!initialized)
             {
-                handler = new EventHandler<JointDataEventArgs>(OnUpdate);
+                Initialize();
             }
-            HandJointData.Instance.SubscribeToJointDataEvent(handedness, jointID, handler);
-            if (useSecondJointID)
+
+            if (targetTransform == null)
             {
-                HandJointData.Instance.SubscribeToJointDataEvent(handedness, secondJointID, handler);
+                targetTransform = transform;
             }
+
+            SubscribeHandSubsystem();
         }
 
         /// <summary>
@@ -108,14 +94,10 @@ namespace ubco.ovilab.HPUI.Tracking
         /// </summary>
         protected void OnDisable()
         {
-            // TODO: Do this if the values for the joints are updated during runtime
-            if (handler != null)
+            UnsubscribeHandSubsystem();
+            if (handSubsystem != null)
             {
-                HandJointData.Instance?.UnsubscribeToJointDataEvent(handedness, jointID, handler);
-                if (useSecondJointID)
-                {
-                    HandJointData.Instance?.UnsubscribeToJointDataEvent(handedness, secondJointID, handler);
-                }
+                handSubsystem = null;
             }
         }
 
@@ -129,6 +111,28 @@ namespace ubco.ovilab.HPUI.Tracking
         }
 
         /// <summary>
+        /// Subscribe to events on the <see cref="XRHandSubsystem"/>
+        /// </summary>
+        private void SubscribeHandSubsystem()
+        {
+            if (handSubsystem == null)
+                return;
+
+            handSubsystem.updatedHands += OnUpdatedHands;
+        }
+
+        /// <summary>
+        /// Unsubscribe from events on the <see cref="XRHandSubsystem"/>
+        /// </summary>
+        private void UnsubscribeHandSubsystem()
+        {
+            if (handSubsystem == null)
+                return;
+
+            handSubsystem.updatedHands -= OnUpdatedHands;
+        }
+
+        /// <summary>
         /// Set the parameters of this JointFollower.
         /// </summary>
         public void SetParams(Handedness handedness, XRHandJointID jointID, float offsetAngle, float offsetAsRationToRadius, float longitudinalOffset)
@@ -138,10 +142,99 @@ namespace ubco.ovilab.HPUI.Tracking
             this.offsetAngle = offsetAngle;
             this.offsetAsRatioToRadius = offsetAsRationToRadius;
             this.longitudinalOffset = longitudinalOffset;
+        }
 
-            // Making sure the hooks are correctly registered
-            OnDisable();
-            OnEnable();
+        private void Initialize()
+        {
+            if (xrOrigin == null)
+            {
+                XROrigin[] objs = FindObjectsOfType<XROrigin>();
+                if (objs.Length != 1)
+                {
+                    throw new InvalidOperationException($"Got {objs.Length} `XROrigin`s. Expected only 1. Perhaps assign it in inspector.");
+                }
+                xrOrigin = objs[0];
+            }
+
+            initialized = true;
+        }
+
+        private void OnUpdatedHands(XRHandSubsystem subsystem,
+                                    XRHandSubsystem.UpdateSuccessFlags updateSuccessFlags,
+                                    XRHandSubsystem.UpdateType updateType)
+        {
+            switch (updateType)
+            {
+                case XRHandSubsystem.UpdateType.Dynamic:
+                    // Update game logic that uses hand data
+                    break;
+                case XRHandSubsystem.UpdateType.BeforeRender:
+                    if (handedness == Handedness.Left)
+                    {
+                        ProcessJointData(subsystem.leftHand);
+                    }
+                    else if (handedness == Handedness.Right)
+                    {
+                        ProcessJointData(subsystem.rightHand);
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Apply data recieved to the transform.
+        /// </summary>
+        private void ProcessJointData(XRHand hand)
+        {
+            XRHandJoint mainJoint = hand.GetJoint(jointID);
+            bool mainPoseSuccess = mainJoint.TryGetPose(out Pose mainJointPose);
+            bool mainRadiusSuccess = mainJoint.TryGetRadius(out float mainRadius);
+
+            if (mainPoseSuccess)
+            {
+                mainJointPose = mainJointPose.GetTransformedBy(xrOrigin.transform);
+            }
+
+            XRHandJoint secondJoint;
+            bool secondPoseSuccess = false;
+            Pose secondJointPose = default;
+            if (useSecondJointID)
+            {
+                secondJoint = hand.GetJoint(secondJointID);
+                secondPoseSuccess = secondJoint.TryGetPose(out secondJointPose);
+                if (secondPoseSuccess)
+                {
+                    secondJointPose = secondJointPose.GetTransformedBy(xrOrigin.transform);
+                }
+            }
+
+            if (mainRadiusSuccess)
+            {
+                cachedRadius = mainRadius;
+            }
+            else if (cachedRadius == 0)
+            {
+                cachedRadius = defaultJointRadius;
+            }
+
+            if (mainPoseSuccess && (!useSecondJointID || secondPoseSuccess))
+            {
+                Vector3 poseForward = mainJointPose.forward;
+                Vector3 jointPlaneOffset;
+                if (offsetAngle == 0 || offsetAsRatioToRadius == 0)
+                {
+                    jointPlaneOffset = -mainJointPose.up;
+                }
+                else
+                {
+                    jointPlaneOffset = Quaternion.AngleAxis(offsetAngle, poseForward) * -mainJointPose.up;
+                }
+
+                Vector3 jointLongitudianlOffset = secondPoseSuccess ? (secondJointPose.position - mainJointPose.position) * longitudinalOffset : poseForward * longitudinalOffset;
+
+                targetTransform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
+                targetTransform.position = mainJointPose.position + jointPlaneOffset * (cachedRadius * offsetAsRatioToRadius) + jointLongitudianlOffset;
+            }
         }
     }
 }
