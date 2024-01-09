@@ -22,7 +22,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Initializes a new instance of the with the thrshold values.
         /// </summary>
-        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold)
+        public HPUIGestureLogicDistributed(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold)
         {
             this.interactor = interactor;
             this.tapTimeThreshold = tapTimeThreshold;

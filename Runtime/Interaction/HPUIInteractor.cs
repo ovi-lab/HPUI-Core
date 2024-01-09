@@ -42,7 +42,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public HPUISwipeEvent SwipeEvent { get => swipeEvent; set => swipeEvent = value; }
 
-        protected HPUIGestureLogic gestureLogic;
+        protected IHPUIGestureLogic gestureLogic;
         private List<IXRInteractable> validTargets = new List<IXRInteractable>();
 
         /// <inheritdoc />
@@ -50,7 +50,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             base.Awake();
             keepSelectedTargetValid = true;
-            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold);
+            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold);
         }
 
         /// <inheritdoc />

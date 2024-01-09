@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -129,6 +130,21 @@ namespace ubco.ovilab.HPUI.Interaction
         public void OnSwipe(HPUISwipeEventArgs args)
         {
             swipeEvent?.Invoke(args);
+        }
+
+        /// <inheritdoc />
+        public bool HandlesGestureState(HPUIGestureState state)
+        {
+            switch (state) {
+                case HPUIGestureState.Tap: {
+                    return TapEvent.GetPersistentEventCount() > 0;
+                }
+                case HPUIGestureState.Swipe: {
+                    return SwipeEvent.GetPersistentEventCount() > 0;
+                }
+                default:
+                    throw new InvalidOperationException($"Gesture state {state} is not handled by {typeof(HPUIBaseInteractable)}");
+            }
         }
         #endregion
     }

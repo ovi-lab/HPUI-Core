@@ -1,3 +1,5 @@
+using System;
+
 namespace ubco.ovilab.HPUI.Interaction
 {
     public interface IHPUIGestureLogic: IDisposable

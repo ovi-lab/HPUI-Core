@@ -23,6 +23,13 @@ namespace ubco.ovilab.HPUI.Interaction
         void OnTap(HPUITapEventArgs args);
 
         /// <summary>
+        /// Indicates if this handles gesture. If not, if given gesture 
+        /// happens while this interactable is selected, it'll be passed to
+        /// the next selected interactable in the priority list.
+        /// </summary>
+        bool HandlesGestureState(HPUIGestureState state);
+
+        /// <summary>
         /// This is called when a swipe event occurs on the interactable.
         /// </summary>
         void OnSwipe(HPUISwipeEventArgs args);

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.XR.Interaction.Toolkit;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -11,7 +10,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// Encapsulates the logic for HPUI gesture interactions.
     /// The interactor dectates which interactable gets the gesture.
     /// </summary>
-    public class HPUILogicUnified: IHPUIGestureLogic
+    public class HPUIGestureLogicUnified: IHPUIGestureLogic
     {
         // private Dictionary<IHPUIInteractable, HPUIInteractionState> states = new Dictionary<IHPUIInteractable, HPUIInteractionState>();
 
@@ -21,10 +20,10 @@ namespace ubco.ovilab.HPUI.Interaction
         private float tapTimeThreshold, tapDistanceThreshold;
         private IHPUIInteractor interactor;
 
-        private float startTime, distance;
+        private float startTime, cumilativeDistance;
         private Vector2 previousPosition, cumilativeDelta;
 
-        private int activePriorityZIndex = int.MaxValue;
+        private int lowestTargetZIndex = int.MaxValue;
         private int activeInteractablesCount = 0;
         private bool changedInteractable = false;
 
@@ -36,7 +35,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Initializes a new instance of the with the thrshold values.
         /// </summary>
-        public HPUILogicUnified(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold)
+        public HPUIGestureLogicUnified(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold)
         {
             this.interactor = interactor;
             this.tapTimeThreshold = tapTimeThreshold;
@@ -66,15 +65,16 @@ namespace ubco.ovilab.HPUI.Interaction
             }
             else
             {
-                HPUIInteractionState state = new HPUIInteractionState(Time.time);
+                float currentTime = Time.time;
+                bool inValidWindow = (currentTime - startTime) < tapTimeThreshold;
+
+                HPUIInteractionState state = new HPUIInteractionState(Time.time, inValidWindow);
                 activeInteractables.Add(interactable, state);
 
-                float currentTime = Time.time;
-
                 // If a new higher priority targets is encountered within tap time window, we hand over control to that.
-                if (interactable.zOrder < activePriorityZIndex && (currentTime - startTime) < tapTimeThreshold)
+                if (interactable.zOrder < lowestTargetZIndex && inValidWindow)
                 {
-                    activePriorityZIndex = interactable.zOrder;
+                    lowestTargetZIndex = interactable.zOrder;
                     activePriorityInteractable = interactable;
 
                     foreach(HPUIInteractionState interactionState in activeInteractables.Values)
@@ -88,21 +88,33 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private void ComputeCurrectTrackingInteractable()
         {
-            if (activePriorityInteractable == currentTrackingInteractable)
-            {
-                return;
-            }
-
+            // Any target that is active should be ok for this.
             IHPUIInteractable interactableToTrack = activeInteractables
                 .Where(kvp => kvp.Value.active)
-                .OrderBy(kvp => kvp.Key.zOrder)
-                .ThenBy(kvp => kvp.Value.startTime)
                 .First().Key;
 
             if (interactableToTrack != currentTrackingInteractable)
             {
                 currentTrackingInteractable = interactableToTrack;
                 changedInteractable = true;
+            }
+        }
+
+        private void ComputeActivePriorityInteractable()
+        {
+            // Targets not selected within the priority window
+            // (defaults to tapdistancethreshold), will not get any
+            // events.  For targets selected withing the window, first
+            // prioritize the zOrder, then the time.
+            IHPUIInteractable interactableToBeActive = activeInteractables
+                .Where(kvp => kvp.Key.HandlesGestureState(interactorGestureState) && kvp.Value.validTarget)
+                .OrderBy(kvp => kvp.Key.zOrder)
+                .ThenBy(kvp => kvp.Value.startTime)
+                .FirstOrDefault().Key;
+
+            if (interactableToBeActive != activePriorityInteractable)
+            {
+                activePriorityInteractable = interactableToBeActive;
             }
         }
 
@@ -123,18 +135,23 @@ namespace ubco.ovilab.HPUI.Interaction
                     case HPUIGestureState.Tap:
                         using (hpuiTapEventArgsPool.Get(out HPUITapEventArgs tapEventArgs))
                         {
+                            ComputeActivePriorityInteractable();
                             tapEventArgs.SetParams(interactor, activePriorityInteractable);
-                            activePriorityInteractable.OnTap(tapEventArgs);
+                            activePriorityInteractable?.OnTap(tapEventArgs);
                             interactor.OnTap(tapEventArgs);
                         }
                         break;
                     case HPUIGestureState.Swipe:
                         using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                         {
-                            swipeEventArgs.SetParams(interactor, activePriorityInteractable,
-                                                     HPUISwipeState.Stopped, Time.time - state.startTime, state.startTime, state.startPosition,
-                                                     state.previousPosition, state.previousPosition, state.previousPosition - state.startPosition);
-                            activePriorityInteractable.OnSwipe(swipeEventArgs);
+                            // TODO
+                            swipeEventArgs.interactorObject = interactor;
+                            swipeEventArgs.interactableObject = activePriorityInteractable;
+                            // swipeEventArgs.SetParams(interactor, activePriorityInteractable,
+                            //                          HPUISwipeState.Stopped, Time.time - state.startTime, state.startTime, state.startPosition,
+                            //                          state.previousPosition, state.previousPosition, state.previousPosition - state.startPosition);
+
+                            activePriorityInteractable?.OnSwipe(swipeEventArgs);
                             interactor.OnSwipe(swipeEventArgs);
 
                         }
@@ -159,9 +176,9 @@ namespace ubco.ovilab.HPUI.Interaction
             interactorGestureState = HPUIGestureState.None;
             activeInteractables.Clear();
             activePriorityInteractable = null;
-            activePriorityZIndex = int.MaxValue;
+            lowestTargetZIndex = int.MaxValue;
             currentTrackingInteractable = null;
-            distance = 0;
+            cumilativeDistance = 0;
             cumilativeDelta = Vector2.zero;
         }
 
@@ -185,20 +202,25 @@ namespace ubco.ovilab.HPUI.Interaction
             Vector2 currentPosition = currentTrackingInteractable.ComputeInteractorPostion(interactor);
             Vector2 delta = previousPosition - currentPosition;
             float timeDelta = Time.time - startTime;
-            distance += delta.magnitude;
+            cumilativeDistance += delta.magnitude;
             cumilativeDelta += delta;
 
             switch(interactorGestureState)
             {
                 case HPUIGestureState.Tap:
-                    if (timeDelta > tapTimeThreshold || distance > tapDistanceThreshold)
+                    if (timeDelta > tapTimeThreshold || cumilativeDistance > tapDistanceThreshold)
                     {
+                        interactorGestureState = HPUIGestureState.Swipe;
+                        ComputeActivePriorityInteractable();
                         using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                         {
-                            swipeEventArgs.SetParams(interactor, activePriorityInteractable,
-                                                     HPUISwipeState.Started, timeDelta, state.startTime, state.startPosition, state.previousPosition,
-                                                     currentPosition, direction);
-                            activePriorityInteractable.OnSwipe(swipeEventArgs);
+                            // TODO
+                            swipeEventArgs.interactorObject = interactor;
+                            swipeEventArgs.interactableObject = activePriorityInteractable;
+                            // swipeEventArgs.SetParams(interactor, activePriorityInteractable,
+                            //                          HPUISwipeState.Started, timeDelta, state.startTime, state.startPosition, state.previousPosition,
+                            //                          currentPosition, direction);
+                            activePriorityInteractable?.OnSwipe(swipeEventArgs);
                             interactor.OnSwipe(swipeEventArgs);
                         }
                     }
@@ -206,10 +228,13 @@ namespace ubco.ovilab.HPUI.Interaction
                 case HPUIGestureState.Swipe:
                     using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                     {
-                        swipeEventArgs.SetParams(interactor, activePriorityInteractable,
-                                                 HPUISwipeState.Updated, timeDelta, state.startTime, state.startPosition, state.previousPosition,
-                                                 currentPosition, direction);
-                        activePriorityInteractable.OnSwipe(swipeEventArgs);
+                        // TODO
+                        swipeEventArgs.interactorObject = interactor;
+                        swipeEventArgs.interactableObject = activePriorityInteractable;
+                        // swipeEventArgs.SetParams(interactor, activePriorityInteractable,
+                        //                          HPUISwipeState.Updated, timeDelta, state.startTime, state.startPosition, state.previousPosition,
+                        //                          currentPosition, direction);
+                        activePriorityInteractable?.OnSwipe(swipeEventArgs);
                         interactor.OnSwipe(swipeEventArgs);
                     }
                     break;
@@ -233,14 +258,14 @@ namespace ubco.ovilab.HPUI.Interaction
         class HPUIInteractionState
         {
             public float startTime;
-            // public Vector2 startPosition;
-            // public Vector2 previousPosition;
             public bool active;
+            public bool validTarget;
 
-            public HPUIInteractionState(float startTime)
+            public HPUIInteractionState(float startTime, bool validTarget)
             {
                 this.startTime = startTime;
                 this.active = true;
+                this.validTarget = validTarget;
             }
         }
     }
