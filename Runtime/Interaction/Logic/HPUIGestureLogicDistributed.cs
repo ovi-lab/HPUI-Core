@@ -9,7 +9,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// <summary>
     /// Encapsulates the logic for HPUI gesture interactions.
     /// </summary>
-    public class HPUIGestureLogic: IDisposable
+    public class HPUIGestureLogicDistributed: IHPUIGestureLogic
     {
         private Dictionary<IHPUIInteractable, HPUIInteractionState> states = new Dictionary<IHPUIInteractable, HPUIInteractionState>();
         private float previousTime;
@@ -147,22 +147,23 @@ namespace ubco.ovilab.HPUI.Interaction
             hpuiSwipeEventArgsPool.Dispose();
             states.Clear();
         }
-    }
 
-    public class HPUIInteractionState
-    {
-        public HPUIGestureState gestureState;
-        public float startTime;
-        public Vector2 startPosition;
-        public Vector2 previousPosition;
-
-        public HPUIInteractionState SetParams(HPUIGestureState gestureState, float startTime, Vector2 startPosition)
+        class HPUIInteractionState
         {
-            this.gestureState = gestureState;
-            this.startTime = startTime;
-            this.startPosition = startPosition;
-            this.previousPosition = startPosition;
-            return this;
+            public HPUIGestureState gestureState;
+            public float startTime;
+            public Vector2 startPosition;
+            public Vector2 previousPosition;
+
+            public HPUIInteractionState SetParams(HPUIGestureState gestureState, float startTime, Vector2 startPosition)
+            {
+                this.gestureState = gestureState;
+                this.startTime = startTime;
+                this.startPosition = startPosition;
+                this.previousPosition = startPosition;
+                return this;
+            }
         }
     }
+
 }
