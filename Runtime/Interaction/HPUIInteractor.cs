@@ -42,8 +42,8 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public HPUISwipeEvent SwipeEvent { get => swipeEvent; set => swipeEvent = value; }
 
-
         protected HPUIGestureLogic gestureLogic;
+        private List<IXRInteractable> validTargets = new List<IXRInteractable>();
 
         /// <inheritdoc />
         protected override void Awake()
@@ -86,20 +86,25 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
             List<IXRInteractable> recievedTargets = ListPool<IXRInteractable>.Get();
-            recievedTargets.AddRange(targets);
+            recievedTargets.AddRange(targets.Distinct());
 
             targets.Clear();
+            validTargets.Clear();
             foreach(IXRInteractable target in recievedTargets.Select(t => t as IHPUIInteractable).Where(ht => ht != null).OrderBy(ht => ht.zOrder))
             {
                 targets.Add(target);
+                validTargets.Add(target);
             }
+
+            // TODO check if an interactable with lower z order is selected. If so cancel it.
+
             ListPool<IXRInteractable>.Release(recievedTargets);
         }
 
         /// <inheritdoc />
         public override bool CanSelect(IXRSelectInteractable interactable)
         {
-            return ProcessSelectFilters(interactable);
+            return validTargets.Contains(interactable) && ProcessSelectFilters(interactable);
         }
 
 
