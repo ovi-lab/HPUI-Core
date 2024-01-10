@@ -64,7 +64,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     case HPUIGesture.Tap:
                         using (hpuiTapEventArgsPool.Get(out HPUITapEventArgs tapEventArgs))
                         {
-                            tapEventArgs.SetParams(interactor, interactable);
+                            tapEventArgs.SetParams(interactor, interactable, state.startPosition + state.cumilativeDirection);
                             interactable.OnTap(tapEventArgs);
                             interactor.OnTap(tapEventArgs);
                         }
@@ -73,8 +73,8 @@ namespace ubco.ovilab.HPUI.Interaction
                         using (hpuiGestureEventArgsPool.Get(out HPUIGestureEventArgs gestureEventArgs))
                         {
                             gestureEventArgs.SetParams(interactor, interactable,
-                                                     HPUIGestureState.Stopped, Time.time - state.startTime, state.startTime, state.startPosition,
-                                                     state.cumilativeDirection, state.cumilativeDistance, state.delta);
+                                                       HPUIGestureState.Stopped, Time.time - state.startTime, state.startTime, state.startPosition,
+                                                       state.cumilativeDirection, state.cumilativeDistance, state.delta);
                             interactable.OnGesture(gestureEventArgs);
                             interactor.OnGesture(gestureEventArgs);
 
@@ -112,8 +112,8 @@ namespace ubco.ovilab.HPUI.Interaction
                                 using (hpuiGestureEventArgsPool.Get(out HPUIGestureEventArgs gestureEventArgs))
                                 {
                                     gestureEventArgs.SetParams(interactor, hpuiInteractable,
-                                                             HPUIGestureState.Started, timeDelta, state.startTime, state.startPosition,
-                                                             state.cumilativeDirection, state.cumilativeDistance, state.delta);
+                                                               HPUIGestureState.Started, timeDelta, state.startTime, state.startPosition,
+                                                               state.cumilativeDirection, state.cumilativeDistance, state.delta);
                                     hpuiInteractable.OnGesture(gestureEventArgs);
                                     interactor.OnGesture(gestureEventArgs);
                                 }
@@ -123,8 +123,8 @@ namespace ubco.ovilab.HPUI.Interaction
                             using (hpuiGestureEventArgsPool.Get(out HPUIGestureEventArgs gestureEventArgs))
                             {
                                 gestureEventArgs.SetParams(interactor, hpuiInteractable,
-                                                         HPUIGestureState.Updated, timeDelta, state.startTime, state.startPosition,
-                                                         state.cumilativeDirection, state.cumilativeDistance, state.delta);
+                                                           HPUIGestureState.Updated, timeDelta, state.startTime, state.startPosition,
+                                                           state.cumilativeDirection, state.cumilativeDistance, state.delta);
                                 hpuiInteractable.OnGesture(gestureEventArgs);
                                 interactor.OnGesture(gestureEventArgs);
                             }

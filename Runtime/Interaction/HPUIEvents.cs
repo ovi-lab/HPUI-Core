@@ -44,10 +44,17 @@ namespace ubco.ovilab.HPUI.Interaction
             set => base.interactableObject = value;
         }
 
-        public virtual void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable)
+        /// <summary>
+        /// The position of the interaction on the plane of the
+        /// interactable relative to its position.
+        /// </summary>
+        public virtual Vector2 Position { get; private set; }
+
+        public virtual void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, Vector2 position)
         {
             interactorObject = interactor;
             interactableObject = interactable;
+            Position = position;
         }
     }
 
@@ -78,7 +85,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public float CumilativeDistance { get; private set; }
         public Vector2 DeltaDirection { get; private set; }
 
-        public override void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable)
+        public override void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, Vector2 position)
         {
             throw new InvalidOperationException("Call overloaded method!");
         }
@@ -86,7 +93,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUIGestureState state, float timeDelta, float startTime,
                               Vector2 startPosition, Vector2 cumilativeDirection, float cumilativeDistance, Vector2 deltaDirection)
         {
-            base.SetParams(interactor, interactable);
+            base.SetParams(interactor, interactable, startPosition + cumilativeDirection);
             State = state;
             TimeDelta = timeDelta;
             StartTime = startTime;

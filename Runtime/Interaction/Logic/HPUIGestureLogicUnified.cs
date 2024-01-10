@@ -128,13 +128,23 @@ namespace ubco.ovilab.HPUI.Interaction
 
             if (activeInteractablesCount == 0)
             {
+                HPUIInteractionState state;
+                if (activePriorityInteractable != null)
+                {
+                    state = activeInteractables[activePriorityInteractable];
+                }
+                else
+                {
+                    state = HPUIInteractionState.empty;
+                }
+
                 switch (interactorGestureState)
                 {
                     case HPUIGesture.Tap:
                         using (hpuiTapEventArgsPool.Get(out HPUITapEventArgs tapEventArgs))
                         {
                             ComputeActivePriorityInteractable();
-                            tapEventArgs.SetParams(interactor, activePriorityInteractable);
+                            tapEventArgs.SetParams(interactor, activePriorityInteractable, state.startPosition + cumilativeDirection);
                             activePriorityInteractable?.OnTap(tapEventArgs);
                             interactor.OnTap(tapEventArgs);
                         }
@@ -142,15 +152,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     case HPUIGesture.Gesture:
                         using (hpuiGestureEventArgsPool.Get(out HPUIGestureEventArgs gestureEventArgs))
                         {
-                            HPUIInteractionState state;
-                            if (activePriorityInteractable != null)
-                            {
-                                state = activeInteractables[activePriorityInteractable];
-                            }
-                            else
-                            {
-                                state = HPUIInteractionState.empty;
-                            }
                             gestureEventArgs.SetParams(interactor, activePriorityInteractable,
                                                      HPUIGestureState.Stopped, timeDelta, state.startTime, state.startPosition,
                                                      cumilativeDirection, cumilativeDistance, delta);
@@ -227,8 +228,8 @@ namespace ubco.ovilab.HPUI.Interaction
                                 state = HPUIInteractionState.empty;
                             }
                             gestureEventArgs.SetParams(interactor, activePriorityInteractable,
-                                                     HPUIGestureState.Started, timeDelta, state.startTime, state.startPosition,
-                                                     cumilativeDirection, cumilativeDistance, delta);
+                                                       HPUIGestureState.Started, timeDelta, state.startTime, state.startPosition,
+                                                       cumilativeDirection, cumilativeDistance, delta);
                             activePriorityInteractable?.OnGesture(gestureEventArgs);
                             interactor.OnGesture(gestureEventArgs);
                         }
@@ -247,8 +248,8 @@ namespace ubco.ovilab.HPUI.Interaction
                             state = HPUIInteractionState.empty;
                         }
                         gestureEventArgs.SetParams(interactor, activePriorityInteractable,
-                                                 HPUIGestureState.Updated, timeDelta, state.startTime, state.startPosition,
-                                                 cumilativeDirection, cumilativeDistance, delta);
+                                                   HPUIGestureState.Updated, timeDelta, state.startTime, state.startPosition,
+                                                   cumilativeDirection, cumilativeDistance, delta);
                         activePriorityInteractable?.OnGesture(gestureEventArgs);
                         interactor.OnGesture(gestureEventArgs);
                     }
