@@ -73,27 +73,27 @@ namespace ubco.ovilab.HPUI.Interaction
         public HPUISwipeState State { get; private set; }
         public float TimeDelta { get; private set; }
         public float StartTime { get; private set; }
-        public Vector3 StartPosition { get; private set; }
-        public Vector3 PreviousPosition { get; private set; }
-        public Vector3 CurrentPosition { get; private set; }
-        public Vector3 Direction { get; private set; }
-        public Vector3 DeltaDirection { get => CurrentPosition - PreviousPosition; }
+        public Vector2 StartPosition { get; private set; }
+        public Vector2 CumilativeDirection { get; private set; }
+        public float CumilativeDistance { get; private set; }
+        public Vector2 DeltaDirection { get; private set; }
 
         public override void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable)
         {
             throw new InvalidOperationException("Call overloaded method!");
         }
 
-        public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUISwipeState state, float timeDelta, float startTime, Vector3 startPosition, Vector3 previousPosition, Vector3 currentPosition, Vector3 direction)
+        public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUISwipeState state, float timeDelta, float startTime,
+                              Vector2 startPosition, Vector2 cumilativeDirection, float cumilativeDistance, Vector2 deltaDirection)
         {
             base.SetParams(interactor, interactable);
             State = state;
             TimeDelta = timeDelta;
             StartTime = startTime;
             StartPosition = startPosition;
-            PreviousPosition = previousPosition;
-            CurrentPosition = currentPosition;
-            Direction = direction;
+            CumilativeDirection = cumilativeDirection;
+            CumilativeDistance = cumilativeDistance;
+            DeltaDirection = deltaDirection;
         }
     }
 

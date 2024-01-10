@@ -12,16 +12,14 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     public class HPUIGestureLogicUnified: IHPUIGestureLogic
     {
-        // private Dictionary<IHPUIInteractable, HPUIInteractionState> states = new Dictionary<IHPUIInteractable, HPUIInteractionState>();
-
         private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(() => new HPUITapEventArgs());
         private LinkedPool<HPUISwipeEventArgs> hpuiSwipeEventArgsPool = new LinkedPool<HPUISwipeEventArgs>(() => new HPUISwipeEventArgs());
 
         private float tapTimeThreshold, tapDistanceThreshold;
         private IHPUIInteractor interactor;
 
-        private float startTime, cumilativeDistance;
-        private Vector2 previousPosition, cumilativeDelta;
+        private float startTime, cumilativeDistance, timeDelta;
+        private Vector2 delta, previousPosition, cumilativeDirection;
 
         private int lowestTargetZIndex = int.MaxValue;
         private int activeInteractablesCount = 0;
@@ -68,7 +66,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 float currentTime = Time.time;
                 bool inValidWindow = (currentTime - startTime) < tapTimeThreshold;
 
-                HPUIInteractionState state = new HPUIInteractionState(Time.time, inValidWindow);
+                HPUIInteractionState state = new HPUIInteractionState(Time.time, interactable.ComputeInteractorPostion(interactor), inValidWindow);
                 activeInteractables.Add(interactable, state);
 
                 // If a new higher priority targets is encountered within tap time window, we hand over control to that.
@@ -144,13 +142,18 @@ namespace ubco.ovilab.HPUI.Interaction
                     case HPUIGestureState.Swipe:
                         using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                         {
-                            // TODO
-                            swipeEventArgs.interactorObject = interactor;
-                            swipeEventArgs.interactableObject = activePriorityInteractable;
-                            // swipeEventArgs.SetParams(interactor, activePriorityInteractable,
-                            //                          HPUISwipeState.Stopped, Time.time - state.startTime, state.startTime, state.startPosition,
-                            //                          state.previousPosition, state.previousPosition, state.previousPosition - state.startPosition);
-
+                            HPUIInteractionState state;
+                            if (activePriorityInteractable != null)
+                            {
+                                state = activeInteractables[activePriorityInteractable];
+                            }
+                            else
+                            {
+                                state = HPUIInteractionState.empty;
+                            }
+                            swipeEventArgs.SetParams(interactor, activePriorityInteractable,
+                                                     HPUISwipeState.Stopped, timeDelta, state.startTime, state.startPosition,
+                                                     cumilativeDirection, cumilativeDistance, delta);
                             activePriorityInteractable?.OnSwipe(swipeEventArgs);
                             interactor.OnSwipe(swipeEventArgs);
 
@@ -179,7 +182,7 @@ namespace ubco.ovilab.HPUI.Interaction
             lowestTargetZIndex = int.MaxValue;
             currentTrackingInteractable = null;
             cumilativeDistance = 0;
-            cumilativeDelta = Vector2.zero;
+            cumilativeDirection = Vector2.zero;
         }
 
         /// <inheritdoc />
@@ -200,10 +203,10 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
             Vector2 currentPosition = currentTrackingInteractable.ComputeInteractorPostion(interactor);
-            Vector2 delta = previousPosition - currentPosition;
-            float timeDelta = Time.time - startTime;
+            delta = previousPosition - currentPosition;
+            timeDelta = Time.time - startTime;
             cumilativeDistance += delta.magnitude;
-            cumilativeDelta += delta;
+            cumilativeDirection += delta;
 
             switch(interactorGestureState)
             {
@@ -214,12 +217,18 @@ namespace ubco.ovilab.HPUI.Interaction
                         ComputeActivePriorityInteractable();
                         using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                         {
-                            // TODO
-                            swipeEventArgs.interactorObject = interactor;
-                            swipeEventArgs.interactableObject = activePriorityInteractable;
-                            // swipeEventArgs.SetParams(interactor, activePriorityInteractable,
-                            //                          HPUISwipeState.Started, timeDelta, state.startTime, state.startPosition, state.previousPosition,
-                            //                          currentPosition, direction);
+                            HPUIInteractionState state;
+                            if (activePriorityInteractable != null)
+                            {
+                                state = activeInteractables[activePriorityInteractable];
+                            }
+                            else
+                            {
+                                state = HPUIInteractionState.empty;
+                            }
+                            swipeEventArgs.SetParams(interactor, activePriorityInteractable,
+                                                     HPUISwipeState.Started, timeDelta, state.startTime, state.startPosition,
+                                                     cumilativeDirection, cumilativeDistance, delta);
                             activePriorityInteractable?.OnSwipe(swipeEventArgs);
                             interactor.OnSwipe(swipeEventArgs);
                         }
@@ -228,12 +237,18 @@ namespace ubco.ovilab.HPUI.Interaction
                 case HPUIGestureState.Swipe:
                     using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                     {
-                        // TODO
-                        swipeEventArgs.interactorObject = interactor;
-                        swipeEventArgs.interactableObject = activePriorityInteractable;
-                        // swipeEventArgs.SetParams(interactor, activePriorityInteractable,
-                        //                          HPUISwipeState.Updated, timeDelta, state.startTime, state.startPosition, state.previousPosition,
-                        //                          currentPosition, direction);
+                        HPUIInteractionState state;
+                        if (activePriorityInteractable != null)
+                        {
+                            state = activeInteractables[activePriorityInteractable];
+                        }
+                        else
+                        {
+                            state = HPUIInteractionState.empty;
+                        }
+                        swipeEventArgs.SetParams(interactor, activePriorityInteractable,
+                                                 HPUISwipeState.Updated, timeDelta, state.startTime, state.startPosition,
+                                                 cumilativeDirection, cumilativeDistance, delta);
                         activePriorityInteractable?.OnSwipe(swipeEventArgs);
                         interactor.OnSwipe(swipeEventArgs);
                     }
@@ -257,13 +272,16 @@ namespace ubco.ovilab.HPUI.Interaction
 
         class HPUIInteractionState
         {
+            public static HPUIInteractionState empty = new HPUIInteractionState(0, Vector2.zero, false);
             public float startTime;
+            public Vector2 startPosition;
             public bool active;
             public bool validTarget;
 
-            public HPUIInteractionState(float startTime, bool validTarget)
+            public HPUIInteractionState(float startTime, Vector2 startPosition, bool validTarget)
             {
                 this.startTime = startTime;
+                this.startPosition = startPosition;
                 this.active = true;
                 this.validTarget = validTarget;
             }

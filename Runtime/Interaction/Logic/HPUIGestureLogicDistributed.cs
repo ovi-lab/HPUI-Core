@@ -74,7 +74,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             swipeEventArgs.SetParams(interactor, interactable,
                                                      HPUISwipeState.Stopped, Time.time - state.startTime, state.startTime, state.startPosition,
-                                                     state.previousPosition, state.previousPosition, state.previousPosition - state.startPosition);
+                                                     state.cumilativeDirection, state.cumilativeDistance, state.delta);
                             interactable.OnSwipe(swipeEventArgs);
                             interactor.OnSwipe(swipeEventArgs);
 
@@ -99,19 +99,21 @@ namespace ubco.ovilab.HPUI.Interaction
                     Vector2 currentPosition = hpuiInteractable.ComputeInteractorPostion(interactor);
                     HPUIInteractionState state = states[hpuiInteractable];
                     float timeDelta = currentTime - state.startTime;
-                    Vector2 direction = currentPosition - state.startPosition;
+                    state.delta = currentPosition - state.previousPosition;
+                    state.cumilativeDirection += state.delta;
+                    state.cumilativeDistance += state.delta.magnitude;
 
                     switch (state.gestureState)
                     {
                         case HPUIGestureState.Tap:
-                            if (timeDelta > tapTimeThreshold || direction.magnitude > tapDistanceThreshold)
+                            if (timeDelta > tapTimeThreshold || state.cumilativeDirection.magnitude > tapDistanceThreshold)
                             {
                                 state.gestureState = HPUIGestureState.Swipe;
                                 using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                                 {
                                     swipeEventArgs.SetParams(interactor, hpuiInteractable,
-                                                             HPUISwipeState.Started, timeDelta, state.startTime, state.startPosition, state.previousPosition,
-                                                             currentPosition, direction);
+                                                             HPUISwipeState.Started, timeDelta, state.startTime, state.startPosition,
+                                                             state.cumilativeDirection, state.cumilativeDistance, state.delta);
                                     hpuiInteractable.OnSwipe(swipeEventArgs);
                                     interactor.OnSwipe(swipeEventArgs);
                                 }
@@ -121,8 +123,8 @@ namespace ubco.ovilab.HPUI.Interaction
                             using (hpuiSwipeEventArgsPool.Get(out HPUISwipeEventArgs swipeEventArgs))
                             {
                                 swipeEventArgs.SetParams(interactor, hpuiInteractable,
-                                                         HPUISwipeState.Updated, timeDelta, state.startTime, state.startPosition, state.previousPosition,
-                                                         currentPosition, direction);
+                                                         HPUISwipeState.Updated, timeDelta, state.startTime, state.startPosition,
+                                                         state.cumilativeDirection, state.cumilativeDistance, state.delta);
                                 hpuiInteractable.OnSwipe(swipeEventArgs);
                                 interactor.OnSwipe(swipeEventArgs);
                             }
@@ -154,6 +156,9 @@ namespace ubco.ovilab.HPUI.Interaction
             public float startTime;
             public Vector2 startPosition;
             public Vector2 previousPosition;
+            public Vector2 delta;
+            public Vector2 cumilativeDirection;
+            public float cumilativeDistance;
 
             public HPUIInteractionState SetParams(HPUIGestureState gestureState, float startTime, Vector2 startPosition)
             {
