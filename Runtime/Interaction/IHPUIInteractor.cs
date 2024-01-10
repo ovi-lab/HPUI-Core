@@ -10,9 +10,9 @@ namespace ubco.ovilab.HPUI.Interaction
         void OnTap(HPUITapEventArgs args);
 
         /// <summary>
-        /// This is called when a swipe event occurs on the interactable.
+        /// This is called when a gesture event occurs on the interactable.
         /// </summary>
-        void OnSwipe(HPUISwipeEventArgs args);
+        void OnGesture(HPUIGestureEventArgs args);
     }
 
 }

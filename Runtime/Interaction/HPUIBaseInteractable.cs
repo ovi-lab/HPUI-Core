@@ -40,12 +40,12 @@ namespace ubco.ovilab.HPUI.Interaction
         public HPUITapEvent TapEvent { get => tapEvent; set => tapEvent = value; }
 
         [SerializeField]
-        private HPUISwipeEvent swipeEvent = new HPUISwipeEvent();
+        private HPUIGestureEvent gestureEvent = new HPUIGestureEvent();
 
         /// <summary>
-        /// Event triggered on swipe
+        /// Event triggered on gesture
         /// </summary>
-        public HPUISwipeEvent SwipeEvent { get => swipeEvent; set => swipeEvent = value; }
+        public HPUIGestureEvent GestureEvent { get => gestureEvent; set => gestureEvent = value; }
 
         private Vector2 surfaceBounds, surfaceOrigin;
 
@@ -127,20 +127,20 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void OnSwipe(HPUISwipeEventArgs args)
+        public void OnGesture(HPUIGestureEventArgs args)
         {
-            swipeEvent?.Invoke(args);
+            gestureEvent?.Invoke(args);
         }
 
         /// <inheritdoc />
-        public bool HandlesGestureState(HPUIGestureState state)
+        public bool HandlesGesture(HPUIGesture state)
         {
             switch (state) {
-                case HPUIGestureState.Tap: {
+                case HPUIGesture.Tap: {
                     return TapEvent.GetPersistentEventCount() > 0;
                 }
-                case HPUIGestureState.Swipe: {
-                    return SwipeEvent.GetPersistentEventCount() > 0;
+                case HPUIGesture.Gesture: {
+                    return GestureEvent.GetPersistentEventCount() > 0;
                 }
                 default:
                     throw new InvalidOperationException($"Gesture state {state} is not handled by {typeof(HPUIBaseInteractable)}");

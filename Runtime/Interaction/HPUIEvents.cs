@@ -5,26 +5,26 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
-    public enum HPUIGestureState
+    public enum HPUIGesture
     {
         None,
-        Tap, Swipe,
+        Tap, Gesture,
         Custom // TODO: Custom gestures?
     }
 
-    public enum HPUISwipeState
+    public enum HPUIGestureState
     {
         Started, Updated, Stopped, Invalid
     }
 
     #region events classes
-    public class HPUIGestureEvent: UnityEvent<HPUIGestureEventArgs>
+    public class HPUIInteractionEvent: UnityEvent<HPUIInteractionEventArgs>
     {}
 
     /// <summary>
     /// Event data associated with an gesture interaction on HPUI
     /// </summary>
-    public class HPUIGestureEventArgs: BaseInteractionEventArgs
+    public class HPUIInteractionEventArgs: BaseInteractionEventArgs
     {
         /// <summary>
         /// The Interactor associated with the interaction event.
@@ -58,19 +58,19 @@ namespace ubco.ovilab.HPUI.Interaction
     /// <summary>
     /// Event data associated with an tap gesture interaction on HPUI
     /// </summary>
-    public class HPUITapEventArgs: HPUIGestureEventArgs
+    public class HPUITapEventArgs: HPUIInteractionEventArgs
     {}
 
     [Serializable]
-    public class HPUISwipeEvent: UnityEvent<HPUISwipeEventArgs>
+    public class HPUIGestureEvent: UnityEvent<HPUIGestureEventArgs>
     {}
 
     /// <summary>
-    /// Event data associated with an swipe gesture interaction on HPUI
+    /// Event data associated with a gesture interaction on HPUI
     /// </summary>
-    public class HPUISwipeEventArgs: HPUIGestureEventArgs
+    public class HPUIGestureEventArgs: HPUIInteractionEventArgs
     {
-        public HPUISwipeState State { get; private set; }
+        public HPUIGestureState State { get; private set; }
         public float TimeDelta { get; private set; }
         public float StartTime { get; private set; }
         public Vector2 StartPosition { get; private set; }
@@ -83,7 +83,7 @@ namespace ubco.ovilab.HPUI.Interaction
             throw new InvalidOperationException("Call overloaded method!");
         }
 
-        public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUISwipeState state, float timeDelta, float startTime,
+        public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUIGestureState state, float timeDelta, float startTime,
                               Vector2 startPosition, Vector2 cumilativeDirection, float cumilativeDistance, Vector2 deltaDirection)
         {
             base.SetParams(interactor, interactable);

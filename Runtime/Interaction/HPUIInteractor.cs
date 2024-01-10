@@ -35,12 +35,12 @@ namespace ubco.ovilab.HPUI.Interaction
         public HPUITapEvent TapEvent { get => tapEvent; set => tapEvent = value; }
 
         [SerializeField]
-        private HPUISwipeEvent swipeEvent = new HPUISwipeEvent();
+        private HPUIGestureEvent gestureEvent = new HPUIGestureEvent();
 
         /// <summary>
-        /// Event triggered on swipe
+        /// Event triggered on gesture
         /// </summary>
-        public HPUISwipeEvent SwipeEvent { get => swipeEvent; set => swipeEvent = value; }
+        public HPUIGestureEvent GestureEvent { get => gestureEvent; set => gestureEvent = value; }
 
         protected IHPUIGestureLogic gestureLogic;
         private List<IXRInteractable> validTargets = new List<IXRInteractable>();
@@ -116,9 +116,9 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void OnSwipe(HPUISwipeEventArgs args)
+        public void OnGesture(HPUIGestureEventArgs args)
         {
-            swipeEvent?.Invoke(args);
+            gestureEvent?.Invoke(args);
         }
         #endregion
     }

@@ -10,7 +10,7 @@ namespace ubco.ovilab.HPUI.Editor
     {
         private HPUIInteractor t;
         protected List<SerializedProperty> eventProperties;
-        protected List<string> eventPropertyNames = new List<string>() { "tapEvent", "swipeEvent"};
+        protected List<string> eventPropertyNames = new List<string>() { "tapEvent", "gestureEvent"};
 
         protected bool hpuiInteractablesExpanded;
 

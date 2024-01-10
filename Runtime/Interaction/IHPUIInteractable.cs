@@ -27,12 +27,12 @@ namespace ubco.ovilab.HPUI.Interaction
         /// happens while this interactable is selected, it'll be passed to
         /// the next selected interactable in the priority list.
         /// </summary>
-        bool HandlesGestureState(HPUIGestureState state);
+        bool HandlesGesture(HPUIGesture gesture);
 
         /// <summary>
-        /// This is called when a swipe event occurs on the interactable.
+        /// This is called when a gesture event occurs on the interactable.
         /// </summary>
-        void OnSwipe(HPUISwipeEventArgs args);
+        void OnGesture(HPUIGestureEventArgs args);
     }
 
 }
