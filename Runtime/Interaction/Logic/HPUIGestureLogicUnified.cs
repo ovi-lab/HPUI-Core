@@ -49,8 +49,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
-            activeInteractablesCount += 1;
-
             if (interactorGestureState == HPUIGesture.None)
             {
                 interactorGestureState = HPUIGesture.Tap;
@@ -68,6 +66,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 HPUIInteractionState state = new HPUIInteractionState(Time.time, interactable.ComputeInteractorPostion(interactor), inValidWindow);
                 activeInteractables.Add(interactable, state);
+                activeInteractablesCount += 1;
 
                 // If a new higher priority targets is encountered within tap time window, we hand over control to that.
                 if (interactable.zOrder < lowestTargetZIndex && inValidWindow)
@@ -86,9 +85,10 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private void ComputeCurrectTrackingInteractable()
         {
-            // Any target that is active should be ok for this.
+            // Any target that is active should be ok for this?
             IHPUIInteractable interactableToTrack = activeInteractables
                 .Where(kvp => kvp.Value.active)
+                .OrderBy(kvp => kvp.Value.startTime)
                 .First().Key;
 
             if (interactableToTrack != currentTrackingInteractable)
@@ -124,9 +124,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
-            activeInteractablesCount -= 1;
-
-            if (activeInteractablesCount == 0)
+            if (activeInteractablesCount == 1)
             {
                 HPUIInteractionState state;
                 if (activePriorityInteractable != null)
@@ -169,6 +167,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 if (activeInteractables.ContainsKey(interactable))
                 {
                     activeInteractables[interactable].active = false;
+                    activeInteractablesCount -= 1;
                     ComputeCurrectTrackingInteractable();
                 }
             }
@@ -259,6 +258,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     throw new NotImplementedException();
             }
 
+            previousPosition = currentPosition;
         }
 
         /// <summary>
