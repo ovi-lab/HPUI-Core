@@ -47,8 +47,6 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public HPUIGestureEvent GestureEvent { get => gestureEvent; set => gestureEvent = value; }
 
-        private Vector2 surfaceBounds, surfaceOrigin;
-
         #region overrides
         /// <inheritdoc />
         protected override void Awake()
@@ -80,15 +78,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
             Bounds colliderBounds = boundsCollider.bounds;
             Transform interactableTransform = GetAttachTransform(null);
-            surfaceOrigin = ComputeTargetPointOnInteractablePlane(colliderBounds.center
-                                                           - interactableTransform.right.normalized * colliderBounds.extents.x
-                                                           - interactableTransform.forward.normalized * colliderBounds.extents.z,
-                                                           interactableTransform);
-
-            surfaceBounds = ComputeTargetPointOnInteractablePlane(colliderBounds.center
-                                                           + interactableTransform.right.normalized * colliderBounds.extents.x
-                                                           + interactableTransform.forward.normalized * colliderBounds.extents.z,
-                                                           interactableTransform) - surfaceOrigin;
         }
 
         protected DistanceInfo GetDistanceOverride(IXRInteractable interactable, Vector3 position)
@@ -107,7 +96,10 @@ namespace ubco.ovilab.HPUI.Interaction
             Plane xzPlane = new Plane(interactableTransform.up, interactableTransform.position);
 
             Vector3 pointOnXZPlane = xzPlane.ClosestPointOnPlane(targetPoint);
-            pointOnXZPlane = transform.InverseTransformPoint(pointOnXZPlane);
+
+            // InverseTransformPoint without taking scale.
+            Matrix4x4 worldToLocalMatrix = Matrix4x4.TRS(interactableTransform.position, interactableTransform.rotation, Vector3.one).inverse;
+            pointOnXZPlane = worldToLocalMatrix.MultiplyPoint3x4(pointOnXZPlane);
             return new Vector2(pointOnXZPlane.x, pointOnXZPlane.z);
         }
 
@@ -117,7 +109,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             Vector3 closestPointOnCollider = GetDistanceOverride(this, interactor.GetAttachTransform(this).position).point;
             Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
-            return (pointOnPlane - surfaceOrigin) / surfaceBounds;
+            return pointOnPlane;
         }
 
         /// <inheritdoc />

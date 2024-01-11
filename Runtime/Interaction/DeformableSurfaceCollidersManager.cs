@@ -21,8 +21,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private Vector3 scaleFactor;
         private int maxY, maxX;
-        private Vector2 surfaceBounds;
-        private float gridSize;
+        private float gridSize, offset_x, offset_y;
         private TransformAccessArray colliderObjects;
 
         private Dictionary<Collider, Vector2> colliderCoords;
@@ -91,9 +90,7 @@ namespace ubco.ovilab.HPUI.Interaction
             maxY = vertices_native.Length - continuousInteractable.x_divisions;
             maxX = continuousInteractable.x_divisions;
 
-            List<Collider> colliders = GenerateColliders(vertices, normals, collidersRootTransform, continuousInteractable.x_divisions);
-
-            surfaceBounds = new Vector2(gridSize * (continuousInteractable.x_divisions - 1), gridSize * (continuousInteractable.y_divisions - 1));
+            List<Collider> colliders = GenerateColliders(vertices, normals, collidersRootTransform, continuousInteractable.x_divisions, continuousInteractable.y_divisions);
 
             generatedColliders = true;
             return colliders;
@@ -101,8 +98,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
         /// <summary>
         /// Return the (appoximate) point on the surface of where the collider is.
-        /// The returned Vector2 - (x, z) on the xz-plane.
-        /// (0, 0) would be the bounds min on the surface & (1, 1) the bounds max on the surface.
+        /// The returned Vector2 - (x, z) on the xz-plane. This is relative to the
+        /// center of the surface.
         /// </summary>
         public Vector2 GetSurfacePointForCollider(Collider collider)
         {
@@ -111,14 +108,14 @@ namespace ubco.ovilab.HPUI.Interaction
                 throw new ArgumentException("Unknown {collider.name}");
             }
 
-            return colliderCoords[collider]/surfaceBounds;
+            return colliderCoords[collider];
         }
 
         /// <summary>
         /// Generate the colliders for a given set of vertices. The vertices are expected to be the order along x then along y.
         /// The generated colliders will be parented to the rootTransform.
         /// </summary>
-	private List<Collider> GenerateColliders(List<Vector3> positions, List<Vector3> _normals, Transform rootTransform, int x_divisions)
+	private List<Collider> GenerateColliders(List<Vector3> positions, List<Vector3> _normals, Transform rootTransform, int x_divisions, int y_divisions)
 	{
 	    var right = positions[1] - positions[0];
 	    GameObject colliderObj;
@@ -149,14 +146,17 @@ namespace ubco.ovilab.HPUI.Interaction
 		    scaleFactor.z = (gridSize / buttonSize.y) * 1.05f * rootTransform.lossyScale.y;
                     scaleFactor.y = 0.00001f;
                     gridSize = (positions[0] - positions[1]).magnitude;
-		}
+
+                    offset_x = gridSize * x_divisions * 0.5f;
+                    offset_y = gridSize * y_divisions * 0.5f;
+                }
 		colliderObj.transform.parent = rootTransform;
 		colliderObj.transform.localPosition = positions[i];
 		colliderObj.transform.localRotation = Quaternion.identity;
 		colliderObj.transform.localScale = scaleFactor;
                 colliderTransforms[i] = colliderObj.transform;
 
-                colliderCoords.Add(collider, new Vector2(gridSize * x, gridSize * y));
+                colliderCoords.Add(collider, new Vector2(gridSize * x - offset_x, gridSize * y - offset_y));
             }
 
 	    colliderObjects = new TransformAccessArray(colliderTransforms);
