@@ -101,6 +101,8 @@ namespace ubco.ovilab.HPUI.Interaction
             ListPool<IXRInteractable>.Release(recievedTargets);
         }
 
+        // NOTE: PokeInteractor has a bug where it doesn't account for the re-prioritization.
+        // See: https://forum.unity.com/threads/xrpokeinteractor-m_currentpoketarget-not-respecting-getvalidtargets-and-target-filters.1534039/#post-9571063
         /// <inheritdoc />
         public override bool CanSelect(IXRSelectInteractable interactable)
         {
