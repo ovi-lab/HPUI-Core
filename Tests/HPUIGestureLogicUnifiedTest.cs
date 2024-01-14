@@ -367,6 +367,11 @@ namespace ubco.ovilab.HPUI.Tests
             #region IHPUIInteracttable only
             public int zOrder { get; set; }
 
+            public Vector2 boundsMax { get; set; }
+
+            public Vector2 boundsMin { get; set; }
+
+
             Vector2 IHPUIInteractable.ComputeInteractorPostion(IXRInteractor interactor)
             {
                 return interactorPosition;

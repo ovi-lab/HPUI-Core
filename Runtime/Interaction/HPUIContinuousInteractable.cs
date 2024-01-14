@@ -33,6 +33,12 @@ namespace ubco.ovilab.HPUI.Interaction
         [Tooltip("(Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.")]
 	public MeshFilter filter;
 
+        /// <inheritdoc />
+        public override Vector2 boundsMax { get => surfaceCollidersManager?.boundsMax ?? Vector2.zero; }
+
+        /// <inheritdoc />
+        public override Vector2 boundsMin { get => surfaceCollidersManager?.boundsMin ?? Vector2.zero; }
+
         [SerializeField]
         private HPUIContinuousSurfaceEvent continuousSurfaceCreatedEvent = new HPUIContinuousSurfaceEvent();
 

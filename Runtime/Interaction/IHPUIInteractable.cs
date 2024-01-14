@@ -11,6 +11,18 @@ namespace ubco.ovilab.HPUI.Interaction
         int zOrder { get; set; }
 
         /// <summary>
+        /// The max point on the surface of the interactable, relative to the center of the object.
+        /// Center is the position of transform returned by the <see cref="GetAttachTransform"/>.
+        /// </summary>
+        Vector2 boundsMax { get; }
+
+        /// <summary>
+        /// The min point on the surface of the interactable, relative to the center of the object.
+        /// Center is the position of transform returned by the <see cref="GetAttachTransform"/>.
+        /// </summary>
+        Vector2 boundsMin { get; }
+
+        /// <summary>
         /// Get the projection of the interactors position on the xz plane of this interactable, normalized.
         /// the returned Vector2 - (x, z) on the xz-plane, relative to the center of the interactable.
         /// </summary>

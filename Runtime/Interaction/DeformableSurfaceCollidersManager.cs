@@ -4,6 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine.Jobs;
 using System;
+using System.Linq;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -25,6 +26,9 @@ namespace ubco.ovilab.HPUI.Interaction
         private TransformAccessArray colliderObjects;
 
         private Dictionary<Collider, Vector2> colliderCoords;
+
+        public Vector2 boundsMax { get; protected set; }
+        public Vector2 boundsMin { get; protected set; }
 
         /// <inheritdoc />
         private void OnDestroy()
@@ -160,6 +164,10 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
 	    colliderObjects = new TransformAccessArray(colliderTransforms);
+
+            boundsMax = new Vector2(colliderCoords.Values.Select(v => v.x).Max(), colliderCoords.Values.Select(v => v.y).Max());
+            boundsMin = new Vector2(colliderCoords.Values.Select(v => v.x).Min(), colliderCoords.Values.Select(v => v.y).Min());
+
             return colliders;
         }
 

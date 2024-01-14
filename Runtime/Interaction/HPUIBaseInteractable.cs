@@ -31,6 +31,12 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public int zOrder { get => _zOrder; set => _zOrder = value; }
 
+        /// <inheritdoc />
+        public virtual Vector2 boundsMax { get; protected set; }
+
+        /// <inheritdoc />
+        public virtual Vector2 boundsMin { get; protected set; }
+
         [SerializeField]
         private HPUITapEvent tapEvent = new HPUITapEvent();
 
@@ -78,6 +84,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
             Bounds colliderBounds = boundsCollider.bounds;
             Transform interactableTransform = GetAttachTransform(null);
+            boundsMax = ComputeTargetPointOnInteractablePlane(colliderBounds.max, interactableTransform);
+            boundsMin = ComputeTargetPointOnInteractablePlane(colliderBounds.min, interactableTransform);
         }
 
         protected DistanceInfo GetDistanceOverride(IXRInteractable interactable, Vector3 position)
