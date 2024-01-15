@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using ubco.ovilab.HPUI.Utils;
-using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
@@ -35,12 +33,8 @@ namespace ubco.ovilab.HPUI.Tracking
         [SerializeField]
         public float longitudinalOffset = 0f;
 
-        [Tooltip("(optional) The XR Origin. If not set, will be automatically set.")][SerializeField]
-        private XROrigin xrOrigin;
-
         private float cachedRadius = 0f;
         private XRHandSubsystem handSubsystem;
-        private bool initialized;
 
         /// <inheritdoc />
         protected void Update()
@@ -76,11 +70,6 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <inheritdoc />
         protected void OnEnable()
         {
-            if (!initialized)
-            {
-                Initialize();
-            }
-
             if (targetTransform == null)
             {
                 targetTransform = transform;
@@ -144,21 +133,6 @@ namespace ubco.ovilab.HPUI.Tracking
             this.longitudinalOffset = longitudinalOffset;
         }
 
-        private void Initialize()
-        {
-            if (xrOrigin == null)
-            {
-                XROrigin[] objs = FindObjectsOfType<XROrigin>();
-                if (objs.Length != 1)
-                {
-                    throw new InvalidOperationException($"Got {objs.Length} `XROrigin`s. Expected only 1. Perhaps assign it in inspector.");
-                }
-                xrOrigin = objs[0];
-            }
-
-            initialized = true;
-        }
-
         private void OnUpdatedHands(XRHandSubsystem subsystem,
                                     XRHandSubsystem.UpdateSuccessFlags updateSuccessFlags,
                                     XRHandSubsystem.UpdateType updateType)
@@ -190,11 +164,6 @@ namespace ubco.ovilab.HPUI.Tracking
             bool mainPoseSuccess = mainJoint.TryGetPose(out Pose mainJointPose);
             bool mainRadiusSuccess = mainJoint.TryGetRadius(out float mainRadius);
 
-            if (mainPoseSuccess)
-            {
-                mainJointPose = mainJointPose.GetTransformedBy(xrOrigin.transform);
-            }
-
             XRHandJoint secondJoint;
             bool secondPoseSuccess = false;
             Pose secondJointPose = default;
@@ -202,10 +171,6 @@ namespace ubco.ovilab.HPUI.Tracking
             {
                 secondJoint = hand.GetJoint(secondJointID);
                 secondPoseSuccess = secondJoint.TryGetPose(out secondJointPose);
-                if (secondPoseSuccess)
-                {
-                    secondJointPose = secondJointPose.GetTransformedBy(xrOrigin.transform);
-                }
             }
 
             if (mainRadiusSuccess)
