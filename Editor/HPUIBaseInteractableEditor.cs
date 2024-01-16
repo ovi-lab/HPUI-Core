@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace ubco.ovilab.HPUI.Editor
 {
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(HPUIBaseInteractable), true)]
     public class HPUIBaseInteractableEditor: XRBaseInteractableEditor
     {
@@ -55,8 +56,11 @@ namespace ubco.ovilab.HPUI.Editor
             return props;
         }
 
+        // Selection mode and distance calculation mode are programatically set.
         /// <inheritdoc />
-        protected override void DrawSelectionConfiguration()
-        {}
+        protected override void DrawSelectionConfiguration() { }
+
+        /// <inheritdoc />
+        protected override void DrawDistanceCalculationMode() { }
     }
 }

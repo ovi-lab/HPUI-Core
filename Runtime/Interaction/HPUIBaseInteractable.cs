@@ -23,7 +23,14 @@ namespace ubco.ovilab.HPUI.Interaction
             set => handedness = value;
         }
 
-        public Collider boundsCollider;
+        [SerializeField]
+        private Collider boundsCollider;
+
+        /// <summary>
+        /// The collider used to compute the bounds of the interactable.
+        /// /// <seealso cref="ComputeInteractorPostion"/>
+        /// </summary>
+        public Collider BoundsCollider { get => boundsCollider; set => boundsCollider = value; }
 
         [SerializeField]
         private int _zOrder;
@@ -76,13 +83,13 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         protected virtual void ComputeSurfaceBounds()
         {
-            if (boundsCollider == null)
+            if (BoundsCollider == null)
             {
-                boundsCollider = colliders[0];
-                Debug.LogWarning($"boundsCollider is not set. Using {boundsCollider.name}'s collider.");
+                BoundsCollider = colliders[0];
+                Debug.LogWarning($"boundsCollider is not set. Using {BoundsCollider.name}'s collider.");
             }
 
-            Bounds colliderBounds = boundsCollider.bounds;
+            Bounds colliderBounds = BoundsCollider.bounds;
             Transform interactableTransform = GetAttachTransform(null);
             boundsMax = ComputeTargetPointOnInteractablePlane(colliderBounds.max, interactableTransform);
             boundsMin = ComputeTargetPointOnInteractablePlane(colliderBounds.min, interactableTransform);

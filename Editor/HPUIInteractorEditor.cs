@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace ubco.ovilab.HPUI.Editor
 {
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(HPUIInteractor), true)]
     public class HPUIInteractorEditor: XRBaseInteractorEditor
     {
