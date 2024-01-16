@@ -99,6 +99,12 @@ namespace ubco.ovilab.HPUI.Tracking
             if (handSubsystem == null)
                 return;
 
+            if (jointFollowerData.Value == null)
+            {
+                Debug.LogError($"jointFollowerData is not set. Not subscribgin to events");
+                return;
+            }
+
             handSubsystem.updatedHands += OnUpdatedHands;
         }
 
