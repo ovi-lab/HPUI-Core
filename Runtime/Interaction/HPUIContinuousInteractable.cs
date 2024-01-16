@@ -96,7 +96,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 GameObject obj = new GameObject($"{Handedness}_{jointID}");
                 JointFollower jointFollower = obj.AddComponent<JointFollower>();
-                jointFollower.SetParams(Handedness, jointID, 0, 0, 0);
+                jointFollower.SetData(new JointFollowerData(Handedness, jointID, 0, 0, 0));
 
                 Transform keypoint = obj.transform;
                 keypoint.parent = this.transform;

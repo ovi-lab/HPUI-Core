@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using ubco.ovilab.HPUI.Utils;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
@@ -10,28 +9,21 @@ namespace ubco.ovilab.HPUI.Tracking
     /// </summary>
     public class JointFollower: MonoBehaviour
     {
-        [Tooltip("The handedness of the joint to follow")]
-        public Handedness handedness;
-        [Tooltip("The joint to follow.")]
-        public XRHandJointID jointID;
-        [Tooltip("Should a second joint be used. If `useSecondJointID` is true, offsetAlongJoint behaves differently.")]
-        public bool useSecondJointID;
-        [Tooltip("Second joint to use as reference. If `useSecondJointID` is true, offsetAlongJoint behaves differently.")]
-        [ConditionalField("useSecondJointID")]
-        public XRHandJointID secondJointID;
-        [Tooltip("Default joint radius to use when joint radius is not provided by XR Hands. In unity units.")]
-        public float defaultJointRadius = 0.01f;
-
-        [Tooltip("(optional) The target transform to use. If not set, use this transform.")]
-        public Transform targetTransform;
-
-        [Tooltip("The offset angle.")][SerializeField]
-        public float offsetAngle = 0f;
-        [Tooltip("The offset as a ratio of the joint radius.")][SerializeField]
-        public float offsetAsRatioToRadius = 1f;
-        [Tooltip("The offset along joint (the joint's up) if no secondJoint is set. Otherwise, the position along joint as a ratio to the distance between jointID and secondJointID. In unity units.")]
         [SerializeField]
-        public float longitudinalOffset = 0f;
+        [Tooltip("Joint follower data to use for this Joint.")]
+        private JointFollowerDatumProperty jointFollowerData = new JointFollowerDatumProperty(new JointFollowerData());
+        /// <summary>
+        /// Joint follower data to use for this Joint.
+        /// </summary>
+        public JointFollowerDatumProperty JointFollowerDatumProperty { get => jointFollowerData; set => jointFollowerData = value; }
+
+        [SerializeField]
+        [Tooltip("(optional) The target transform to use. If not set, use this transform.")]
+        private Transform targetTransform;
+        /// <summary>
+        /// The target transform to use. If not set, use this transform.
+        /// </summary>
+        public Transform TargetTransform { get => targetTransform; set => targetTransform = value; }
 
         private float cachedRadius = 0f;
         private XRHandSubsystem handSubsystem;
@@ -70,9 +62,9 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <inheritdoc />
         protected void OnEnable()
         {
-            if (targetTransform == null)
+            if (TargetTransform == null)
             {
-                targetTransform = transform;
+                TargetTransform = transform;
             }
 
             SubscribeHandSubsystem();
@@ -124,13 +116,9 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <summary>
         /// Set the parameters of this JointFollower.
         /// </summary>
-        public void SetParams(Handedness handedness, XRHandJointID jointID, float offsetAngle, float offsetAsRationToRadius, float longitudinalOffset)
+        public void SetData(JointFollowerData jointFollowerData)
         {
-            this.handedness = handedness;
-            this.jointID = jointID;
-            this.offsetAngle = offsetAngle;
-            this.offsetAsRatioToRadius = offsetAsRationToRadius;
-            this.longitudinalOffset = longitudinalOffset;
+            this.jointFollowerData.Value = jointFollowerData;
         }
 
         private void OnUpdatedHands(XRHandSubsystem subsystem,
@@ -143,11 +131,11 @@ namespace ubco.ovilab.HPUI.Tracking
                     // Update game logic that uses hand data
                     break;
                 case XRHandSubsystem.UpdateType.BeforeRender:
-                    if (handedness == Handedness.Left)
+                    if (jointFollowerData.Value.handedness == Handedness.Left)
                     {
                         ProcessJointData(subsystem.leftHand);
                     }
-                    else if (handedness == Handedness.Right)
+                    else if (jointFollowerData.Value.handedness == Handedness.Right)
                     {
                         ProcessJointData(subsystem.rightHand);
                     }
@@ -160,16 +148,17 @@ namespace ubco.ovilab.HPUI.Tracking
         /// </summary>
         private void ProcessJointData(XRHand hand)
         {
-            XRHandJoint mainJoint = hand.GetJoint(jointID);
+            JointFollowerData jointFollowerDataValue = jointFollowerData.Value;
+            XRHandJoint mainJoint = hand.GetJoint(jointFollowerDataValue.jointID);
             bool mainPoseSuccess = mainJoint.TryGetPose(out Pose mainJointPose);
             bool mainRadiusSuccess = mainJoint.TryGetRadius(out float mainRadius);
 
             XRHandJoint secondJoint;
             bool secondPoseSuccess = false;
             Pose secondJointPose = default;
-            if (useSecondJointID)
+            if (jointFollowerDataValue.useSecondJointID)
             {
-                secondJoint = hand.GetJoint(secondJointID);
+                secondJoint = hand.GetJoint(jointFollowerDataValue.secondJointID);
                 secondPoseSuccess = secondJoint.TryGetPose(out secondJointPose);
             }
 
@@ -179,26 +168,26 @@ namespace ubco.ovilab.HPUI.Tracking
             }
             else if (cachedRadius == 0)
             {
-                cachedRadius = defaultJointRadius;
+                cachedRadius = jointFollowerDataValue.defaultJointRadius;
             }
 
-            if (mainPoseSuccess && (!useSecondJointID || secondPoseSuccess))
+            if (mainPoseSuccess && (!jointFollowerDataValue.useSecondJointID || secondPoseSuccess))
             {
                 Vector3 poseForward = mainJointPose.forward;
                 Vector3 jointPlaneOffset;
-                if (offsetAngle == 0 || offsetAsRatioToRadius == 0)
+                if (jointFollowerDataValue.offsetAngle == 0 || jointFollowerDataValue.offsetAsRatioToRadius == 0)
                 {
                     jointPlaneOffset = -mainJointPose.up;
                 }
                 else
                 {
-                    jointPlaneOffset = Quaternion.AngleAxis(offsetAngle, poseForward) * -mainJointPose.up;
+                    jointPlaneOffset = Quaternion.AngleAxis(jointFollowerDataValue.offsetAngle, poseForward) * -mainJointPose.up;
                 }
 
-                Vector3 jointLongitudianlOffset = secondPoseSuccess ? (secondJointPose.position - mainJointPose.position) * longitudinalOffset : poseForward * longitudinalOffset;
+                Vector3 jointLongitudianlOffset = secondPoseSuccess ? (secondJointPose.position - mainJointPose.position) * jointFollowerDataValue.longitudinalOffset : poseForward * jointFollowerDataValue.longitudinalOffset;
 
-                targetTransform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
-                targetTransform.position = mainJointPose.position + jointPlaneOffset * (cachedRadius * offsetAsRatioToRadius) + jointLongitudianlOffset;
+                TargetTransform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
+                TargetTransform.position = mainJointPose.position + jointPlaneOffset * (cachedRadius * jointFollowerDataValue.offsetAsRatioToRadius) + jointLongitudianlOffset;
             }
         }
     }
