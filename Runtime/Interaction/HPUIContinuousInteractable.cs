@@ -4,6 +4,7 @@ using ubco.ovilab.HPUI.Tracking;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -68,6 +69,10 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public override Transform GetAttachTransform(IXRInteractor interactor)
         {
+            if (interactor == null)
+            {
+                return this.transform;
+            }
             // NOTE: This also should allow the XRPokeFilter to work with ContinuousInteractable, I think!
             return GetDistance(interactor.GetAttachTransform(this).transform.position).collider.transform;
         }
@@ -182,6 +187,11 @@ namespace ubco.ovilab.HPUI.Interaction
             OnDisable();
             OnEnable();
 
+            XRPokeFilter pokeFilter = GetComponent<XRPokeFilter>();
+            if (pokeFilter != null)
+            {
+                pokeFilter.enabled = true;
+            }
             continuousSurfaceCreatedEvent?.Invoke(new HPUIContinuousSurfaceCreatedEventArgs(this));
         }
     }

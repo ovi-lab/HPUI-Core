@@ -3,10 +3,10 @@ This can be imported as a git package in Unity. The package is built to use [Uni
 
 ## Scene setup
 - Setup the Scene with an XR Origin & XR Interaction Manager (see documentation [XRI documentation for more details](https://docs.unity3d.com/Packages/com.unity.xr.interaction.toolkit@3.0/manual/general-setup.html#create-the-xr-origin-camera-rig-for-tracked-devices)).
-- Add the `HandJointData` in the scene.
 - Setup the `HPUIInteractor`
   - For each hand, add `hpuiinteractorright` and `HPUIInteractorLeft` prefabs to the scene.
 - Setup an HPUI Interactable. (TODO)
+  - HPUIInteractor is an extention of `XRPokeInteractor`. You would be able to use `XRPokeFilter` on any of the HPUI Interactables. Note that, with the `HPUIContinuousInteractable`, the associated `XRPokeFilter` needs to be enabled after the surface is created. By default, once the surface is created, it will enable any XRPokeFilter component on the same GameObject, right before `continuousSurfaceCreatedEvent` is invoked.
 
 ## Interactables
 TODO
