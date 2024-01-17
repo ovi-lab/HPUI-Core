@@ -8,8 +8,8 @@ namespace ubco.ovilab.HPUI.Interaction
     public enum HPUIGesture
     {
         None,
-        Tap, Gesture,
-        Custom // TODO: Custom gestures?
+        Tap, Gesture
+        // TODO: Custom gestures?
     }
 
     public enum HPUIGestureState
@@ -18,8 +18,39 @@ namespace ubco.ovilab.HPUI.Interaction
     }
 
     #region events classes
-    public class HPUIInteractionEvent: UnityEvent<HPUIInteractionEventArgs>
-    {}
+    public class HPUIInteractionEvent<T>: UnityEvent<T> where T: HPUIInteractionEventArgs
+    {
+        protected int eventsCount = 0;
+
+        /// <summary>
+        /// Get total number of listeners.
+        /// </summary>
+        public int GetAllEventsCount()
+        {
+            return eventsCount + GetPersistentEventCount();
+        }
+
+        /// <inheritdoc />
+	public new void AddListener(UnityAction<T> call)
+        {
+            base.AddListener(call);
+            eventsCount++;
+        }
+
+        /// <inheritdoc />
+	public new void RemoveListener(UnityAction<T> call)
+        {
+            base.RemoveListener(call);
+            eventsCount--;
+            RemoveAllListeners();
+        }
+
+        /// <inheritdoc />
+	public new void RemoveAllListeners()
+        {
+            eventsCount = 0;
+        }
+    }
 
     /// <summary>
     /// Event data associated with an gesture interaction on HPUI
@@ -59,7 +90,7 @@ namespace ubco.ovilab.HPUI.Interaction
     }
 
     [Serializable]
-    public class HPUITapEvent: UnityEvent<HPUITapEventArgs>
+    public class HPUITapEvent: HPUIInteractionEvent<HPUITapEventArgs>
     {}
 
     /// <summary>
@@ -69,7 +100,7 @@ namespace ubco.ovilab.HPUI.Interaction
     {}
 
     [Serializable]
-    public class HPUIGestureEvent: UnityEvent<HPUIGestureEventArgs>
+    public class HPUIGestureEvent: HPUIInteractionEvent<HPUIGestureEventArgs>
     {}
 
     /// <summary>

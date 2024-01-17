@@ -144,10 +144,10 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             switch (state) {
                 case HPUIGesture.Tap: {
-                    return TapEvent.GetPersistentEventCount() > 0;
+                    return TapEvent.GetAllEventsCount() > 0;
                 }
                 case HPUIGesture.Gesture: {
-                    return GestureEvent.GetPersistentEventCount() > 0;
+                    return GestureEvent.GetAllEventsCount() > 0;
                 }
                 default:
                     throw new InvalidOperationException($"Gesture state {state} is not handled by {typeof(HPUIBaseInteractable)}");

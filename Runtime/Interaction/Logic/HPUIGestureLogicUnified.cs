@@ -253,9 +253,8 @@ namespace ubco.ovilab.HPUI.Interaction
                         interactor.OnGesture(gestureEventArgs);
                     }
                     break;
-                case HPUIGesture.Custom:
-                    // TODO: custom gestures
-                    throw new NotImplementedException();
+                default:
+                    throw new InvalidOperationException("Unknown gesture.");
             }
 
             previousPosition = currentPosition;
