@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
@@ -7,7 +7,7 @@ namespace ubco.ovilab.HPUI.Tracking
     /// <summary>
     /// A component that makes the object follow a hand joint
     /// </summary>
-    public class JointFollower: MonoBehaviour
+    public class JointFollower: HandSubsystemSubscriber
     {
         [SerializeField]
         [Tooltip("Joint follower data to use for this Joint.")]
@@ -26,41 +26,9 @@ namespace ubco.ovilab.HPUI.Tracking
         public Transform TargetTransform { get => targetTransform; set => targetTransform = value; }
 
         private float cachedRadius = 0f;
-        private XRHandSubsystem handSubsystem;
 
         /// <inheritdoc />
-        protected void Update()
-        {
-            if (handSubsystem != null && handSubsystem.running)
-            {
-                return;
-            }
-
-            List<XRHandSubsystem> handSubsystems = new List<XRHandSubsystem>();
-            SubsystemManager.GetSubsystems(handSubsystems);
-            bool foundRunningHandSubsystem = false;
-            for (var i = 0; i < handSubsystems.Count; ++i)
-            {
-                XRHandSubsystem handSubsystem = handSubsystems[i];
-                if (handSubsystem.running)
-                {
-                    UnsubscribeHandSubsystem();
-                    this.handSubsystem = handSubsystem;
-                    foundRunningHandSubsystem = true;
-                    break;
-                }
-            }
-
-            if (!foundRunningHandSubsystem)
-            {
-                return;
-            }
-
-            SubscribeHandSubsystem();
-        }
-
-        /// <inheritdoc />
-        protected void OnEnable()
+        protected override void OnEnable()
         {
             if (TargetTransform == null)
             {
@@ -68,18 +36,6 @@ namespace ubco.ovilab.HPUI.Tracking
             }
 
             SubscribeHandSubsystem();
-        }
-
-        /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
-        /// </summary>
-        protected void OnDisable()
-        {
-            UnsubscribeHandSubsystem();
-            if (handSubsystem != null)
-            {
-                handSubsystem = null;
-            }
         }
 
         /// <summary>
@@ -94,29 +50,15 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <summary>
         /// Subscribe to events on the <see cref="XRHandSubsystem"/>
         /// </summary>
-        private void SubscribeHandSubsystem()
+        protected override void SubscribeHandSubsystem()
         {
-            if (handSubsystem == null)
-                return;
-
             if (jointFollowerData.Value == null)
             {
                 Debug.LogError($"jointFollowerData is not set. Not subscribgin to events");
                 return;
             }
 
-            handSubsystem.updatedHands += OnUpdatedHands;
-        }
-
-        /// <summary>
-        /// Unsubscribe from events on the <see cref="XRHandSubsystem"/>
-        /// </summary>
-        private void UnsubscribeHandSubsystem()
-        {
-            if (handSubsystem == null)
-                return;
-
-            handSubsystem.updatedHands -= OnUpdatedHands;
+            base.SubscribeHandSubsystem();
         }
 
         /// <summary>
@@ -127,33 +69,18 @@ namespace ubco.ovilab.HPUI.Tracking
             this.jointFollowerData.Value = jointFollowerData;
         }
 
-        private void OnUpdatedHands(XRHandSubsystem subsystem,
-                                    XRHandSubsystem.UpdateSuccessFlags updateSuccessFlags,
-                                    XRHandSubsystem.UpdateType updateType)
-        {
-            switch (updateType)
-            {
-                case XRHandSubsystem.UpdateType.Dynamic:
-                    // Update game logic that uses hand data
-                    break;
-                case XRHandSubsystem.UpdateType.BeforeRender:
-                    if (jointFollowerData.Value.handedness == Handedness.Left)
-                    {
-                        ProcessJointData(subsystem.leftHand);
-                    }
-                    else if (jointFollowerData.Value.handedness == Handedness.Right)
-                    {
-                        ProcessJointData(subsystem.rightHand);
-                    }
-                    break;
-            }
-        }
-
         /// <summary>
         /// Apply data recieved to the transform.
         /// </summary>
-        private void ProcessJointData(XRHand hand)
+        protected override void ProcessJointData(XRHandSubsystem subsystem)
         {
+            XRHand hand = jointFollowerData.Value.handedness switch
+            {
+                Handedness.Left => subsystem.leftHand,
+                Handedness.Right => subsystem.rightHand,
+                _ => throw new InvalidOperationException($"Handedness value in JointFollerData not valid (got {jointFollowerData.Value.handedness})")
+            };
+
             JointFollowerData jointFollowerDataValue = jointFollowerData.Value;
             XRHandJoint mainJoint = hand.GetJoint(jointFollowerDataValue.jointID);
             bool mainPoseSuccess = mainJoint.TryGetPose(out Pose mainJointPose);
