@@ -27,11 +27,18 @@ namespace ubco.ovilab.HPUI.Editor
         {
             base.OnInspectorGUI();
             GUI.enabled = EditorApplication.isPlaying;
-            if (GUILayout.Button("Run calibration"))
+            if (GUILayout.Button("Manual recompute"))
             {
                 foreach (Object t in targets)
                 {
-                    (t as HPUIContinuousInteractable)?.Configure();
+                    (t as HPUIContinuousInteractable)?.ManualRecompute();
+                }
+            }
+            if (GUILayout.Button("Automated recompute"))
+            {
+                foreach (Object t in targets)
+                {
+                    (t as HPUIContinuousInteractable)?.AutomatedRecompute();
                 }
             }
             GUI.enabled = true;

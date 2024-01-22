@@ -145,14 +145,25 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <summary>
-        /// Configure the continuous surface.
+        /// Manually compute the continuous surface. The hand posture
+        /// should be held such that all joints are flat when this is
+        /// being called.
         /// </summary>
-        public void Configure()
+        public void ManualRecompute()
         {
             colliders.Clear();
             ClearKeypointsCache();
             keypointsCache = SetupKeypoints();
             StartCoroutine(DelayedExecuteCalibration(x_size, y_size, keypointsCache));
+        }
+
+        /// <summary>
+        /// Restart the automated compuation procedure.
+        /// </summary>
+        public void AutomatedRecompute()
+        {
+            startedApproximatingJoints = false;
+            finishedApproximatingJoints = false;
         }
 
         /// <summary>
