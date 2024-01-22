@@ -108,28 +108,34 @@ namespace ubco.ovilab.HPUI.Tracking
             {
                 Pose xrOriginPose = new Pose(xrOriginTransform.position, xrOriginTransform.rotation);
                 mainJointPose = mainJointPose.GetTransformedBy(xrOriginPose);
-
-                Vector3 poseForward = mainJointPose.forward;
-                Vector3 jointPlaneOffset;
-                if (jointFollowerDataValue.offsetAngle == 0 || jointFollowerDataValue.offsetAsRatioToRadius == 0)
-                {
-                    jointPlaneOffset = -mainJointPose.up;
-                }
-                else
-                {
-                    jointPlaneOffset = Quaternion.AngleAxis(jointFollowerDataValue.offsetAngle, poseForward) * -mainJointPose.up;
-                }
-
                 if (secondPoseSuccess)
                 {
                     secondJointPose = secondJointPose.GetTransformedBy(xrOriginPose);
                 }
 
-                Vector3 jointLongitudianlOffset = secondPoseSuccess ? (secondJointPose.position - mainJointPose.position) * jointFollowerDataValue.longitudinalOffset : poseForward * jointFollowerDataValue.longitudinalOffset;
-
-                TargetTransform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
-                TargetTransform.position = mainJointPose.position + jointPlaneOffset * (cachedRadius * jointFollowerDataValue.offsetAsRatioToRadius) + jointLongitudianlOffset;
+                SetPose(mainJointPose, secondJointPose, secondPoseSuccess);
             }
+        }
+
+        internal void SetPose(Pose mainJointPose, Pose secondJointPose, bool secondPoseSuccess)
+        {
+            JointFollowerData jointFollowerDataValue = jointFollowerData.Value;
+
+            Vector3 poseForward = mainJointPose.forward;
+            Vector3 jointPlaneOffset;
+            if (jointFollowerDataValue.offsetAngle == 0 || jointFollowerDataValue.offsetAsRatioToRadius == 0)
+            {
+                jointPlaneOffset = -mainJointPose.up;
+            }
+            else
+            {
+                jointPlaneOffset = Quaternion.AngleAxis(jointFollowerDataValue.offsetAngle, poseForward) * -mainJointPose.up;
+            }
+
+            Vector3 jointLongitudianlOffset = secondPoseSuccess ? (secondJointPose.position - mainJointPose.position) * jointFollowerDataValue.longitudinalOffset : poseForward * jointFollowerDataValue.longitudinalOffset;
+
+            TargetTransform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
+            TargetTransform.position = mainJointPose.position + jointPlaneOffset * (cachedRadius * jointFollowerDataValue.offsetAsRatioToRadius) + jointLongitudianlOffset;
         }
     }
 }

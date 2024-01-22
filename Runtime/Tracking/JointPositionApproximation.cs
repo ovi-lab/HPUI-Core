@@ -8,6 +8,29 @@ namespace ubco.ovilab.HPUI.Tracking
 {
     public class JointPositionApproximation: HandSubsystemSubscriber
     {
+        private static JointPositionApproximation leftJointPositionApproximation, rightJointPositionApproximation;
+        public static JointPositionApproximation LeftJointPositionApproximation {
+            get
+            {
+                if (leftJointPositionApproximation == null)
+                {
+                    leftJointPositionApproximation = InstantiateObj(Handedness.Left);
+                }
+                return leftJointPositionApproximation;
+            }
+        }
+
+        public static JointPositionApproximation RightJointPositionApproximation {
+            get
+            {
+                if (rightJointPositionApproximation == null)
+                {
+                    rightJointPositionApproximation = InstantiateObj(Handedness.Right);
+                }
+                return rightJointPositionApproximation;
+            }
+        }
+
         private const int windowSize = 10;
         private const float maeThreshold = 0.003f; // 3mm
         private List<XRHandJointID> computeKeypointsJoints = new List<XRHandJointID>()
@@ -17,7 +40,7 @@ namespace ubco.ovilab.HPUI.Tracking
         private Handedness handedness; // TODO make this work for both hands
         private Dictionary<XRHandJointID, (float mean, float mae, bool stable)> jointsLengthEsitmation = new Dictionary<XRHandJointID, (float, float, bool)>();
         private Dictionary<XRHandJointID, Queue<float>> jointsLastLengths = new Dictionary<XRHandJointID, Queue<float>>();
-        private Dictionary<XRHandJointID, (Queue<Vector3> positions, bool stable)> computeKeypointJointsData = new Dictionary<XRHandJointID, (Queue<Vector3> poses, bool stable)>();
+        private Dictionary<XRHandJointID, (Queue<Vector3> positions, Vector3 position, bool stable)> computeKeypointJointsData = new Dictionary<XRHandJointID, (Queue<Vector3> poses, Vector3 position, bool stable)>();
         private Pose lastWristPose;
         private bool recievedLastWristPose = false;
 
@@ -36,7 +59,7 @@ namespace ubco.ovilab.HPUI.Tracking
             // Compute the distances of the joints
             foreach (XRHandFingerID fingerID in Enum.GetValues(typeof(XRHandFingerID)))
             {
-                for(var i = fingerID.GetFrontJointID().ToIndex(); // intermedial
+                for(var i = fingerID.GetFrontJointID().ToIndex() + 2; // intermedial
                     i <= fingerID.GetBackJointID().ToIndex();  // to tip
                     i++)
                 {
@@ -53,11 +76,11 @@ namespace ubco.ovilab.HPUI.Tracking
                         continue;
                     }
 
-                    XRHandJointID parentJointID = XRHandJointIDUtility.FromIndex(i + 1);
+                    XRHandJointID parentJointID = XRHandJointIDUtility.FromIndex(i - 1);
                     XRHandJoint joint = hand.GetJoint(jointID);
                     XRHandJoint parentJoint = hand.GetJoint(parentJointID);
 
-                    if (joint.TryGetPose(out Pose jointPose) && joint.TryGetPose(out Pose parentJointPose))
+                    if (joint.TryGetPose(out Pose jointPose) && parentJoint.TryGetPose(out Pose parentJointPose))
                     {
                         if (!jointsLastLengths.TryGetValue(jointID, out Queue<float> jointLastLengths))
                         {
@@ -80,10 +103,7 @@ namespace ubco.ovilab.HPUI.Tracking
                         float mean = jointLastLengths.Average();
                         float mae = jointLastLengths.Sum(v => Mathf.Abs(v - mean)) / jointLastLengths.Count;
 
-                        if (!jointsLengthEsitmation.ContainsKey(jointID))
-                        {
-                            jointsLengthEsitmation.Add(jointID, (mean, mae, jointLastLengths.Count == windowSize ? mae < maeThreshold : false));
-                        }
+                        jointsLengthEsitmation[jointID] = (mean, mae, jointLastLengths.Count == windowSize ? mae < maeThreshold : false);
                     }
                 }
             }
@@ -92,15 +112,14 @@ namespace ubco.ovilab.HPUI.Tracking
             if (hand.GetJoint(XRHandJointID.Wrist).TryGetPose(out lastWristPose))
             {
                 recievedLastWristPose = true;
-                Matrix4x4 wristWorldToLocalMatrix = Matrix4x4.TRS(lastWristPose.position, lastWristPose.rotation, Vector3.one).inverse;
 
                 foreach (XRHandJointID jointID in computeKeypointsJoints)
                 {
                     if (hand.GetJoint(jointID).TryGetPose(out Pose jointPose))
                     {
-                        if (!computeKeypointJointsData.TryGetValue(jointID, out (Queue<Vector3> positions, bool stable) data))
+                        if (!computeKeypointJointsData.TryGetValue(jointID, out (Queue<Vector3> positions, Vector3 position, bool stable) data))
                         {
-                            data = (new Queue<Vector3>(), false);
+                            data = (new Queue<Vector3>(), Vector3.zero, false);
                             computeKeypointJointsData.Add(jointID, data);
                         }
 
@@ -109,14 +128,13 @@ namespace ubco.ovilab.HPUI.Tracking
                             continue;
                         }
 
-                        Vector3 localPosition = wristWorldToLocalMatrix.MultiplyPoint3x4(jointPose.position);
-
                         if (data.positions.Count == windowSize)
                         {
                             data.positions.Dequeue();
                         }
 
-                        data.positions.Enqueue(localPosition);
+                        data.positions.Enqueue(jointPose.GetTransformedBy(lastWristPose).position);
+                        data.position = jointPose.position;
                         if (data.positions.Count == windowSize)
                         {
                             float mae = data.positions.Skip(1).Zip(data.positions.SkipLast(1), (p1, p2) => (p1 - p2).magnitude).Sum() / data.positions.Count;
@@ -132,46 +150,54 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
-        public bool TryComputePoseForKeyPoints(List<XRHandJointID> keypoints, out Dictionary<XRHandJointID, Pose> keypointPoses, Handedness handedness)
+        public bool TryComputePoseForKeyPoints(List<XRHandJointID> keypoints, out Dictionary<XRHandJointID, Pose> keypointPoses)
         {
-            if (handedness != this.handedness)
+            keypointPoses = null;
+
+            // Was just initiated
+            if (jointsLengthEsitmation.Count == 0)
             {
-                throw new InvalidOperationException("`handedness` is not the one expected.");
+                return false;
             }
+
             // Checking of all joints
             // FIXME: Optimization - Avoid computing for all joints if not necessary
             bool jointLengthsStable = jointsLengthEsitmation.All(kvp => kvp.Value.stable);
             bool computeKeypointsStable = computeKeypointJointsData.All(kvp => kvp.Value.stable);
-            keypointPoses = new Dictionary<XRHandJointID, Pose>();
 
             if (!jointLengthsStable || !computeKeypointsStable || !recievedLastWristPose)
             {
                 return false;
             }
 
-            Vector3 forward = computeKeypointJointsData[XRHandJointID.MiddleProximal].positions.Last();
+            keypointPoses = new Dictionary<XRHandJointID, Pose>();
+
+            Pose xrOriginPose = new Pose(xrOriginTransform.position, xrOriginTransform.rotation);
+            lastWristPose = lastWristPose.GetTransformedBy(xrOriginPose);
+
+            Vector3 forward = xrOriginTransform.TransformPoint(computeKeypointJointsData[XRHandJointID.MiddleProximal].position) - lastWristPose.position;
 
             // The assumption here is the plane formed by the ring & middle proximal with the wrist would the plane of the hand when held out flat.
             // This is used to compute the up vector to get the rotation.
             (XRHandJointID pivot, XRHandJointID other) pointsForUp = handedness switch
             {
-                Handedness.Left => (XRHandJointID.MiddleProximal, XRHandJointID.RingProximal),
-                Handedness.Right => (XRHandJointID.RingProximal, XRHandJointID.MiddleProximal),
+                Handedness.Right => (XRHandJointID.MiddleProximal, XRHandJointID.RingProximal),
+                Handedness.Left => (XRHandJointID.RingProximal, XRHandJointID.MiddleProximal),
                 _ => throw new InvalidOperationException("`handedness` is invalid.")
             };
 
-            Vector3 pivot = computeKeypointJointsData[pointsForUp.pivot].positions.Last();
-            Vector3 up = Vector3.Cross(computeKeypointJointsData[pointsForUp.other].positions.Last() - pivot, - pivot);
+            Vector3 pivot = xrOriginTransform.TransformPoint(computeKeypointJointsData[pointsForUp.pivot].position);
+            Vector3 up = Vector3.Cross(xrOriginTransform.TransformPoint(computeKeypointJointsData[pointsForUp.other].position) - pivot, lastWristPose.position - pivot);
 
-            // up & forward in wrist local space
-            Matrix4x4 wristLocalToWorldMatrix = Matrix4x4.TRS(lastWristPose.position, lastWristPose.rotation, Vector3.one);
-
-            forward = wristLocalToWorldMatrix.MultiplyVector(forward);
-            up = wristLocalToWorldMatrix.MultiplyVector(up);
             Quaternion rotation = Quaternion.LookRotation(forward, up);
 
             foreach (XRHandFingerID fingerID in Enum.GetValues(typeof(XRHandFingerID)))
             {
+                if (fingerID == XRHandFingerID.Thumb)
+                {
+                    continue;
+                }
+
                 Vector3? currentPos = null;
                 for (var i = fingerID.GetFrontJointID().ToIndex() + 1; // proximal
                     i <= fingerID.GetBackJointID().ToIndex();  // until tip
@@ -181,7 +207,7 @@ namespace ubco.ovilab.HPUI.Tracking
                     // If this is null, the jointID is that of the proximal
                     if (currentPos == null)
                     {
-                        currentPos = wristLocalToWorldMatrix.MultiplyPoint3x4(computeKeypointJointsData[jointID].positions.Last());
+                        currentPos = xrOriginTransform.TransformPoint(computeKeypointJointsData[jointID].position);
                     }
                     else
                     {
@@ -196,6 +222,14 @@ namespace ubco.ovilab.HPUI.Tracking
             }
 
             return true;
+        }
+
+        private static JointPositionApproximation InstantiateObj(Handedness handedness)
+        {
+            GameObject obj = new GameObject($"JointPositionApproximation_{handedness}");
+            JointPositionApproximation jointPositionApproximation = obj.AddComponent<JointPositionApproximation>();
+            jointPositionApproximation.handedness = handedness;
+            return jointPositionApproximation;
         }
     }
 }
