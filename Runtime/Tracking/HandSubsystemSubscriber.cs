@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
@@ -10,6 +11,7 @@ namespace ubco.ovilab.HPUI.Tracking
     public abstract class HandSubsystemSubscriber: MonoBehaviour
     {
         private XRHandSubsystem handSubsystem;
+        protected Transform xrOriginTransform;
 
         /// <inheritdoc />
         protected virtual void Update()
@@ -45,6 +47,11 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <inheritdoc />
         protected virtual void OnEnable()
         {
+            if (xrOriginTransform == null)
+            {
+                xrOriginTransform = FindObjectOfType<XROrigin>().transform;
+            }
+
             SubscribeHandSubsystem();
         }
 

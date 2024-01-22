@@ -35,7 +35,7 @@ namespace ubco.ovilab.HPUI.Tracking
                 TargetTransform = transform;
             }
 
-            SubscribeHandSubsystem();
+            base.OnEnable();
         }
 
         /// <summary>
@@ -106,6 +106,9 @@ namespace ubco.ovilab.HPUI.Tracking
 
             if (mainPoseSuccess && (!jointFollowerDataValue.useSecondJointID || secondPoseSuccess))
             {
+                Pose xrOriginPose = new Pose(xrOriginTransform.position, xrOriginTransform.rotation);
+                mainJointPose = mainJointPose.GetTransformedBy(xrOriginPose);
+
                 Vector3 poseForward = mainJointPose.forward;
                 Vector3 jointPlaneOffset;
                 if (jointFollowerDataValue.offsetAngle == 0 || jointFollowerDataValue.offsetAsRatioToRadius == 0)
@@ -115,6 +118,11 @@ namespace ubco.ovilab.HPUI.Tracking
                 else
                 {
                     jointPlaneOffset = Quaternion.AngleAxis(jointFollowerDataValue.offsetAngle, poseForward) * -mainJointPose.up;
+                }
+
+                if (secondPoseSuccess)
+                {
+                    secondJointPose = secondJointPose.GetTransformedBy(xrOriginPose);
                 }
 
                 Vector3 jointLongitudianlOffset = secondPoseSuccess ? (secondJointPose.position - mainJointPose.position) * jointFollowerDataValue.longitudinalOffset : poseForward * jointFollowerDataValue.longitudinalOffset;
