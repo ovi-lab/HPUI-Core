@@ -91,10 +91,10 @@ namespace ubco.ovilab.HPUI.Interaction
 
             HPUIContinuousInteractable continuousInteractable = GetComponentInParent<HPUIContinuousInteractable>();
 
-            maxY = vertices_native.Length - continuousInteractable.x_divisions;
-            maxX = continuousInteractable.x_divisions;
+            maxY = vertices_native.Length - continuousInteractable.X_divisions;
+            maxX = continuousInteractable.X_divisions;
 
-            List<Collider> colliders = GenerateColliders(vertices, normals, collidersRootTransform, continuousInteractable.x_divisions, continuousInteractable.y_divisions);
+            List<Collider> colliders = GenerateColliders(vertices, normals, collidersRootTransform, continuousInteractable.X_divisions, continuousInteractable.Y_divisions);
 
             generatedColliders = true;
             return colliders;

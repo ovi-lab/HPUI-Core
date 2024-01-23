@@ -21,22 +21,22 @@ namespace ubco.ovilab.HPUI.Interaction
         //TODO: make following configs an asset
         [Space()]
         [Header("Continuous surface configuration")]
-        [Tooltip("The size along the abduction-adduction axis of the fingers (x-axis of joints).")]
-        public float x_size;
-        [Tooltip("The size along the flexion-extension axis of the fingers (z-axis of joints).")]
-        public float y_size;
+        [Tooltip("The size along the abduction-adduction axis of the fingers (x-axis of joints) in unity units")]
+        [SerializeField] private float x_size;
+        [Tooltip("The size along the flexion-extension axis of the fingers (z-axis of joints) in unity units.")]
+        [SerializeField] private float y_size;
         [Tooltip("The number of subdivisions along the flexion-extension axis of the fingers. The subdivisions along the abduction-adduction axis will be computed from this such that the resulting subdivisions are squares.")]
-	public int y_divisions = 35;
+	[SerializeField] private int y_divisions = 35;
         [Tooltip("Offset from the center of the joints (as reported by XRHands) towards the palmer side of the hand.")]
-	public float offset = 0.0005f;
+	[SerializeField] private float offset = 0.0005f;
         [Tooltip("The number of bones to use per vertex in the SkinnedMeshRenderer.")]
-        public byte numberOfBonesPerVertex = 3;
+        [SerializeField] private byte numberOfBonesPerVertex = 3;
         [Tooltip("The joints that will be used for the SkinnedMeshRenderer.")]
-        public List<XRHandJointID> keypointJoints;
+        [SerializeField] private List<XRHandJointID> keypointJoints;
         [Tooltip("(Optional) The default material to use for the surface.")]
-        public Material defaultMaterial;
+        [SerializeField] private Material defaultMaterial;
         [Tooltip("(Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.")]
-	public MeshFilter filter;
+	[SerializeField] private MeshFilter filter;
         [Tooltip("(Optional) Will be used to provide feedback during setup.")]
         [SerializeField] private HPUIContinuousInteractableUI ui;
 
@@ -58,7 +58,57 @@ namespace ubco.ovilab.HPUI.Interaction
             set => continuousSurfaceCreatedEvent = value;
         }
 
-        public int x_divisions { get; private set; }
+        /// <summary>
+        /// The size along the abduction-adduction axis of the fingers (x-axis of joints) in unity units.
+        /// </summary>
+        public float X_size { get => x_size; set => x_size = value; }
+
+        /// <summary>
+        /// The size along the flexion-extension axis of the fingers (z-axis of joints) in unity units.
+        /// </summary>
+        public float Y_size { get => y_size; set => y_size = value; }
+
+        /// <summary>
+        /// The number of subdivisions along the abduction-adduction
+        /// axis of the fingers. This is computed be computed from the
+        /// <see cref="Y_divisions"/> such that the resulting subdivisions
+        /// are squares.
+        /// </summary>
+        public int X_divisions { get; private set; }
+
+        /// <summary>
+        /// The number of subdivisions along the flexion-extension
+        /// axis of the fingers. The subdivisions along the
+        /// abduction-adduction axis will be computed from this such
+        /// that the resulting subdivisions are squares.
+        /// </summary>
+        public int Y_divisions { get => y_divisions; set => y_divisions = value; }
+
+        /// <summary>
+        /// Offset from the center of the joints (as reported by XRHands) towards the palmer side of the hand.
+        /// </summary>
+        public float Offset { get => offset; set => offset = value; }
+
+        /// <summary>
+        /// The number of bones to use per vertex in the SkinnedMeshRenderer.
+        /// </summary>
+        public byte NumberOfBonesPerVertex { get => numberOfBonesPerVertex; set => numberOfBonesPerVertex = value; }
+
+        /// <summary>
+        /// The joints that will be used for the SkinnedMeshRenderer.
+        /// </summary>
+        public List<XRHandJointID> KeypointJoints { get => keypointJoints; set => keypointJoints = value; }
+
+        /// <summary>
+        /// (Optional) The default material to use for the surface.
+        /// </summary>
+        public Material DefaultMaterial { get => defaultMaterial; set => defaultMaterial = value; }
+
+        /// <summary>
+        /// (Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.
+        /// </summary>
+        public MeshFilter Filter { get => filter; set => filter = value; }
+
         private List<Transform> keypointsCache;
         private DeformableSurfaceCollidersManager surfaceCollidersManager;
         private GameObject collidersRoot;
@@ -107,7 +157,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private List<Transform> SetupKeypoints()
         {
             List<Transform> keypointTransforms = new List<Transform>();
-            foreach (XRHandJointID jointID in keypointJoints)
+            foreach (XRHandJointID jointID in KeypointJoints)
             {
                 GameObject obj = new GameObject($"{Handedness}_{jointID}");
                 JointFollower jointFollower = obj.AddComponent<JointFollower>();
@@ -118,11 +168,11 @@ namespace ubco.ovilab.HPUI.Interaction
                 keypointTransforms.Add(keypoint);
             }
 
-            if (filter == null)
+            if (Filter == null)
             {
                 GameObject skinNode = new GameObject("SkinNode");
                 skinNode.transform.parent = this.transform;
-                filter = skinNode.AddComponent<MeshFilter>();
+                Filter = skinNode.AddComponent<MeshFilter>();
                 skinNode.transform.localPosition = Vector3.zero;
                 skinNode.transform.localRotation = Quaternion.identity;
             }
@@ -157,7 +207,7 @@ namespace ubco.ovilab.HPUI.Interaction
             colliders.Clear();
             ClearKeypointsCache();
             keypointsCache = SetupKeypoints();
-            StartCoroutine(DelayedExecuteCalibration(x_size, y_size, keypointsCache));
+            StartCoroutine(DelayedExecuteCalibration(X_size, y_size, keypointsCache));
         }
 
         /// <summary>
@@ -183,9 +233,9 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         private void ExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
         {
-            if (filter.mesh != null)
+            if (Filter.mesh != null)
             {
-                Destroy(filter.mesh);
+                Destroy(Filter.mesh);
             }
 
             if (collidersRoot != null)
@@ -193,14 +243,14 @@ namespace ubco.ovilab.HPUI.Interaction
                 Destroy(collidersRoot);
             }
 
-            float step_size = y_size / y_divisions;
-	    x_divisions = (int)(x_size / step_size);
+            float step_size = y_size / Y_divisions;
+	    X_divisions = (int)(x_size / step_size);
 
-            DeformableSurface.GenerateMesh(x_size, y_size, x_divisions, y_divisions, offset, filter, keypoints, numberOfBonesPerVertex);
+            DeformableSurface.GenerateMesh(x_size, y_size, X_divisions, Y_divisions, Offset, Filter, keypoints, NumberOfBonesPerVertex);
 
-            if (defaultMaterial != null)
+            if (DefaultMaterial != null)
             {
-                filter.GetComponent<Renderer>().material = defaultMaterial;
+                Filter.GetComponent<Renderer>().material = DefaultMaterial;
             }
 
             collidersRoot = new GameObject("CollidersRoot");
@@ -208,10 +258,10 @@ namespace ubco.ovilab.HPUI.Interaction
             collidersRoot.transform.localPosition = Vector3.zero;
             collidersRoot.transform.localRotation = Quaternion.identity;
 
-            surfaceCollidersManager = filter.GetComponent<DeformableSurfaceCollidersManager>();
+            surfaceCollidersManager = Filter.GetComponent<DeformableSurfaceCollidersManager>();
             if (surfaceCollidersManager == null)
             {
-                surfaceCollidersManager = filter.gameObject.AddComponent<DeformableSurfaceCollidersManager>();
+                surfaceCollidersManager = Filter.gameObject.AddComponent<DeformableSurfaceCollidersManager>();
             }
 
             List<Collider> generatedColliders = surfaceCollidersManager.SetupColliders(collidersRoot.transform);
@@ -257,7 +307,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 };
             }
 
-            var keypointsUsed = keypointJoints.Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
+            IEnumerable<XRHandJointID> keypointsUsed = KeypointJoints.Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
             if (jointFollower.JointFollowerDatumProperty.Value.useSecondJointID)
             {
                 keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);
@@ -267,6 +317,7 @@ namespace ubco.ovilab.HPUI.Interaction
                                                                       out Dictionary<XRHandJointID, Pose> keypointPoses,
                                                                       out float percentageDone))
             {
+                ui?.Hide();
                 keypointsCache = SetupKeypoints();
 
                 foreach (Transform t in keypointsCache)
@@ -303,7 +354,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 Debug.Log(newPose2.ToString("F4") + "  " + useSecondJointID);
                 jointFollower.SetPose(newPose1, newPose2, useSecondJointID);
 
-                ExecuteCalibration(x_size, y_size, keypointsCache);
+                ExecuteCalibration(X_size, y_size, keypointsCache);
 
                 foreach (Transform t in keypointsCache)
                 {
