@@ -40,7 +40,7 @@ namespace ubco.ovilab.HPUI.Tracking
         private Handedness handedness; // TODO make this work for both hands
         private Dictionary<XRHandJointID, (float mean, float mae, bool stable)> jointsLengthEsitmation = new Dictionary<XRHandJointID, (float, float, bool)>();
         private Dictionary<XRHandJointID, Queue<float>> jointsLastLengths = new Dictionary<XRHandJointID, Queue<float>>();
-        private Dictionary<XRHandJointID, (Queue<Vector3> positions, Vector3 position, bool stable)> computeKeypointJointsData = new Dictionary<XRHandJointID, (Queue<Vector3> poses, Vector3 position, bool stable)>();
+        private Dictionary<XRHandJointID, (Queue<Vector3> positions, Pose pose, bool stable)> computeKeypointJointsData = new Dictionary<XRHandJointID, (Queue<Vector3> poses, Pose pose, bool stable)>();
         private Pose lastWristPose;
         private bool recievedLastWristPose = false;
 
@@ -117,9 +117,9 @@ namespace ubco.ovilab.HPUI.Tracking
                 {
                     if (hand.GetJoint(jointID).TryGetPose(out Pose jointPose))
                     {
-                        if (!computeKeypointJointsData.TryGetValue(jointID, out (Queue<Vector3> positions, Vector3 position, bool stable) data))
+                        if (!computeKeypointJointsData.TryGetValue(jointID, out (Queue<Vector3> positions, Pose pose, bool stable) data))
                         {
-                            data = (new Queue<Vector3>(), Vector3.zero, false);
+                            data = (new Queue<Vector3>(), Pose.identity, false);
                             computeKeypointJointsData.Add(jointID, data);
                         }
 
@@ -134,7 +134,7 @@ namespace ubco.ovilab.HPUI.Tracking
                         }
 
                         data.positions.Enqueue(jointPose.GetTransformedBy(lastWristPose).position);
-                        data.position = jointPose.position;
+                        data.pose = jointPose;
                         if (data.positions.Count == windowSize)
                         {
                             float mae = data.positions.Skip(1).Zip(data.positions.SkipLast(1), (p1, p2) => (p1 - p2).magnitude).Sum() / data.positions.Count;
@@ -177,19 +177,8 @@ namespace ubco.ovilab.HPUI.Tracking
             Pose xrOriginPose = new Pose(xrOriginTransform.position, xrOriginTransform.rotation);
             lastWristPose = lastWristPose.GetTransformedBy(xrOriginPose);
 
-            Vector3 forward = xrOriginTransform.TransformPoint(computeKeypointJointsData[XRHandJointID.MiddleProximal].position) - lastWristPose.position;
-
-            // The assumption here is the plane formed by the ring & middle proximal with the wrist would the plane of the hand when held out flat.
-            // This is used to compute the up vector to get the rotation.
-            (XRHandJointID pivot, XRHandJointID other) pointsForUp = handedness switch
-            {
-                Handedness.Right => (XRHandJointID.MiddleProximal, XRHandJointID.RingProximal),
-                Handedness.Left => (XRHandJointID.RingProximal, XRHandJointID.MiddleProximal),
-                _ => throw new InvalidOperationException("`handedness` is invalid.")
-            };
-
-            Vector3 pivot = xrOriginTransform.TransformPoint(computeKeypointJointsData[pointsForUp.pivot].position);
-            Vector3 up = Vector3.Cross(xrOriginTransform.TransformPoint(computeKeypointJointsData[pointsForUp.other].position) - pivot, lastWristPose.position - pivot);
+            Vector3 forward = xrOriginTransform.TransformDirection(computeKeypointJointsData[XRHandJointID.MiddleProximal].pose.forward);
+            Vector3 up = xrOriginTransform.TransformDirection(computeKeypointJointsData[XRHandJointID.MiddleProximal].pose.up);
 
             Quaternion rotation = Quaternion.LookRotation(forward, up);
 
@@ -209,7 +198,7 @@ namespace ubco.ovilab.HPUI.Tracking
                     // If this is null, the jointID is that of the proximal
                     if (currentPos == null)
                     {
-                        currentPos = xrOriginTransform.TransformPoint(computeKeypointJointsData[jointID].position);
+                        currentPos = xrOriginTransform.TransformPoint(computeKeypointJointsData[jointID].pose.position);
                     }
                     else
                     {
