@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using ubco.ovilab.HPUI.Tracking;
+using ubco.ovilab.HPUI.UI;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -36,6 +37,8 @@ namespace ubco.ovilab.HPUI.Interaction
         public Material defaultMaterial;
         [Tooltip("(Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.")]
 	public MeshFilter filter;
+        [Tooltip("(Optional) Will be used to provide feedback during setup.")]
+        [SerializeField] public HPUIContinuousInteractableUI ui;
 
         /// <inheritdoc />
         public override Vector2 boundsMax { get => surfaceCollidersManager?.boundsMax ?? Vector2.zero; }
@@ -260,7 +263,8 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
             if (jointPositionApproximation.TryComputePoseForKeyPoints(keypointsUsed.ToList(),
-                                                                      out Dictionary<XRHandJointID, Pose> keypointPoses))
+                                                                      out Dictionary<XRHandJointID, Pose> keypointPoses,
+                                                                      out float percentageDone))
             {
                 keypointsCache = SetupKeypoints();
 
@@ -306,6 +310,10 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
                 jointFollower.enabled = true;
                 finishedApproximatingJoints = true;
+            }
+            else
+            {
+                // TODO: display progress
             }
         }
     }

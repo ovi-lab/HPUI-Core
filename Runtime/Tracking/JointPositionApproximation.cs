@@ -150,9 +150,10 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
-        public bool TryComputePoseForKeyPoints(List<XRHandJointID> keypoints, out Dictionary<XRHandJointID, Pose> keypointPoses)
+        public bool TryComputePoseForKeyPoints(List<XRHandJointID> keypoints, out Dictionary<XRHandJointID, Pose> keypointPoses, out float percentageDone)
         {
             keypointPoses = null;
+            percentageDone = 0;
 
             // Was just initiated
             if (jointsLengthEsitmation.Count == 0)
@@ -162,10 +163,11 @@ namespace ubco.ovilab.HPUI.Tracking
 
             // Checking of all joints
             // FIXME: Optimization - Avoid computing for all joints if not necessary
-            bool jointLengthsStable = jointsLengthEsitmation.All(kvp => kvp.Value.stable);
-            bool computeKeypointsStable = computeKeypointJointsData.All(kvp => kvp.Value.stable);
+            float jointLengthsStableRatio = (float)jointsLengthEsitmation.Where(kvp => kvp.Value.stable).Count() / (float)windowSize;
+            float computeKeypointsStableRatio = (float)computeKeypointJointsData.Where(kvp => kvp.Value.stable).Count() / (float)windowSize;
 
-            if (!jointLengthsStable || !computeKeypointsStable || !recievedLastWristPose)
+            percentageDone = (jointLengthsStableRatio + computeKeypointsStableRatio) * 0.5f;
+            if (jointLengthsStableRatio == 1 || computeKeypointsStableRatio == 1 || !recievedLastWristPose)
             {
                 return false;
             }
