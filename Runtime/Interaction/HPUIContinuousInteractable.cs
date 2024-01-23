@@ -38,7 +38,7 @@ namespace ubco.ovilab.HPUI.Interaction
         [Tooltip("(Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.")]
 	public MeshFilter filter;
         [Tooltip("(Optional) Will be used to provide feedback during setup.")]
-        [SerializeField] public HPUIContinuousInteractableUI ui;
+        [SerializeField] private HPUIContinuousInteractableUI ui;
 
         /// <inheritdoc />
         public override Vector2 boundsMax { get => surfaceCollidersManager?.boundsMax ?? Vector2.zero; }
@@ -244,6 +244,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliders.Clear();
                 ClearKeypointsCache();
                 startedApproximatingJoints = true;
+                ui?.Show();
             }
 
             if (jointPositionApproximation == null)
@@ -313,7 +314,18 @@ namespace ubco.ovilab.HPUI.Interaction
             }
             else
             {
-                // TODO: display progress
+                if (ui != null)
+                {
+                    ui.TextMessage = "Processing hand pose";
+                    if (percentageDone > 1)
+                    {
+                        ui.InProgress();
+                    }
+                    else
+                    {
+                        ui.SetProgress(percentageDone);
+                    }
+                }
             }
         }
     }

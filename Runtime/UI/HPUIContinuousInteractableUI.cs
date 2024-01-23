@@ -2,20 +2,23 @@ using ubco.ovilab.HPUI.Tracking;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Hands;
+using TMPro;
 
 namespace ubco.ovilab.HPUI.UI
 {
     public class HPUIContinuousInteractableUI : MonoBehaviour
     {
-        private const string UIPrefab = "Packages/ubc.ok.ovilab.hpui-core/Runtime/Prefabs/HPUIContinousUI.prefab";
         [SerializeField] private JointFollower jointFollower;
         [SerializeField] private Transform UIRoot;
         [SerializeField] private Image progressBarImage;
-        [SerializeField] private Image inProgressImage;
-        [SerializeField] private Text textMessage;
+        [SerializeField] private Transform inProgressObj;
+        [SerializeField] private TMP_Text textMessage;
 
         private bool usingInProgress = false;
 
+        /// <summary>
+        /// Above which hand is the UI expected to show?
+        /// </summary>
         public Handedness Handedness
         {
             get => jointFollower?.JointFollowerDatumProperty.Value.handedness ?? Handedness.Invalid;
@@ -27,7 +30,12 @@ namespace ubco.ovilab.HPUI.UI
             }
         }
 
-        public string TextMessage {
+        /// <summary>
+        /// The text message to display.
+        /// </summary>
+        public string TextMessage
+        {
+            get => textMessage.text;
             set => textMessage.text = value;
         }
 
@@ -39,7 +47,7 @@ namespace ubco.ovilab.HPUI.UI
         {
             usingInProgress = false;
             progressBarImage.transform.parent.gameObject.SetActive(true);
-            inProgressImage.transform.parent.gameObject.SetActive(false);
+            inProgressObj.gameObject.SetActive(false);
             progressBarImage.fillAmount = progress;
         }
 
@@ -51,7 +59,7 @@ namespace ubco.ovilab.HPUI.UI
         {
             usingInProgress = true;
             progressBarImage.transform.parent.gameObject.SetActive(false);
-            inProgressImage.transform.parent.gameObject.SetActive(true);
+            inProgressObj.gameObject.SetActive(true);
         }
 
         /// <inheritdoc />
@@ -60,18 +68,24 @@ namespace ubco.ovilab.HPUI.UI
             if (usingInProgress)
             {
                 // Full rotation every 3 seconds.
-                inProgressImage.fillAmount = Time.time / 3;
+                inProgressObj.Rotate(0, (Time.time % 3) / 3 * 360, 0);
             }
 
             UIRoot.localPosition = transform.position + Vector3.up * 0.1f;
             UIRoot.LookAt(Camera.main.transform);
         }
 
+        /// <summary>
+        /// Show the UI
+        /// </summary>
         public void Show()
         {
             gameObject.SetActive(true);
         }
 
+        /// <summary>
+        /// Hide the UI
+        /// </summary>
         public void Hide()
         {
             gameObject.SetActive(false);
