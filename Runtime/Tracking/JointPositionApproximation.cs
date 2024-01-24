@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI.Tracking
@@ -31,7 +32,7 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
-        private const int windowSize = 10;
+        private const int windowSize = 100;
         private const float maeThreshold = 0.003f; // 3mm
         private List<XRHandJointID> computeKeypointsJoints = new List<XRHandJointID>()
         {
@@ -172,17 +173,40 @@ namespace ubco.ovilab.HPUI.Tracking
                 return false;
             }
 
+            IEnumerable<int> keyPointsIndex = keypoints.Select(kp => XRHandJointIDUtility.ToIndex(kp));
+            List<XRHandFingerID> usedFingers = ListPool<XRHandFingerID>.Get();
+
             keypointPoses = new Dictionary<XRHandJointID, Pose>();
 
-            Pose xrOriginPose = new Pose(xrOriginTransform.position, xrOriginTransform.rotation);
-            lastWristPose = lastWristPose.GetTransformedBy(xrOriginPose);
+            foreach (XRHandFingerID fingerID in Enum.GetValues(typeof(XRHandFingerID)))
+            {
+                if (keyPointsIndex
+                    .Select(id => id > fingerID.GetFrontJointID().ToIndex() && id <= fingerID.GetBackJointID().ToIndex())
+                    .Any())
+                {
+                    usedFingers.Add(fingerID);
+                }
+            }
 
-            Vector3 forward = xrOriginTransform.TransformDirection(computeKeypointJointsData[XRHandJointID.MiddleProximal].pose.forward);
-            Vector3 up = xrOriginTransform.TransformDirection(computeKeypointJointsData[XRHandJointID.MiddleProximal].pose.up);
+            Pose xrOriginPose = new Pose(xrOriginTransform.position, xrOriginTransform.rotation);
+            Pose anchorPose;
+            // If only one finger, the orientation can match the corresponding finger's proximal orientation.
+            // If not use the middle proximal's orientation.
+            if (usedFingers.Count == 1)
+            {
+                anchorPose = computeKeypointJointsData[XRHandJointIDUtility.FromIndex(usedFingers[0].GetFrontJointID().ToIndex() + 1)].pose;
+            }
+            else
+            {
+                anchorPose = computeKeypointJointsData[XRHandJointID.MiddleProximal].pose;
+            }
+
+            Vector3 forward = xrOriginTransform.TransformDirection(anchorPose.forward);
+            Vector3 up = xrOriginTransform.TransformDirection(anchorPose.up);
 
             Quaternion rotation = Quaternion.LookRotation(forward, up);
 
-            foreach (XRHandFingerID fingerID in Enum.GetValues(typeof(XRHandFingerID)))
+            foreach (XRHandFingerID fingerID in usedFingers)
             {
                 if (fingerID == XRHandFingerID.Thumb)
                 {
@@ -211,6 +235,8 @@ namespace ubco.ovilab.HPUI.Tracking
                     }
                 }
             }
+
+            ListPool<XRHandFingerID>.Release(usedFingers);
 
             return true;
         }
