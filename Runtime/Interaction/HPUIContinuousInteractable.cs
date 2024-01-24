@@ -117,6 +117,22 @@ namespace ubco.ovilab.HPUI.Interaction
         private JointFollower jointFollower;
         private JointPositionApproximation jointPositionApproximation;
 
+        public JointPositionApproximation JointPositionApproximation {
+            get
+            {
+                if (jointPositionApproximation == null)
+                {
+                    jointPositionApproximation = jointFollower.JointFollowerDatumProperty.Value.handedness switch
+                        {
+                            Handedness.Left => JointPositionApproximation.LeftJointPositionApproximation,
+                            Handedness.Right => JointPositionApproximation.RightJointPositionApproximation,
+                            _ => throw new InvalidOperationException("Handedness value not valid)")
+                        };
+                }
+                return jointPositionApproximation;
+            }
+            set => jointPositionApproximation = value; }
+
         /// <summary>
         /// See <see cref="MonoBehaviour"/>.
         /// </summary>
@@ -215,6 +231,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public void AutomatedRecompute()
         {
+            JointPositionApproximation.Reset();
             startedApproximatingJoints = false;
             finishedApproximatingJoints = false;
         }
@@ -297,23 +314,13 @@ namespace ubco.ovilab.HPUI.Interaction
                 ui?.Show();
             }
 
-            if (jointPositionApproximation == null)
-            {
-                jointPositionApproximation = jointFollower.JointFollowerDatumProperty.Value.handedness switch
-                {
-                    Handedness.Left => JointPositionApproximation.LeftJointPositionApproximation,
-                    Handedness.Right => JointPositionApproximation.RightJointPositionApproximation,
-                    _ => throw new InvalidOperationException("Handedness value not valid)")
-                };
-            }
-
             IEnumerable<XRHandJointID> keypointsUsed = KeypointJoints.Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
             if (jointFollower.JointFollowerDatumProperty.Value.useSecondJointID)
             {
                 keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);
             }
 
-            if (jointPositionApproximation.TryComputePoseForKeyPoints(keypointsUsed.ToList(),
+            if (JointPositionApproximation.TryComputePoseForKeyPoints(keypointsUsed.ToList(),
                                                                       out Dictionary<XRHandJointID, Pose> keypointPoses,
                                                                       out float percentageDone))
             {

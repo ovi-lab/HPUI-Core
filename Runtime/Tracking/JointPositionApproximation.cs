@@ -241,6 +241,14 @@ namespace ubco.ovilab.HPUI.Tracking
             return true;
         }
 
+        public void Reset()
+        {
+            computeKeypointJointsData.Clear();
+            jointsLengthEsitmation.Clear();
+            jointsLastLengths.Clear();
+            computeKeypointJointsData.Clear();
+        }
+
         private static JointPositionApproximation InstantiateObj(Handedness handedness)
         {
             GameObject obj = new GameObject($"JointPositionApproximation_{handedness}");
