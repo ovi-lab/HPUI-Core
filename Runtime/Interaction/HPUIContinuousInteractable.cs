@@ -18,6 +18,8 @@ namespace ubco.ovilab.HPUI.Interaction
     [RequireComponent(typeof(JointFollower))]
     public class HPUIContinuousInteractable: HPUIBaseInteractable
     {
+        private enum ApproximationComputeState { None, Starting, DataCollection, Computing, Finished}
+
         //TODO: make following configs an asset
         [Space()]
         [Header("Continuous surface configuration")]
@@ -112,10 +114,9 @@ namespace ubco.ovilab.HPUI.Interaction
         private List<Transform> keypointsCache;
         private DeformableSurfaceCollidersManager surfaceCollidersManager;
         private GameObject collidersRoot;
-        private bool startedApproximatingJoints = false,
-            finishedApproximatingJoints = false;
         private JointFollower jointFollower;
         private JointPositionApproximation jointPositionApproximation;
+        private ApproximationComputeState approximationComputeState = ApproximationComputeState.Starting;
 
         public JointPositionApproximation JointPositionApproximation {
             get
@@ -232,8 +233,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public void AutomatedRecompute()
         {
             JointPositionApproximation.Reset();
-            startedApproximatingJoints = false;
-            finishedApproximatingJoints = false;
+            approximationComputeState = ApproximationComputeState.Starting;
         }
 
         /// <summary>
@@ -297,93 +297,118 @@ namespace ubco.ovilab.HPUI.Interaction
             continuousSurfaceCreatedEvent?.Invoke(new HPUIContinuousSurfaceCreatedEventArgs(this));
         }
 
+        // FIXME: Debug
+        public UnityEngine.Events.UnityEvent todo;
+
         /// <inheritdoc />
         public override void ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
             base.ProcessInteractable(updatePhase);
-            if (updatePhase != XRInteractionUpdateOrder.UpdatePhase.Dynamic || finishedApproximatingJoints)
+            if (updatePhase != XRInteractionUpdateOrder.UpdatePhase.Dynamic || approximationComputeState == ApproximationComputeState.None)
             {
                 return;
             }
 
-            if (!startedApproximatingJoints)
+            switch (approximationComputeState)
             {
-                colliders.Clear();
-                ClearKeypointsCache();
-                startedApproximatingJoints = true;
-                ui?.Show();
-            }
-
-            IEnumerable<XRHandJointID> keypointsUsed = KeypointJoints.Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
-            if (jointFollower.JointFollowerDatumProperty.Value.useSecondJointID)
-            {
-                keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);
-            }
-
-            if (JointPositionApproximation.TryComputePoseForKeyPoints(keypointsUsed.ToList(),
-                                                                      out Dictionary<XRHandJointID, Pose> keypointPoses,
-                                                                      out float percentageDone))
-            {
-                ui?.Hide();
-                keypointsCache = SetupKeypoints();
-
-                foreach (Transform t in keypointsCache)
-                {
-                    t.GetComponent<JointFollower>().enabled = false;
-                }
-                jointFollower.enabled = false;
-
-                Pose newPose1, newPose2 = Pose.identity;
-                XRHandJointID jointID;
-                foreach (Transform t in keypointsCache)
-                {
-                    JointFollower kpJointFollower = t.GetComponent<JointFollower>();
-                    jointID = kpJointFollower.JointFollowerDatumProperty.Value.jointID;
-                    newPose1 = keypointPoses[jointID];
-                    kpJointFollower.SetPose(newPose1, Pose.identity, false);
-
-                    // var obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                    // obj.transform.localScale = Vector3.one * 0.005f;
-                    // obj.transform.position = newPose1.position;
-                    // obj.transform.rotation = newPose1.rotation;
-                }
-
-                jointID = jointFollower.JointFollowerDatumProperty.Value.jointID;
-                newPose1 = keypointPoses[jointID];
-
-
-                jointID = jointFollower.JointFollowerDatumProperty.Value.secondJointID;
-                bool useSecondJointID = jointFollower.JointFollowerDatumProperty.Value.useSecondJointID;
-                if (useSecondJointID)
-                {
-                    newPose2 = keypointPoses[jointID];
-                }
-                Debug.Log(newPose2.ToString("F4") + "  " + useSecondJointID);
-                jointFollower.SetPose(newPose1, newPose2, useSecondJointID);
-
-                ExecuteCalibration(X_size, y_size, keypointsCache);
-
-                foreach (Transform t in keypointsCache)
-                {
-                    t.GetComponent<JointFollower>().enabled = true;
-                }
-                jointFollower.enabled = true;
-                finishedApproximatingJoints = true;
-            }
-            else
-            {
-                if (ui != null)
-                {
-                    ui.TextMessage = "Processing hand pose";
-                    if (percentageDone > 1)
+                case ApproximationComputeState.Starting:
+                    colliders.Clear();
+                    ClearKeypointsCache();
+                    ui?.Show();
+                    approximationComputeState = ApproximationComputeState.DataCollection;
+                    break;
+                case ApproximationComputeState.DataCollection:
+                    IEnumerable<XRHandJointID> keypointsUsed = KeypointJoints.Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
+                    if (jointFollower.JointFollowerDatumProperty.Value.useSecondJointID)
                     {
-                        ui.InProgress();
+                        keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);
+                    }
+
+                    if (JointPositionApproximation.TryComputePoseForKeyPoints(keypointsUsed.ToList(),
+                                                                              out Dictionary<XRHandJointID, Pose> keypointPoses,
+                                                                              out float percentageDone))
+                    {
+                        ui?.Hide();
+                        keypointsCache = SetupKeypoints();
+
+                        foreach (Transform t in keypointsCache)
+                        {
+                            t.GetComponent<JointFollower>().enabled = false;
+                        }
+                        jointFollower.enabled = false;
+
+                        Pose newPose1, newPose2 = Pose.identity;
+                        XRHandJointID jointID;
+                        foreach (Transform t in keypointsCache)
+                        {
+                            JointFollower kpJointFollower = t.GetComponent<JointFollower>();
+                            jointID = kpJointFollower.JointFollowerDatumProperty.Value.jointID;
+                            newPose1 = keypointPoses[jointID];
+                            kpJointFollower.SetPose(newPose1, Pose.identity, false);
+
+                            // FIXME: Debug code
+                            {
+                                var obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                                obj.transform.localScale = Vector3.one * 0.005f;
+                                obj.transform.position = kpJointFollower.transform.position;
+                                obj.transform.rotation = kpJointFollower.transform.rotation;
+                            }
+                        }
+
+                        jointID = jointFollower.JointFollowerDatumProperty.Value.jointID;
+                        newPose1 = keypointPoses[jointID];
+
+                        jointID = jointFollower.JointFollowerDatumProperty.Value.secondJointID;
+                        bool useSecondJointID = jointFollower.JointFollowerDatumProperty.Value.useSecondJointID;
+                        if (useSecondJointID)
+                        {
+                            newPose2 = keypointPoses[jointID];
+                        }
+                        jointFollower.SetPose(newPose1, newPose2, useSecondJointID);
+
+                        // FIXME: Debug code
+                        {
+                            var obj1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            obj1.transform.localScale = Vector3.one * 0.005f;
+                            obj1.transform.position = jointFollower.transform.position;
+                            obj1.transform.rotation = jointFollower.transform.rotation;
+
+
+                            todo?.Invoke();
+                        }
+                        
+                        approximationComputeState = ApproximationComputeState.Computing;
                     }
                     else
                     {
-                        ui.SetProgress(percentageDone);
+                        if (ui != null)
+                        {
+                            ui.TextMessage = "Processing hand pose";
+                            if (percentageDone > 1)
+                            {
+                                ui.InProgress();
+                            }
+                            else
+                            {
+                                ui.SetProgress(percentageDone);
+                            }
+                        }
                     }
-                }
+                    break;
+                case ApproximationComputeState.Computing:
+                    ExecuteCalibration(X_size, y_size, keypointsCache);
+                    approximationComputeState = ApproximationComputeState.Finished;
+                    break;
+                case ApproximationComputeState.Finished:
+                    foreach (Transform t in keypointsCache)
+                    {
+                        t.GetComponent<JointFollower>().enabled = true;
+                    }
+                    jointFollower.enabled = true;
+                    approximationComputeState = ApproximationComputeState.None;
+                    break;
+                default:
+                    break;
             }
         }
     }
