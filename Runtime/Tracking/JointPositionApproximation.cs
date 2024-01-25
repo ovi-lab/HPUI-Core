@@ -188,7 +188,9 @@ namespace ubco.ovilab.HPUI.Tracking
                 }
             }
 
+
             Pose xrOriginPose = new Pose(xrOriginTransform.position, xrOriginTransform.rotation);
+            Vector3 handNormal = xrOriginTransform.TransformDirection(lastWristPose.up);
             Pose anchorPose;
             // If only one finger, the orientation can match the corresponding finger's proximal orientation.
             // If not use the middle proximal's orientation.
@@ -201,8 +203,8 @@ namespace ubco.ovilab.HPUI.Tracking
                 anchorPose = computeKeypointJointsData[XRHandJointID.MiddleProximal].pose;
             }
 
-            Vector3 forward = xrOriginTransform.TransformDirection(anchorPose.forward);
-            Vector3 up = xrOriginTransform.TransformDirection(anchorPose.up);
+            Vector3 forward = Vector3.ProjectOnPlane(xrOriginTransform.TransformDirection(anchorPose.forward), handNormal);
+            Vector3 up = Vector3.Cross(Vector3.Cross(forward, xrOriginTransform.TransformDirection(anchorPose.up)), forward);
 
             Quaternion rotation = Quaternion.LookRotation(forward, up);
 
