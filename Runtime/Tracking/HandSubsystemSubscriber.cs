@@ -7,6 +7,7 @@ namespace ubco.ovilab.HPUI.Tracking
 {
     /// <summary>
     /// Abstract class which subscribes to the <see cref="XRHandSubsystem"/> to get hand pose data.
+    /// <seealso cref="XRHandTrackingEvents"/>
     /// </summary>
     public abstract class HandSubsystemSubscriber: MonoBehaviour
     {

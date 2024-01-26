@@ -7,9 +7,16 @@ using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI.Tracking
 {
+    /// <summary>
+    /// This class is used to approximate the joint positions to be used with <see cref="HPUIContinuousInteractable"/>.
+    /// </summary>
     public class JointPositionApproximation: HandSubsystemSubscriber
     {
         private static JointPositionApproximation leftJointPositionApproximation, rightJointPositionApproximation;
+
+        /// <summary>
+        /// Approximate the joint positions of the left hand.
+        /// </summary>
         public static JointPositionApproximation LeftJointPositionApproximation {
             get
             {
@@ -21,6 +28,9 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
+        /// <summary>
+        /// Approximate the joint positions of the right hand.
+        /// </summary>
         public static JointPositionApproximation RightJointPositionApproximation {
             get
             {
@@ -44,8 +54,6 @@ namespace ubco.ovilab.HPUI.Tracking
         private Dictionary<XRHandJointID, (Queue<Vector3> positions, Pose pose, bool stable)> computeKeypointJointsData = new Dictionary<XRHandJointID, (Queue<Vector3> poses, Pose pose, bool stable)>();
         private Pose lastWristPose;
         private bool recievedLastWristPose = false;
-
-        public Handedness Handedness { get => handedness; set => handedness = value; }
 
         /// <inheritdoc />
         protected override void ProcessJointData(XRHandSubsystem subsystem)
