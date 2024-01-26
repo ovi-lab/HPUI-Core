@@ -116,7 +116,11 @@ namespace ubco.ovilab.HPUI.Tracking
 
                 foreach (XRHandJointID jointID in computeKeypointsJoints)
                 {
-                    if (hand.GetJoint(jointID).TryGetPose(out Pose jointPose))
+                    XRHandJointID childJointID = XRHandJointIDUtility.FromIndex(jointID.ToIndex() + 1);
+                    XRHandJoint joint = hand.GetJoint(jointID);
+                    XRHandJoint childJoint = hand.GetJoint(childJointID);
+
+                    if (joint.TryGetPose(out Pose jointPose) && childJoint.TryGetPose(out Pose childJointPose))
                     {
                         if (!computeKeypointJointsData.TryGetValue(jointID, out (Queue<Vector3> positions, Pose pose, bool stable) data))
                         {
@@ -135,7 +139,7 @@ namespace ubco.ovilab.HPUI.Tracking
                         }
 
                         data.positions.Enqueue(jointPose.GetTransformedBy(lastWristPose).position);
-                        data.pose = jointPose;
+                        data.pose = new Pose(jointPose.position, Quaternion.LookRotation(childJointPose.position - jointPose.position, jointPose.up));
                         if (data.positions.Count == windowSize)
                         {
                             float mae = data.positions.Skip(1).Zip(data.positions.SkipLast(1), (p1, p2) => (p1 - p2).magnitude).Sum() / data.positions.Count;

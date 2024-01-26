@@ -304,7 +304,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public override void ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
             base.ProcessInteractable(updatePhase);
-            if (updatePhase != XRInteractionUpdateOrder.UpdatePhase.Dynamic || approximationComputeState == ApproximationComputeState.None)
+            if (updatePhase != XRInteractionUpdateOrder.UpdatePhase.Late || approximationComputeState == ApproximationComputeState.None)
             {
                 return;
             }
@@ -373,10 +373,20 @@ namespace ubco.ovilab.HPUI.Interaction
                             obj1.transform.position = jointFollower.transform.position;
                             obj1.transform.rotation = jointFollower.transform.rotation;
 
+                            obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                            obj1.transform.localScale = Vector3.one * 0.005f;
+                            obj1.transform.position = newPose1.position;
+                            obj1.transform.rotation = newPose1.rotation;
 
-                            todo?.Invoke();
+                            obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                            obj1.transform.localScale = Vector3.one * 0.005f;
+                            obj1.transform.position = newPose2.position;
+                            obj1.transform.rotation = newPose2.rotation;
+
+                            // todo?.Invoke();
                         }
                         
+                        ExecuteCalibration(X_size, y_size, keypointsCache);
                         approximationComputeState = ApproximationComputeState.Computing;
                     }
                     else
@@ -396,7 +406,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     }
                     break;
                 case ApproximationComputeState.Computing:
-                    ExecuteCalibration(X_size, y_size, keypointsCache);
                     approximationComputeState = ApproximationComputeState.Finished;
                     break;
                 case ApproximationComputeState.Finished:
