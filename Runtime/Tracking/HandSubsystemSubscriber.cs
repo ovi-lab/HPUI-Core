@@ -14,6 +14,11 @@ namespace ubco.ovilab.HPUI.Tracking
         private XRHandSubsystem handSubsystem;
         protected Transform xrOriginTransform;
 
+        /// <summary>
+        /// The current handedness used.
+        /// </summary>
+        public abstract Handedness Handedness { get;set; }
+
         /// <inheritdoc />
         protected virtual void Update()
         {

@@ -42,6 +42,13 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
+        /// <inheritdoc />
+        public override Handedness Handedness
+        {
+            get => handedness;
+            set => handedness = value;
+        }
+
         private const int windowSize = 100;
         private const float maeThreshold = 0.003f; // 3mm
         private List<XRHandJointID> computeKeypointsJoints = new List<XRHandJointID>()

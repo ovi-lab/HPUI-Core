@@ -25,6 +25,13 @@ namespace ubco.ovilab.HPUI.Tracking
         /// </summary>
         public Transform TargetTransform { get => targetTransform; set => targetTransform = value; }
 
+        /// <inheritdoc />
+        public override Handedness Handedness
+        {
+            get => jointFollowerData.Value.handedness;
+            set => jointFollowerData.Value.handedness = value;
+        }
+
         private float cachedRadius = 0f;
 
         /// <inheritdoc />
