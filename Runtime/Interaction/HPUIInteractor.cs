@@ -53,6 +53,19 @@ namespace ubco.ovilab.HPUI.Interaction
             gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold);
         }
 
+#if UNITY_EDITOR
+        /// <inheritdoc />
+        protected void OnValidate()
+        {
+            // When values are changed in inspector, update the values
+            if (gestureLogic != null)
+            {
+                gestureLogic.Dispose();
+            }
+            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold);
+        }
+#endif
+
         /// <inheritdoc />
         protected override void OnSelectEntering(SelectEnterEventArgs args)
         {
