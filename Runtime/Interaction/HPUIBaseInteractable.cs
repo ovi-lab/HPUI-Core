@@ -47,17 +47,13 @@ namespace ubco.ovilab.HPUI.Interaction
         [SerializeField]
         private HPUITapEvent tapEvent = new HPUITapEvent();
 
-        /// <summary>
-        /// Event triggered on tap
-        /// </summary>
+        /// <inheritdoc />
         public HPUITapEvent TapEvent { get => tapEvent; set => tapEvent = value; }
 
         [SerializeField]
         private HPUIGestureEvent gestureEvent = new HPUIGestureEvent();
 
-        /// <summary>
-        /// Event triggered on gesture
-        /// </summary>
+        /// <inheritdoc />
         public HPUIGestureEvent GestureEvent { get => gestureEvent; set => gestureEvent = value; }
 
         #region overrides
