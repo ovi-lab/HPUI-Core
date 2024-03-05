@@ -425,6 +425,18 @@ namespace ubco.ovilab.HPUI.Tests
 
             Transform IXRInteractable.transform => throw new NotImplementedException();
 
+            HoverEnterEvent IXRHoverInteractable.firstHoverEntered => throw new NotImplementedException();
+
+            HoverExitEvent IXRHoverInteractable.lastHoverExited => throw new NotImplementedException();
+
+            HoverEnterEvent IXRHoverInteractable.hoverEntered => throw new NotImplementedException();
+
+            HoverExitEvent IXRHoverInteractable.hoverExited => throw new NotImplementedException();
+
+            List<IXRHoverInteractor> IXRHoverInteractable.interactorsHovering => throw new NotImplementedException();
+
+            bool IXRHoverInteractable.isHovered => throw new NotImplementedException();
+
             event Action<InteractableRegisteredEventArgs> IXRInteractable.registered
             {
                 add
@@ -506,6 +518,31 @@ namespace ubco.ovilab.HPUI.Tests
             }
 
             void IXRInteractable.ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase updatePhase)
+            {
+                throw new NotImplementedException();
+            }
+
+            bool IXRHoverInteractable.IsHoverableBy(IXRHoverInteractor interactor)
+            {
+                throw new NotImplementedException();
+            }
+
+            void IXRHoverInteractable.OnHoverEntering(HoverEnterEventArgs args)
+            {
+                throw new NotImplementedException();
+            }
+
+            void IXRHoverInteractable.OnHoverEntered(HoverEnterEventArgs args)
+            {
+                throw new NotImplementedException();
+            }
+
+            void IXRHoverInteractable.OnHoverExiting(HoverExitEventArgs args)
+            {
+                throw new NotImplementedException();
+            }
+
+            void IXRHoverInteractable.OnHoverExited(HoverExitEventArgs args)
             {
                 throw new NotImplementedException();
             }

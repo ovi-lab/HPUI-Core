@@ -3,7 +3,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 namespace ubco.ovilab.HPUI.Interaction 
 {
-    public interface IHPUIInteractable : IXRInteractable, IXRSelectInteractable
+    public interface IHPUIInteractable : IXRSelectInteractable, IXRHoverInteractable
     {
         /// <summary>
         /// Lower z order will get higher priority.

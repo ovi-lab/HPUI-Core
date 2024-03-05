@@ -64,8 +64,8 @@ namespace ubco.ovilab.HPUI.Interaction
         private bool justStarted = false;
         private Vector3 lastInteractionPoint;
         private PhysicsScene physicsScene;
-        private RaycastHit[] sphereCastHits = new RaycastHit[25];
-        private Collider[] overlapSphereHits = new Collider[25];
+        private RaycastHit[] sphereCastHits = new RaycastHit[200];
+        private Collider[] overlapSphereHits = new Collider[200];
 
         /// <inheritdoc />
         protected override void Awake()
@@ -130,6 +130,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 // If no movement is recorded.
                 // Check if spherecast size is sufficient for proper cast, or if first frame since last frame poke position will be invalid.
                 int numberOfOverlaps;
+                List<Collider> colliders;
 
                 if (justStarted || overlapSqrMagnitude < 0.001f)
                 {
@@ -141,6 +142,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         Physics.AllLayers,
                         // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
                         QueryTriggerInteraction.Ignore);
+                    colliders = overlapSphereHits.ToList();
                 }
                 else
                 {
@@ -154,7 +156,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         Physics.AllLayers,
                         // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
                         QueryTriggerInteraction.Ignore);
-
+                    colliders = sphereCastHits.Select(s => s.collider).ToList();
                 }
 
                 lastInteractionPoint = pokeInteractionPoint;
@@ -162,9 +164,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 for (var i = 0; i < numberOfOverlaps; ++i)
                 {
-                    if (interactionManager.TryGetInteractableForCollider(sphereCastHits[i].collider, out var interactable) &&
-                        interactable is IXRSelectInteractable selectable &&
-                        interactable is IXRHoverInteractable hoverable && hoverable.IsHoverableBy(this))
+                    if (interactionManager.TryGetInteractableForCollider(colliders[i], out var interactable) &&
+                        !validTargets.Contains(interactable) &&
+                        interactable is IHPUIInteractable hpuiInteractable && hpuiInteractable.IsHoverableBy(this))
                     {
                         validTargets.Add(interactable);
                     }
