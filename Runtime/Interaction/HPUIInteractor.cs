@@ -14,12 +14,26 @@ namespace ubco.ovilab.HPUI.Interaction
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
         // TODO move these to an asset?
+        [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
         [SerializeField]
         private float tapTimeThreshold;
+        /// <summary>
+        /// The time threshold at which an interaction would be treated as a gesture.
+        /// That is, if the interactor is in contact with an
+        /// interactable for more than this threshold, it would be
+        /// treated as as gesture.
+        /// </summary>
         public float TapTimeThreshold { get => tapTimeThreshold;  set => tapTimeThreshold = value; }
 
+        [Tooltip("The distance threshold at which an interaction would be treated as a gesture.")]
         [SerializeField]
         private float tapDistanceThreshold;
+        /// <summary>
+        /// The distance threshold at which an interaction would be treated as a gesture.
+        /// That is, if the interactor has moved more than this value
+        /// after coming into contact with a interactable, it would be
+        /// treated as as gesture.
+        /// </summary>
         public float TapDistanceThreshold { get => tapDistanceThreshold; set => tapDistanceThreshold = value; }
 
         [SerializeField]
