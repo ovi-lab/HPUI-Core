@@ -74,6 +74,8 @@ namespace ubco.ovilab.HPUI.Interaction
         }
         #endregion
 
+
+        #region surface point calculations
         /// <summary>
         /// Compute and store the surface bounds to compute point on surface
         /// </summary>
@@ -113,6 +115,7 @@ namespace ubco.ovilab.HPUI.Interaction
             pointOnXZPlane = worldToLocalMatrix.MultiplyPoint3x4(pointOnXZPlane);
             return new Vector2(pointOnXZPlane.x, pointOnXZPlane.z);
         }
+        #endregion
 
         #region IHPUIInteractable interface
         /// <inheritdoc />

@@ -1,10 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Pool;
-using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Utilities;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -13,10 +11,8 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
-    public class HPUIInteractor: XRPokeInteractor, IHPUIInteractor
+    public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
-        public new Handedness handedness;
-
         // TODO move these to an asset?
         [SerializeField]
         private float tapTimeThreshold;
@@ -27,29 +23,42 @@ namespace ubco.ovilab.HPUI.Interaction
         public float TapDistanceThreshold { get => tapDistanceThreshold; set => tapDistanceThreshold = value; }
 
         [SerializeField]
+        [Tooltip("Event triggered on tap")]
         private HPUITapEvent tapEvent = new HPUITapEvent();
 
-        /// <summary>
-        /// Event triggered on tap
-        /// </summary>
+        /// <inheritdoc />
         public HPUITapEvent TapEvent { get => tapEvent; set => tapEvent = value; }
 
         [SerializeField]
+        [Tooltip("Event triggered on gesture")]
         private HPUIGestureEvent gestureEvent = new HPUIGestureEvent();
 
-        /// <summary>
-        /// Event triggered on gesture
-        /// </summary>
+        /// <inheritdoc />
         public HPUIGestureEvent GestureEvent { get => gestureEvent; set => gestureEvent = value; }
+
+        [SerializeField]
+        [Tooltip("Interation hover radius.")]
+        private float interactionHoverRadius = 0.015f;
+
+        /// <summary>
+        /// Interation hover radius.
+        /// </summary>
+        public float InteractionHoverRadius { get => interactionHoverRadius; set => interactionHoverRadius = value; }
 
         protected IHPUIGestureLogic gestureLogic;
         private List<IXRInteractable> validTargets = new List<IXRInteractable>();
+        private bool justStarted = false;
+        private Vector3 lastInteractionPoint;
+        private PhysicsScene physicsScene;
+        private RaycastHit[] sphereCastHits = new RaycastHit[25];
+        private Collider[] overlapSphereHits = new Collider[25];
 
         /// <inheritdoc />
         protected override void Awake()
         {
             base.Awake();
             keepSelectedTargetValid = true;
+            physicsScene = gameObject.scene.GetPhysicsScene();
             gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold);
         }
 
@@ -67,6 +76,13 @@ namespace ubco.ovilab.HPUI.Interaction
 #endif
 
         /// <inheritdoc />
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            justStarted = true;
+        }
+
+        /// <inheritdoc />
         protected override void OnSelectEntering(SelectEnterEventArgs args)
         {
             base.OnSelectEntering(args);
@@ -78,6 +94,68 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             base.OnSelectExiting(args);
             gestureLogic.OnSelectExiting(args.interactableObject as IHPUIInteractable);
+        }
+
+        /// <inheritdoc />
+        public override void PreprocessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
+        {
+            base.PreprocessInteractor(updatePhase);
+
+            // Following the logic in XRPokeInteractor
+            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
+            {
+                validTargets.Clear();
+
+                // Hover Check
+                Vector3 pokeInteractionPoint = GetAttachTransform(null).position;
+                Vector3 overlapStart = lastInteractionPoint;
+                Vector3 interFrameEnd = pokeInteractionPoint; // FIXME: Think of getting this of collision points?
+
+                BurstPhysicsUtils.GetSphereOverlapParameters(overlapStart, interFrameEnd, out Vector3 normalizedOverlapVector, out float overlapSqrMagnitude, out float overlapDistance);
+
+                // If no movement is recorded.
+                // Check if spherecast size is sufficient for proper cast, or if first frame since last frame poke position will be invalid.
+                int numberOfOverlaps;
+
+                if (justStarted || overlapSqrMagnitude < 0.001f)
+                {
+                    numberOfOverlaps = physicsScene.OverlapSphere(
+                        interFrameEnd,
+                        InteractionHoverRadius,
+                        overlapSphereHits,
+                        // FIXME: physics layers should be allowed to be set in inpsector
+                        Physics.AllLayers,
+                        // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                        QueryTriggerInteraction.Ignore);
+                }
+                else
+                {
+                    numberOfOverlaps = physicsScene.SphereCast(
+                        overlapStart,
+                        InteractionHoverRadius,
+                        normalizedOverlapVector,
+                        sphereCastHits,
+                        overlapDistance,
+                        // FIXME: physics layers should be allowed to be set in inpsector
+                        Physics.AllLayers,
+                        // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                        QueryTriggerInteraction.Ignore);
+
+                }
+
+                lastInteractionPoint = pokeInteractionPoint;
+                justStarted = false;
+
+                for (var i = 0; i < numberOfOverlaps; ++i)
+                {
+                    if (interactionManager.TryGetInteractableForCollider(sphereCastHits[i].collider, out var interactable) &&
+                        interactable is IXRSelectInteractable selectable &&
+                        interactable is IXRHoverInteractable hoverable && hoverable.IsHoverableBy(this))
+                    {
+                        validTargets.Add(interactable);
+                    }
+                }
+            }
         }
 
         /// <inheritdoc />
@@ -93,25 +171,13 @@ namespace ubco.ovilab.HPUI.Interaction
         public override void GetValidTargets(List<IXRInteractable> targets)
         {
             base.GetValidTargets(targets);
-            if (handedness == Handedness.Invalid)
-            {
-                throw new InvalidOperationException("handedness not correcly set.");
-            }
-
-            List<IXRInteractable> recievedTargets = ListPool<IXRInteractable>.Get();
-            recievedTargets.AddRange(targets.Distinct());
 
             targets.Clear();
-            validTargets.Clear();
-            foreach(IXRInteractable target in recievedTargets.Select(t => t as IHPUIInteractable).Where(ht => ht != null).OrderBy(ht => ht.zOrder))
+            foreach(IXRInteractable target in validTargets.Select(t => t as IHPUIInteractable).Where(ht => ht != null).OrderBy(ht => ht.zOrder))
             {
                 targets.Add(target);
                 validTargets.Add(target);
             }
-
-            // TODO check if an interactable with lower z order is selected. If so cancel it.
-
-            ListPool<IXRInteractable>.Release(recievedTargets);
         }
 
         // NOTE: PokeInteractor has a bug where it doesn't account for the re-prioritization.
