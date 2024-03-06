@@ -97,17 +97,17 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        protected override void OnSelectEntering(SelectEnterEventArgs args)
+        protected override void OnHoverEntering(HoverEnterEventArgs args)
         {
-            base.OnSelectEntering(args);
-            gestureLogic.OnSelectEntering(args.interactableObject as IHPUIInteractable);
+            base.OnHoverEntering(args);
+            gestureLogic.OnHoverEntering(args.interactableObject as IHPUIInteractable);
         }
 
         /// <inheritdoc />
-        protected override void OnSelectExiting(SelectExitEventArgs args)
+        protected override void OnHoverExiting(HoverExitEventArgs args)
         {
-            base.OnSelectExiting(args);
-            gestureLogic.OnSelectExiting(args.interactableObject as IHPUIInteractable);
+            base.OnHoverExiting(args);
+            gestureLogic.OnHoverExiting(args.interactableObject as IHPUIInteractable);
         }
 
         /// <inheritdoc />

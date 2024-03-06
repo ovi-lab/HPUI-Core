@@ -42,7 +42,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void OnSelectEntering(IHPUIInteractable interactable)
+        public void OnHoverEntering(IHPUIInteractable interactable)
         {
             if (interactable == null)
             {
@@ -117,7 +117,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void OnSelectExiting(IHPUIInteractable interactable)
+        public void OnHoverExiting(IHPUIInteractable interactable)
         {
             if (interactable == null)
             {

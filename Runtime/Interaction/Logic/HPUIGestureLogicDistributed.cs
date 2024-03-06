@@ -33,7 +33,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// To be called by <see cref="IXRSelectInteractor.OnSelectEntering"/> controlling this <see cref="HPUIGestureLogic"/>
         /// </summary>
-        public void OnSelectEntering(IHPUIInteractable interactable)
+        public void OnHoverEntering(IHPUIInteractable interactable)
         {
             if (interactable == null)
             {
@@ -50,7 +50,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// To be called by <see cref="IXRSelectInteractor.OnSelectExiting"/> controlling this <see cref="HPUIGestureLogic"/>
         /// </summary>
-        public void OnSelectExiting(IHPUIInteractable interactable)
+        public void OnHoverExiting(IHPUIInteractable interactable)
         {
             if (interactable == null)
             {

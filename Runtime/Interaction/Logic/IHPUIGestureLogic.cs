@@ -7,12 +7,12 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// To be called by <see cref="IXRSelectInteractor.OnSelectEntering"/> controlling this <see cref="HPUIGestureLogic"/>
         /// </summary>
-        public void OnSelectEntering(IHPUIInteractable interactable);
+        public void OnHoverEntering(IHPUIInteractable interactable);
 
         /// <summary>
         /// To be called by <see cref="IXRSelectInteractor.OnSelectExiting"/> controlling this <see cref="HPUIGestureLogic"/>
         /// </summary>
-        public void OnSelectExiting(IHPUIInteractable interactable);
+        public void OnHoverExiting(IHPUIInteractable interactable);
 
         /// <summary>
         /// Updat method to be called from an interactor. Updates the states of the <see cref="IHPUIInteractable"/> selected by

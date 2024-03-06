@@ -47,20 +47,20 @@ namespace ubco.ovilab.HPUI.Tests
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
             // First tap
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(TapTimeThreshold /2);
             logic.Update();
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 1);
             Assert.AreEqual(gesturesCount, 0);
 
             // Second tap
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(TapTimeThreshold /2);
             logic.Update();
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 2);
             Assert.AreEqual(gesturesCount, 0);
         }
@@ -73,20 +73,20 @@ namespace ubco.ovilab.HPUI.Tests
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
 
             // Tap and hold
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(TapTimeThreshold * 2);
             logic.Update();
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
 
             // Move
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             i1.interactorPosition = Vector2.one * 2;
             logic.Update();
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
         }
@@ -98,21 +98,21 @@ namespace ubco.ovilab.HPUI.Tests
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
             // First tap
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(TapTimeThreshold /2);
             logic.Update();
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 1);
             Assert.AreEqual(gesturesCount, 0);
 
             // Gesture
             Reset();
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(TapTimeThreshold * 2);
             logic.Update();
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
         }
@@ -124,21 +124,21 @@ namespace ubco.ovilab.HPUI.Tests
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
             // Gesture
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(TapTimeThreshold * 2);
             logic.Update();
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
 
             // tap
             Reset();
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(TapTimeThreshold / 2);
             logic.Update();
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 1);
             Assert.AreEqual(gesturesCount, 0);
         }
@@ -152,11 +152,11 @@ namespace ubco.ovilab.HPUI.Tests
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
 
             // Tap 1-2---1-2
-            logic.OnSelectEntering(i1);
-            logic.OnSelectEntering(i2);
+            logic.OnHoverEntering(i1);
+            logic.OnHoverEntering(i2);
             logic.Update();
-            logic.OnSelectExiting(i1);
-            logic.OnSelectExiting(i2);
+            logic.OnHoverExiting(i1);
+            logic.OnHoverExiting(i2);
             Assert.AreEqual(tapsCount, 1);
             Assert.AreEqual(gesturesCount, 0);
             Assert.AreEqual(lastTapInteractable, i1);
@@ -167,11 +167,11 @@ namespace ubco.ovilab.HPUI.Tests
             i1.Reset();
             i2.Reset();
             // Tap 1-2---2-1
-            logic.OnSelectEntering(i1);
-            logic.OnSelectEntering(i2);
+            logic.OnHoverEntering(i1);
+            logic.OnHoverEntering(i2);
             logic.Update();
-            logic.OnSelectExiting(i2);
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i2);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 1);
             Assert.AreEqual(gesturesCount, 0);
             Assert.AreEqual(lastTapInteractable, i1);
@@ -188,11 +188,11 @@ namespace ubco.ovilab.HPUI.Tests
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
 
             // Tap 1-2---1-2
-            logic.OnSelectEntering(i1);
-            logic.OnSelectEntering(i2);
+            logic.OnHoverEntering(i1);
+            logic.OnHoverEntering(i2);
             logic.Update();
-            logic.OnSelectExiting(i1);
-            logic.OnSelectExiting(i2);
+            logic.OnHoverExiting(i1);
+            logic.OnHoverExiting(i2);
             Assert.AreEqual(tapsCount, 1);
             Assert.AreEqual(gesturesCount, 0);
             Assert.AreEqual(lastTapInteractable, i1);
@@ -203,11 +203,11 @@ namespace ubco.ovilab.HPUI.Tests
             i1.Reset();
             i2.Reset();
             // Tap 2-1---2-1
-            logic.OnSelectEntering(i2);
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i2);
+            logic.OnHoverEntering(i1);
             logic.Update();
-            logic.OnSelectExiting(i2);
-            logic.OnSelectExiting(i1);
+            logic.OnHoverExiting(i2);
+            logic.OnHoverExiting(i1);
             Assert.AreEqual(tapsCount, 1);
             Assert.AreEqual(gesturesCount, 0);
             Assert.AreEqual(lastTapInteractable, i1);
@@ -223,13 +223,13 @@ namespace ubco.ovilab.HPUI.Tests
             TestHPUIInteractable i2 = new TestHPUIInteractable(1, true, true, OnTapCallback, OnGestureCallback);
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
 
-            logic.OnSelectEntering(i2);
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i2);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(1);
             logic.Update();
-            logic.OnSelectExiting(i1);
-            logic.OnSelectExiting(i2);
+            logic.OnHoverExiting(i1);
+            logic.OnHoverExiting(i2);
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
             Assert.AreEqual(lastGestureInteractable, i1);
@@ -246,16 +246,16 @@ namespace ubco.ovilab.HPUI.Tests
             TestHPUIInteractable i2 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
 
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(1);
             // Even though this has lower zOrder, this should not get selected
-            logic.OnSelectEntering(i2);
+            logic.OnHoverEntering(i2);
             logic.Update();
             yield return new WaitForSeconds(1);
             logic.Update();
-            logic.OnSelectExiting(i1);
-            logic.OnSelectExiting(i2);
+            logic.OnHoverExiting(i1);
+            logic.OnHoverExiting(i2);
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
             Assert.AreEqual(lastGestureInteractable, i1);
@@ -272,12 +272,12 @@ namespace ubco.ovilab.HPUI.Tests
             TestHPUIInteractable i2 = new TestHPUIInteractable(0, false, false, OnTapCallback, OnGestureCallback);
             IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold);
 
-            logic.OnSelectEntering(i2);
+            logic.OnHoverEntering(i2);
             // even though this is coming in second, this should get the tap
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
-            logic.OnSelectExiting(i1);
-            logic.OnSelectExiting(i2);
+            logic.OnHoverExiting(i1);
+            logic.OnHoverExiting(i2);
             Assert.AreEqual(tapsCount, 1);
             Assert.AreEqual(gesturesCount, 0);
             Assert.AreEqual(lastTapInteractable, i1);
@@ -285,14 +285,14 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             i1.Reset();
             i2.Reset();
-            logic.OnSelectEntering(i2);
+            logic.OnHoverEntering(i2);
             // even though this is coming in second, this should get the gesture
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(1);
             logic.Update();
-            logic.OnSelectExiting(i1);
-            logic.OnSelectExiting(i2);
+            logic.OnHoverExiting(i1);
+            logic.OnHoverExiting(i2);
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
             Assert.AreEqual(lastGestureInteractable, i1);
@@ -313,11 +313,11 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             i1.Reset();
             i2.Reset();
-            logic.OnSelectEntering(i2);
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i2);
+            logic.OnHoverEntering(i1);
             logic.Update();
-            logic.OnSelectExiting(i1);
-            logic.OnSelectExiting(i2);
+            logic.OnHoverExiting(i1);
+            logic.OnHoverExiting(i2);
             Assert.AreEqual(tapsCount, 0);
             Assert.AreEqual(gesturesCount, 0);
 
@@ -325,13 +325,13 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             i1.Reset();
             i2.Reset();
-            logic.OnSelectEntering(i2);
-            logic.OnSelectEntering(i1);
+            logic.OnHoverEntering(i2);
+            logic.OnHoverEntering(i1);
             logic.Update();
             yield return new WaitForSeconds(1);
             logic.Update();
-            logic.OnSelectExiting(i1);
-            logic.OnSelectExiting(i2);
+            logic.OnHoverExiting(i1);
+            logic.OnHoverExiting(i2);
             Assert.AreEqual(tapsCount, 0);
             Assert.AreEqual(gesturesCount, 0);
         }

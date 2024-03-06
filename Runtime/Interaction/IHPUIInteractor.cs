@@ -2,7 +2,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 namespace ubco.ovilab.HPUI.Interaction 
 {
-    public interface IHPUIInteractor: IXRInteractor, IXRSelectInteractor
+    public interface IHPUIInteractor: IXRSelectInteractor, IXRHoverInteractor
     {
         /// <summary>
         /// Event triggered on tap
