@@ -15,9 +15,14 @@ namespace ubco.ovilab.HPUI.Interaction
         public void OnHoverExiting(IHPUIInteractable interactable);
 
         /// <summary>
-        /// Updat method to be called from an interactor. Updates the states of the <see cref="IHPUIInteractable"/> selected by
+        /// Update method to be called from an interactor. Updates the states of the <see cref="IHPUIInteractable"/> selected by
         /// the <see cref="IXRInteractor"/> that was passed when initializing this <see cref="HPUIGestureLogic"/>.
         /// </summary>
         public void Update();
+
+        /// <summary>
+        /// Returns the interactable passed is has the highest priority.
+        /// </summary>
+        public bool IsPriorityTarget(IHPUIInteractable interactable);
     }
 }

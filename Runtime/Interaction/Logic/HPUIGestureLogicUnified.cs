@@ -270,6 +270,12 @@ namespace ubco.ovilab.HPUI.Interaction
             hpuiGestureEventArgsPool.Dispose();
         }
 
+        /// <inheritdoc />
+        public bool IsPriorityTarget(IHPUIInteractable interactable)
+        {
+            return interactable == activePriorityInteractable;
+        }
+
         class HPUIInteractionState
         {
             public static HPUIInteractionState empty = new HPUIInteractionState(0, Vector2.zero, false);

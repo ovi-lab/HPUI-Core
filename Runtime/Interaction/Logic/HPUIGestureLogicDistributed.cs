@@ -149,6 +149,12 @@ namespace ubco.ovilab.HPUI.Interaction
             states.Clear();
         }
 
+        /// <inheritdoc />
+        public bool IsPriorityTarget(IHPUIInteractable interactable)
+        {
+            return true;
+        }
+
         class HPUIInteractionState
         {
             public HPUIGesture gestureState;

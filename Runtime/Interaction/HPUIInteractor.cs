@@ -59,6 +59,15 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public float InteractionHoverRadius { get => interactionHoverRadius; set => interactionHoverRadius = value; }
 
+        [SerializeField]
+        [Tooltip("If true, select only happens for the target with highest priority.")]
+        private bool selectOnlyPriorityTarget = true;
+
+        /// <summary>
+        /// If true, select only happens for the target with highest priority.
+        /// </summary>
+        public bool SelectOnlyPriorityTarget { get => selectOnlyPriorityTarget; set => selectOnlyPriorityTarget = value; }
+
         protected IHPUIGestureLogic gestureLogic;
         private List<IXRInteractable> validTargets = new List<IXRInteractable>();
         private bool justStarted = false;
@@ -196,14 +205,12 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        // NOTE: PokeInteractor has a bug where it doesn't account for the re-prioritization.
-        // See: https://forum.unity.com/threads/xrpokeinteractor-m_currentpoketarget-not-respecting-getvalidtargets-and-target-filters.1534039/#post-9571063
         /// <inheritdoc />
         public override bool CanSelect(IXRSelectInteractable interactable)
         {
-            return validTargets.Contains(interactable) && ProcessSelectFilters(interactable);
+            bool canSelect = validTargets.Contains(interactable) && ProcessSelectFilters(interactable);
+            return canSelect && (!SelectOnlyPriorityTarget || gestureLogic.IsPriorityTarget(interactable as IHPUIInteractable));
         }
-
 
         #region IHPUIInteractor interface
         /// <inheritdoc />
