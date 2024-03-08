@@ -15,7 +15,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(() => new HPUITapEventArgs());
         private LinkedPool<HPUIGestureEventArgs> hpuiGestureEventArgsPool = new LinkedPool<HPUIGestureEventArgs>(() => new HPUIGestureEventArgs());
 
-        private float tapTimeThreshold, tapDistanceThreshold;
+        private float tapTimeThreshold, tapDistanceThreshold, interactionSelectionRadius;
         private IHPUIInteractor interactor;
 
         private float startTime, cumilativeDistance, timeDelta;
@@ -33,11 +33,12 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Initializes a new instance of the with the thrshold values.
         /// </summary>
-        public HPUIGestureLogicUnified(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold)
+        public HPUIGestureLogicUnified(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float interactionSelectionRadius)
         {
             this.interactor = interactor;
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
+            this.interactionSelectionRadius = interactionSelectionRadius;
             Reset();
         }
 
@@ -116,6 +117,11 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        private bool ActiveInteractaableCanTriggerEvent()
+        {
+            return activePriorityInteractable != null && activeInteractables[activePriorityInteractable].minDistanceToInteractor < interactionSelectionRadius;
+        }
+
         /// <inheritdoc />
         public void OnHoverExiting(IHPUIInteractable interactable)
         {
@@ -143,7 +149,13 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             ComputeActivePriorityInteractable();
                             tapEventArgs.SetParams(interactor, activePriorityInteractable, state.startPosition + cumilativeDirection);
-                            activePriorityInteractable?.OnTap(tapEventArgs);
+                            if (ActiveInteractaableCanTriggerEvent())
+                            {
+                                activePriorityInteractable.OnTap(tapEventArgs);
+                            }
+                            // NOTE: There can be interactables that don't take any events. Even
+                            // when that happens, the interactor's events should get triggered.
+                            // KLUDGE: This doesn't account for the interactionSelectionRadius
                             interactor.OnTap(tapEventArgs);
                         }
                         break;
@@ -151,11 +163,14 @@ namespace ubco.ovilab.HPUI.Interaction
                         using (hpuiGestureEventArgsPool.Get(out HPUIGestureEventArgs gestureEventArgs))
                         {
                             gestureEventArgs.SetParams(interactor, activePriorityInteractable,
-                                                     HPUIGestureState.Stopped, timeDelta, state.startTime, state.startPosition,
-                                                     cumilativeDirection, cumilativeDistance, delta);
-                            activePriorityInteractable?.OnGesture(gestureEventArgs);
+                                                       HPUIGestureState.Stopped, timeDelta, state.startTime, state.startPosition,
+                                                       cumilativeDirection, cumilativeDistance, delta);
+                            if (ActiveInteractaableCanTriggerEvent())
+                            {
+                                activePriorityInteractable?.OnGesture(gestureEventArgs);
+                            }
+                            // NOTE: See note when tap gets triggered.
                             interactor.OnGesture(gestureEventArgs);
-
                         }
                         break;
                 }
@@ -186,11 +201,23 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void Update()
+        public void Update(IDictionary<IHPUIInteractable, float> distances)
         {
             if (interactorGestureState == HPUIGesture.None)
             {
                 return;
+            }
+
+            // Update the distances
+            foreach(KeyValuePair<IHPUIInteractable, HPUIInteractionState> statePair in activeInteractables)
+            {
+                if (distances.TryGetValue(statePair.Key, out float distance))
+                {
+                    if (distance < statePair.Value.minDistanceToInteractor)
+                    {
+                        statePair.Value.minDistanceToInteractor = distance;
+                    }
+                }
             }
 
             // If interactable change, we need to restart tracking, hence skipping a frame
@@ -229,7 +256,11 @@ namespace ubco.ovilab.HPUI.Interaction
                             gestureEventArgs.SetParams(interactor, activePriorityInteractable,
                                                        HPUIGestureState.Started, timeDelta, state.startTime, state.startPosition,
                                                        cumilativeDirection, cumilativeDistance, delta);
-                            activePriorityInteractable?.OnGesture(gestureEventArgs);
+                            if (ActiveInteractaableCanTriggerEvent())
+                            {
+                                activePriorityInteractable?.OnGesture(gestureEventArgs);
+                            }
+                            // NOTE: See note when tap gets triggered.
                             interactor.OnGesture(gestureEventArgs);
                         }
                     }
@@ -249,7 +280,11 @@ namespace ubco.ovilab.HPUI.Interaction
                         gestureEventArgs.SetParams(interactor, activePriorityInteractable,
                                                    HPUIGestureState.Updated, timeDelta, state.startTime, state.startPosition,
                                                    cumilativeDirection, cumilativeDistance, delta);
-                        activePriorityInteractable?.OnGesture(gestureEventArgs);
+                        if (ActiveInteractaableCanTriggerEvent())
+                        {
+                            activePriorityInteractable?.OnGesture(gestureEventArgs);
+                        }
+                        // NOTE: See note when tap gets triggered.
                         interactor.OnGesture(gestureEventArgs);
                     }
                     break;
@@ -283,6 +318,7 @@ namespace ubco.ovilab.HPUI.Interaction
             public Vector2 startPosition;
             public bool active;
             public bool validTarget;
+            public float minDistanceToInteractor;
 
             public HPUIInteractionState(float startTime, Vector2 startPosition, bool validTarget)
             {
@@ -290,6 +326,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.startPosition = startPosition;
                 this.active = true;
                 this.validTarget = validTarget;
+                this.minDistanceToInteractor = float.MaxValue;
             }
         }
     }

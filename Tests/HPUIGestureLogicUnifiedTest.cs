@@ -372,7 +372,7 @@ namespace ubco.ovilab.HPUI.Tests
             public Vector2 boundsMin { get; set; }
 
 
-            Vector2 IHPUIInteractable.ComputeInteractorPostion(IXRInteractor interactor)
+            Vector2 IHPUIInteractable.ComputeInteractorPostion(IHPUIInteractor interactor)
             {
                 return interactorPosition;
             }

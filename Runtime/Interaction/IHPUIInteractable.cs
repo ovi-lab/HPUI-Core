@@ -26,7 +26,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// Get the projection of the interactors position on the xz plane of this interactable, normalized.
         /// the returned Vector2 - (x, z) on the xz-plane, relative to the center of the interactable.
         /// </summary>
-        Vector2 ComputeInteractorPostion(IXRInteractor interactor);
+        Vector2 ComputeInteractorPostion(IHPUIInteractor interactor);
 
         /// <summary>
         /// This is called when a tap event occurs on the interactable.

@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
 namespace ubco.ovilab.HPUI.Interaction 
@@ -23,6 +24,10 @@ namespace ubco.ovilab.HPUI.Interaction
         /// This is called when a gesture event occurs on the interactable.
         /// </summary>
         void OnGesture(HPUIGestureEventArgs args);
-    }
 
+        /// <summary>
+        /// Get the point of interaction.
+        /// </summary>
+        Vector3 GetCollisionPoint(IHPUIInteractable interactable);
+    }
 }

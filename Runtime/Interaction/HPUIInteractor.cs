@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Utilities;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -60,6 +59,15 @@ namespace ubco.ovilab.HPUI.Interaction
         public float InteractionHoverRadius { get => interactionHoverRadius; set => interactionHoverRadius = value; }
 
         [SerializeField]
+        [Tooltip("Interation select radius.")]
+        private float interactionSelectionRadius = 0.015f;
+
+        /// <summary>
+        /// Interation selection radius.
+        /// </summary>
+        public float InteractionSelectionRadius { get => interactionSelectionRadius; set => interactionSelectionRadius = value; }
+
+        [SerializeField]
         [Tooltip("If true, select only happens for the target with highest priority.")]
         private bool selectOnlyPriorityTarget = true;
 
@@ -68,8 +76,12 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public bool SelectOnlyPriorityTarget { get => selectOnlyPriorityTarget; set => selectOnlyPriorityTarget = value; }
 
+        // FIXME: Testing different approaches
+        [SerializeField]
+        private bool useRays = false;
+
         protected IHPUIGestureLogic gestureLogic;
-        private List<IXRInteractable> validTargets = new List<IXRInteractable>();
+        private Dictionary<IHPUIInteractable, CollisionInfo> validTargets = new Dictionary<IHPUIInteractable, CollisionInfo>();
         private bool justStarted = false;
         private Vector3 lastInteractionPoint;
         private PhysicsScene physicsScene;
@@ -82,7 +94,7 @@ namespace ubco.ovilab.HPUI.Interaction
             base.Awake();
             keepSelectedTargetValid = true;
             physicsScene = gameObject.scene.GetPhysicsScene();
-            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold);
+            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
         }
 
 #if UNITY_EDITOR
@@ -94,7 +106,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 gestureLogic.Dispose();
             }
-            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold);
+            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
         }
 #endif
 
@@ -129,57 +141,96 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 validTargets.Clear();
 
-                // Hover Check
-                Vector3 pokeInteractionPoint = GetAttachTransform(null).position;
-                Vector3 overlapStart = lastInteractionPoint;
-                Vector3 interFrameEnd = pokeInteractionPoint; // FIXME: Think of getting this of collision points?
+                Transform attachTransform = GetAttachTransform(null);
+                Vector3 interactionPoint = attachTransform.position;
 
-                BurstPhysicsUtils.GetSphereOverlapParameters(overlapStart, interFrameEnd, out Vector3 normalizedOverlapVector, out float overlapSqrMagnitude, out float overlapDistance);
+                List<Vector3> directions = new List<Vector3>();
 
-                // If no movement is recorded.
-                // Check if spherecast size is sufficient for proper cast, or if first frame since last frame poke position will be invalid.
-                int numberOfOverlaps;
-                List<Collider> colliders;
-
-                if (justStarted || overlapSqrMagnitude < 0.001f)
+                for (int x = 0; x < 180; x = x + 10)
                 {
-                    numberOfOverlaps = physicsScene.OverlapSphere(
-                        interFrameEnd,
-                        InteractionHoverRadius,
-                        overlapSphereHits,
-                        // FIXME: physics layers should be allowed to be set in inpsector
-                        Physics.AllLayers,
-                        // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
-                        QueryTriggerInteraction.Ignore);
-                    colliders = overlapSphereHits.ToList();
-                }
-                else
-                {
-                    numberOfOverlaps = physicsScene.SphereCast(
-                        overlapStart,
-                        InteractionHoverRadius,
-                        normalizedOverlapVector,
-                        sphereCastHits,
-                        overlapDistance,
-                        // FIXME: physics layers should be allowed to be set in inpsector
-                        Physics.AllLayers,
-                        // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
-                        QueryTriggerInteraction.Ignore);
-                    colliders = sphereCastHits.Select(s => s.collider).ToList();
-                }
-
-                lastInteractionPoint = pokeInteractionPoint;
-                justStarted = false;
-
-                for (var i = 0; i < numberOfOverlaps; ++i)
-                {
-                    if (interactionManager.TryGetInteractableForCollider(colliders[i], out var interactable) &&
-                        !validTargets.Contains(interactable) &&
-                        interactable is IHPUIInteractable hpuiInteractable && hpuiInteractable.IsHoverableBy(this))
+                    for (int z = -90; z < 90; z = z + 10)
                     {
-                        validTargets.Add(interactable);
+                        Debug.DrawRay(interactionPoint, (Quaternion.Euler(x, 0, z) * Vector3.up).normalized * InteractionHoverRadius);
+                        if (Physics.Raycast(interactionPoint,
+                                            attachTransform.TransformDirection(Quaternion.Euler(x, 0, z) * Vector3.up),
+                                            out RaycastHit hitInfo,
+                                            InteractionHoverRadius,
+                                            // FIXME: physics layers should be allowed to be set in inpsector
+                                            Physics.AllLayers,
+                                            // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                                            QueryTriggerInteraction.Ignore))
+                        {
+                            if (interactionManager.TryGetInteractableForCollider(hitInfo.collider, out var interactable) &&
+                                interactable is IHPUIInteractable hpuiInteractable &&
+                                hpuiInteractable.IsHoverableBy(this))
+                            {
+                                if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
+                                {
+                                    if (hitInfo.distance < info.distance)
+                                    {
+                                        validTargets[hpuiInteractable] = new CollisionInfo(hitInfo.distance, hitInfo.point);
+                                    }
+                                }
+                                else
+                                {
+                                    validTargets.Add(hpuiInteractable, new CollisionInfo(hitInfo.distance, hitInfo.point));
+                                }
+                            }
+                        }
                     }
                 }
+
+                // // Hover Check
+                // Vector3 pokeInteractionPoint = GetAttachTransform(null).position;
+                // Vector3 overlapStart = lastInteractionPoint;
+                // Vector3 interFrameEnd = pokeInteractionPoint; // FIXME: Think of getting this of collision points?
+
+                // BurstPhysicsUtils.GetSphereOverlapParameters(overlapStart, interFrameEnd, out Vector3 normalizedOverlapVector, out float overlapSqrMagnitude, out float overlapDistance);
+
+                // // If no movement is recorded.
+                // // Check if spherecast size is sufficient for proper cast, or if first frame since last frame poke position will be invalid.
+                // int numberOfOverlaps;
+                // List<Collider> colliders;
+
+                // if (justStarted || overlapSqrMagnitude < 0.001f)
+                // {
+                //     numberOfOverlaps = physicsScene.OverlapSphere(
+                //         interFrameEnd,
+                //         InteractionHoverRadius,
+                //         overlapSphereHits,
+                //         // FIXME: physics layers should be allowed to be set in inpsector
+                //         Physics.AllLayers,
+                //         // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                //         QueryTriggerInteraction.Ignore);
+                //     colliders = overlapSphereHits.ToList();
+                // }
+                // else
+                // {
+                //     numberOfOverlaps = physicsScene.SphereCast(
+                //         overlapStart,
+                //         InteractionHoverRadius,
+                //         normalizedOverlapVector,
+                //         sphereCastHits,
+                //         overlapDistance,
+                //         // FIXME: physics layers should be allowed to be set in inpsector
+                //         Physics.AllLayers,
+                //         // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                //         QueryTriggerInteraction.Ignore);
+                //     colliders = sphereCastHits.Select(s => s.collider).ToList();
+                // }
+
+                // lastInteractionPoint = pokeInteractionPoint;
+                // justStarted = false;
+
+                // for (var i = 0; i < numberOfOverlaps; ++i)
+                // {
+                //     if (interactionManager.TryGetInteractableForCollider(colliders[i], out var interactable) &&
+                //         !validTargets.Contains(interactable) &&
+                //         interactable is IHPUIInteractable hpuiInteractable && hpuiInteractable.IsHoverableBy(this))
+                //     {
+                //         validTargets.Add(interactable);
+                //     }
+                // }
             }
         }
 
@@ -188,7 +239,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
             {
-                gestureLogic.Update();
+                gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.distance));
             }
         }
 
@@ -198,17 +249,18 @@ namespace ubco.ovilab.HPUI.Interaction
             base.GetValidTargets(targets);
 
             targets.Clear();
-            foreach(IXRInteractable target in validTargets.Select(t => t as IHPUIInteractable).Where(ht => ht != null).OrderBy(ht => ht.zOrder))
+            foreach(IXRInteractable target in validTargets.Select(kvp => kvp.Key as IHPUIInteractable).Where(ht => ht != null).OrderBy(ht => ht.zOrder))
             {
                 targets.Add(target);
-                validTargets.Add(target);
             }
         }
 
         /// <inheritdoc />
         public override bool CanSelect(IXRSelectInteractable interactable)
         {
-            bool canSelect = validTargets.Contains(interactable) && ProcessSelectFilters(interactable);
+            bool canSelect = validTargets.TryGetValue(interactable as IHPUIInteractable, out CollisionInfo info) &&
+                info.distance < interactionSelectionRadius &&
+                ProcessSelectFilters(interactable);
             return canSelect && (!SelectOnlyPriorityTarget || gestureLogic.IsPriorityTarget(interactable as IHPUIInteractable));
         }
 
@@ -224,7 +276,30 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             gestureEvent?.Invoke(args);
         }
+
+        /// <inheritdoc />
+        public Vector3 GetCollisionPoint(IHPUIInteractable interactable)
+        {
+            if (validTargets.TryGetValue(interactable, out CollisionInfo info))
+            {
+                return info.point;
+            }
+            return GetAttachTransform(interactable).position;
+        }
         #endregion
+
+        struct CollisionInfo
+        {
+            public float distance;
+            public Vector3 point;
+
+            public CollisionInfo(float distance, Vector3 point) : this()
+            {
+                this.distance = distance;
+                this.point = point;
+            }
+
+        }
     }
 }
  

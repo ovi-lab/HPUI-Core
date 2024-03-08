@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -17,8 +18,9 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Update method to be called from an interactor. Updates the states of the <see cref="IHPUIInteractable"/> selected by
         /// the <see cref="IXRInteractor"/> that was passed when initializing this <see cref="HPUIGestureLogic"/>.
+        /// <param name="distances">A dictionary containing the distance values for interactable currenly interacting with.</param>
         /// </summary>
-        public void Update();
+        public void Update(IDictionary<IHPUIInteractable, float> distances);
 
         /// <summary>
         /// Returns the interactable passed is has the highest priority.

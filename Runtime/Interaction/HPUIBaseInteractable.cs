@@ -119,9 +119,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
         #region IHPUIInteractable interface
         /// <inheritdoc />
-        public virtual Vector2 ComputeInteractorPostion(IXRInteractor interactor)
+        public virtual Vector2 ComputeInteractorPostion(IHPUIInteractor interactor)
         {
-            Vector3 closestPointOnCollider = GetDistanceOverride(this, interactor.GetAttachTransform(this).position).point;
+            Vector3 closestPointOnCollider = GetDistanceOverride(this, interactor.GetCollisionPoint(this)).point;
             Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
             return pointOnPlane;
         }
