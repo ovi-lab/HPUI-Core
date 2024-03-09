@@ -146,13 +146,12 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 List<Vector3> directions = new List<Vector3>();
 
-                for (int x = 0; x < 180; x = x + 10)
+                for (int x = -45; x < 45; x = x + 15)
                 {
-                    for (int z = -90; z < 90; z = z + 10)
+                    for (int z = -45; z < 45; z = z + 15)
                     {
-                        Debug.DrawRay(interactionPoint, (Quaternion.Euler(x, 0, z) * Vector3.up).normalized * InteractionHoverRadius);
                         if (Physics.Raycast(interactionPoint,
-                                            attachTransform.TransformDirection(Quaternion.Euler(x, 0, z) * Vector3.up),
+                                            Quaternion.Euler(x, 0, z) * attachTransform.up,
                                             out RaycastHit hitInfo,
                                             InteractionHoverRadius,
                                             // FIXME: physics layers should be allowed to be set in inpsector
