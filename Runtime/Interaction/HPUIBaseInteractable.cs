@@ -13,8 +13,6 @@ namespace ubco.ovilab.HPUI.Interaction
     [DisallowMultipleComponent]
     public class HPUIBaseInteractable: XRBaseInteractable, IHPUIInteractable
     {
-        [Space()]
-        [Header("HPUI Configurations")]
         [SerializeField]
         private Handedness handedness;
         public Handedness Handedness

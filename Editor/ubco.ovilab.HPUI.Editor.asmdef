@@ -5,7 +5,8 @@
         "ubco.ovilab.HPUI",
         "Unity.XR.Interaction.Toolkit",
         "Unity.XR.Interaction.Toolkit.Editor",
-        "Unity.XR.CoreUtils.Editor"
+        "Unity.XR.CoreUtils.Editor",
+        "Unity.XR.Hands"
     ],
     "includePlatforms": [
         "Editor"

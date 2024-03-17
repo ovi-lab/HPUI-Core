@@ -30,9 +30,9 @@ namespace ubco.ovilab.HPUI.Editor
         }
 
         /// <inheritdoc />
-        protected override void DrawInspector()
+        protected override void DrawCoreConfiguration()
         {
-            base.DrawInspector();
+            base.DrawCoreConfiguration();
             EditorGUILayout.PropertyField(uiProp);
             if (uiProp.objectReferenceValue == null)
             {

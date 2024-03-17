@@ -2,6 +2,10 @@ using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
 using UnityEditor.XR.Interaction.Toolkit;
 using System.Collections.Generic;
+using ubco.ovilab.HPUI.Tracking;
+using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI.Editor
 {
@@ -52,6 +56,31 @@ namespace ubco.ovilab.HPUI.Editor
         protected override void DrawProperties()
         {
             DrawCoreConfiguration();
+        }
+
+        /// <inheritdoc />
+        protected override void DrawCoreConfiguration()
+        {
+            DrawInteractionManagement();
+            if (t.TryGetComponent<JointFollower>(out JointFollower jointFollower))
+            {
+                EditorGUILayout.HelpBox("Using handedness from JointFollower", MessageType.Info);
+                GUI.enabled = false;
+                t.handedness = jointFollower.Handedness switch {
+                    Handedness.Right => InteractorHandedness.Right,
+                    Handedness.Left => InteractorHandedness.Left,
+                    _ => InteractorHandedness.None,
+                };
+                EditorGUILayout.PropertyField(m_Handedness, BaseContents.handedness);
+                GUI.enabled = true;
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(m_Handedness, BaseContents.handedness);
+            }
+            EditorGUILayout.PropertyField(m_AttachTransform, BaseContents.attachTransform);
+            EditorGUILayout.PropertyField(m_DisableVisualsWhenBlockedInGroup, BaseContents.disableVisualsWhenBlockedInGroup);
+            EditorGUILayout.PropertyField(m_StartingSelectedInteractable, BaseContents.startingSelectedInteractable);
         }
 
         /// <inheritdoc />

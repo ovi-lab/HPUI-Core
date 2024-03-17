@@ -2,6 +2,8 @@ using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
 using UnityEditor.XR.Interaction.Toolkit;
 using System.Collections.Generic;
+using UnityEngine;
+using ubco.ovilab.HPUI.Tracking;
 
 namespace ubco.ovilab.HPUI.Editor
 {
@@ -14,6 +16,9 @@ namespace ubco.ovilab.HPUI.Editor
         protected virtual List<string> EventPropertyNames => new List<string>() { "tapEvent", "gestureEvent" };
 
         protected bool hpuiInteractablesExpanded;
+        protected SerializedProperty handednessProperty;
+        protected SerializedProperty boundsColliderProperty;
+        protected SerializedProperty zOrderProperty;
 
         /// <inheritdoc />
         protected override void OnEnable()
@@ -26,12 +31,39 @@ namespace ubco.ovilab.HPUI.Editor
             {
                 eventProperties.Add(serializedObject.FindProperty(eventName));
             }
+
+            handednessProperty = serializedObject.FindProperty("handedness");
+            boundsColliderProperty = serializedObject.FindProperty("boundsCollider");
+            zOrderProperty = serializedObject.FindProperty("_zOrder");
         }
 
         /// <inheritdoc />
-        protected override void DrawInspector()
+        protected override void DrawProperties()
         {
-            base.DrawInspector();
+            base.DrawProperties();
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("HPUI Configurations", EditorStyles.boldLabel);
+            if (t.TryGetComponent<JointFollower>(out JointFollower jointFollower))
+            {
+                EditorGUILayout.HelpBox("Using handedness from JointFollower", MessageType.Info);
+                GUI.enabled = false;
+                t.Handedness = jointFollower.Handedness;
+                EditorGUILayout.PropertyField(handednessProperty);
+                GUI.enabled = true;
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(handednessProperty);
+            }
+            EditorGUILayout.PropertyField(boundsColliderProperty);
+            EditorGUILayout.PropertyField(zOrderProperty);
+        }
+
+        /// <inheritdoc />
+        protected override void DrawEvents()
+        {
+            base.DrawEvents();
 
             EditorGUILayout.Space();
 
@@ -53,6 +85,9 @@ namespace ubco.ovilab.HPUI.Editor
         {
             List<string> props = base.GetDerivedSerializedPropertyNames();
             props.AddRange(EventPropertyNames);
+            props.Add("handedness");
+            props.Add("boundsCollider");
+            props.Add("_zOrder");
             return props;
         }
 

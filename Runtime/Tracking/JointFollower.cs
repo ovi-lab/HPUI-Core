@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
@@ -81,12 +80,26 @@ namespace ubco.ovilab.HPUI.Tracking
         /// </summary>
         protected override void ProcessJointData(XRHandSubsystem subsystem)
         {
-            XRHand hand = jointFollowerData.Value.handedness switch
+            if (!enabled)
             {
-                Handedness.Left => subsystem.leftHand,
-                Handedness.Right => subsystem.rightHand,
-                _ => throw new InvalidOperationException($"Handedness value in JointFollerData not valid (got {jointFollowerData.Value.handedness})")
-            };
+                return;
+            }
+
+            XRHand hand;
+            if (Handedness.Left == jointFollowerData.Value.handedness)
+            {
+                hand = subsystem.leftHand;
+            }
+            else if (Handedness.Right == jointFollowerData.Value.handedness)
+            {
+                hand = subsystem.rightHand;
+            }
+            else
+            {
+                Debug.LogError($"Handedness value in JointFollerData not valid (got {jointFollowerData.Value.handedness}), disabling JointFollower.");
+                this.enabled = false;
+                return;
+            }
 
             JointFollowerData jointFollowerDataValue = jointFollowerData.Value;
             XRHandJoint mainJoint = hand.GetJoint(jointFollowerDataValue.jointID);
