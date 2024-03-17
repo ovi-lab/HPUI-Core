@@ -6,7 +6,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 namespace ubco.ovilab.HPUI.Interaction
 {
     /// <summary>
-    /// Base HPUI interactor.
+    /// Base HPUI interactor. Selects/hovers only the closest interactable for a given zOrder.
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
@@ -248,10 +248,15 @@ namespace ubco.ovilab.HPUI.Interaction
             base.GetValidTargets(targets);
 
             targets.Clear();
-            foreach(IXRInteractable target in validTargets.Select(kvp => kvp.Key as IHPUIInteractable).Where(ht => ht != null).OrderBy(ht => ht.zOrder))
-            {
-                targets.Add(target);
-            }
+            IEnumerable<IHPUIInteractable> filteredValidTargets = validTargets
+                .Where(kvp => (kvp.Key is IHPUIInteractable))
+                .GroupBy(kvp => kvp.Key.zOrder)
+                .Select(g => g
+                        .OrderBy(kvp => kvp.Value.distance)
+                        .First()
+                        .Key)
+                .OrderBy(ht => ht.zOrder);
+            targets.AddRange(filteredValidTargets);
         }
 
         /// <inheritdoc />
