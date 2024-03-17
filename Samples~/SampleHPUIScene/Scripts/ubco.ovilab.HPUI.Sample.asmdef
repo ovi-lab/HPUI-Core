@@ -1,0 +1,17 @@
+{
+    "name": "ubco.ovilab.HPUI.Sample",
+    "rootNamespace": "",
+    "references": [
+        "GUID:b28529e3ac53b97439156c0939c8c9ce",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

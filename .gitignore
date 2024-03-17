@@ -77,8 +77,11 @@ crashlytics-build.properties
 *~
 *#
 
+!Samples~/
 !Documentation~/
 
 # vscode
 .vscode
 /Documentation~/pages/
+
+/Samples
