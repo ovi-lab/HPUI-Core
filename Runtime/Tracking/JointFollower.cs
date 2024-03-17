@@ -27,7 +27,17 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <inheritdoc />
         public override Handedness Handedness
         {
-            get => jointFollowerData.Value.handedness;
+            get
+            {
+                if(jointFollowerData.Value != null)
+                {
+                    return jointFollowerData.Value.handedness;
+                }
+                else
+                {
+                    return Handedness.Invalid;
+                }
+            }
             set => jointFollowerData.Value.handedness = value;
         }
 
