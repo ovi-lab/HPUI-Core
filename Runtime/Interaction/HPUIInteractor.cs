@@ -12,6 +12,26 @@ namespace ubco.ovilab.HPUI.Interaction
     [DisallowMultipleComponent]
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
+        public enum HPUIInteractorVisuals
+        {
+            /// <summary>
+            /// No visuls are shown
+            /// </summary>
+            None,
+            /// <summary>
+            /// Show the individual raycasts for the hover detection.
+            /// </summary>
+            Ray,
+            /// <summary>
+            /// Show the sphere for the hover.
+            /// </summary>
+            HoverSphere,
+            /// <summary>
+            /// Show the sphere for the selection.
+            /// </summary>
+            SelectSphere
+        }
+
         // TODO move these to an asset?
         [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
         [SerializeField]
@@ -76,9 +96,18 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public bool SelectOnlyPriorityTarget { get => selectOnlyPriorityTarget; set => selectOnlyPriorityTarget = value; }
 
-        // FIXME: Testing different approaches
         [SerializeField]
-        private bool useRays = false;
+        [Tooltip("Set which visuals to use.")]
+        private HPUIInteractorVisuals visuals = HPUIInteractorVisuals.None;
+
+        /// <summary>
+        /// The visuals that are shown with the interactor.
+        /// </summary>
+        public HPUIInteractorVisuals Visuals { get => visuals; set {
+                UpdateVisuals();
+                visuals = value;
+            }
+        }
 
         protected IHPUIGestureLogic gestureLogic;
         private Dictionary<IHPUIInteractable, CollisionInfo> validTargets = new Dictionary<IHPUIInteractable, CollisionInfo>();
@@ -87,6 +116,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private PhysicsScene physicsScene;
         private RaycastHit[] sphereCastHits = new RaycastHit[200];
         private Collider[] overlapSphereHits = new Collider[200];
+        private GameObject visualsObject;
 
         /// <inheritdoc />
         protected override void Awake()
@@ -107,6 +137,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 gestureLogic.Dispose();
             }
             gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
+
+            UpdateVisuals();
         }
 #endif
 
@@ -150,8 +182,10 @@ namespace ubco.ovilab.HPUI.Interaction
                 {
                     for (int z = -45; z < 45; z = z + 15)
                     {
+                        Vector3 direction = Quaternion.Euler(x, 0, z) * attachTransform.up;
+                        bool validInteractable = false;
                         if (Physics.Raycast(interactionPoint,
-                                            Quaternion.Euler(x, 0, z) * attachTransform.up,
+                                            direction,
                                             out RaycastHit hitInfo,
                                             InteractionHoverRadius,
                                             // FIXME: physics layers should be allowed to be set in inpsector
@@ -163,6 +197,7 @@ namespace ubco.ovilab.HPUI.Interaction
                                 interactable is IHPUIInteractable hpuiInteractable &&
                                 hpuiInteractable.IsHoverableBy(this))
                             {
+                                validInteractable = true;
                                 if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
                                 {
                                     if (hitInfo.distance < info.distance)
@@ -176,60 +211,14 @@ namespace ubco.ovilab.HPUI.Interaction
                                 }
                             }
                         }
+
+                        if (Visuals == HPUIInteractorVisuals.Ray)
+                        {
+                            Color rayColor = validInteractable ? Color.green : Color.red;
+                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionHoverRadius, rayColor);
+                        }
                     }
                 }
-
-                // // Hover Check
-                // Vector3 pokeInteractionPoint = GetAttachTransform(null).position;
-                // Vector3 overlapStart = lastInteractionPoint;
-                // Vector3 interFrameEnd = pokeInteractionPoint; // FIXME: Think of getting this of collision points?
-
-                // BurstPhysicsUtils.GetSphereOverlapParameters(overlapStart, interFrameEnd, out Vector3 normalizedOverlapVector, out float overlapSqrMagnitude, out float overlapDistance);
-
-                // // If no movement is recorded.
-                // // Check if spherecast size is sufficient for proper cast, or if first frame since last frame poke position will be invalid.
-                // int numberOfOverlaps;
-                // List<Collider> colliders;
-
-                // if (justStarted || overlapSqrMagnitude < 0.001f)
-                // {
-                //     numberOfOverlaps = physicsScene.OverlapSphere(
-                //         interFrameEnd,
-                //         InteractionHoverRadius,
-                //         overlapSphereHits,
-                //         // FIXME: physics layers should be allowed to be set in inpsector
-                //         Physics.AllLayers,
-                //         // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
-                //         QueryTriggerInteraction.Ignore);
-                //     colliders = overlapSphereHits.ToList();
-                // }
-                // else
-                // {
-                //     numberOfOverlaps = physicsScene.SphereCast(
-                //         overlapStart,
-                //         InteractionHoverRadius,
-                //         normalizedOverlapVector,
-                //         sphereCastHits,
-                //         overlapDistance,
-                //         // FIXME: physics layers should be allowed to be set in inpsector
-                //         Physics.AllLayers,
-                //         // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
-                //         QueryTriggerInteraction.Ignore);
-                //     colliders = sphereCastHits.Select(s => s.collider).ToList();
-                // }
-
-                // lastInteractionPoint = pokeInteractionPoint;
-                // justStarted = false;
-
-                // for (var i = 0; i < numberOfOverlaps; ++i)
-                // {
-                //     if (interactionManager.TryGetInteractableForCollider(colliders[i], out var interactable) &&
-                //         !validTargets.Contains(interactable) &&
-                //         interactable is IHPUIInteractable hpuiInteractable && hpuiInteractable.IsHoverableBy(this))
-                //     {
-                //         validTargets.Add(interactable);
-                //     }
-                // }
             }
         }
 
@@ -267,6 +256,50 @@ namespace ubco.ovilab.HPUI.Interaction
                 ProcessSelectFilters(interactable);
             return canSelect && (!SelectOnlyPriorityTarget || gestureLogic.IsPriorityTarget(interactable as IHPUIInteractable));
         }
+
+        /// <summary>
+        /// Update the visuals being showne. Called when the <see cref="Visuals"/> is updated or the component is updated in inspector.
+        /// </summary>
+        protected void UpdateVisuals()
+        {
+            switch(visuals)
+            {
+                case HPUIInteractorVisuals.HoverSphere:
+                case HPUIInteractorVisuals.SelectSphere:
+                    if (visualsObject == null)
+                    {
+                        visualsObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        visualsObject.transform.SetParent(GetAttachTransform(null), false);
+                        if (visualsObject.TryGetComponent<Collider>(out Collider debugCollider))
+                        {
+                            Destroy(debugCollider);
+                        }
+                    }
+                    string name;
+                    float radius;
+                    if (visuals == HPUIInteractorVisuals.HoverSphere)
+                    {
+                        name = "Hover";
+                        radius = InteractionHoverRadius;
+                    }
+                    else
+                    {
+                        name = "Select";
+                        radius = InteractionSelectionRadius;
+                    }
+
+                    visualsObject.name = $"[HPUI] Visual - {name}: " + this;
+                    visualsObject.transform.localScale = Vector3.one * radius;
+                    break;
+                default:
+                    if (visualsObject != null)
+                    {
+                        Destroy(visualsObject);
+                    }
+                    break;
+            }
+        }
+
 
         #region IHPUIInteractor interface
         /// <inheritdoc />
