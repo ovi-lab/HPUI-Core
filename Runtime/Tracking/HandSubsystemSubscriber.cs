@@ -12,7 +12,7 @@ namespace ubco.ovilab.HPUI.Tracking
     public abstract class HandSubsystemSubscriber: MonoBehaviour
     {
         private XRHandSubsystem handSubsystem;
-        protected Transform xrOriginTransform;
+        protected XROrigin xrOrigin;
 
         /// <summary>
         /// The current handedness used.
@@ -53,9 +53,9 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <inheritdoc />
         protected virtual void OnEnable()
         {
-            if (xrOriginTransform == null)
+            if (xrOrigin == null)
             {
-                xrOriginTransform = FindObjectOfType<XROrigin>().transform;
+                xrOrigin = FindObjectOfType<XROrigin>();
             }
 
             SubscribeHandSubsystem();

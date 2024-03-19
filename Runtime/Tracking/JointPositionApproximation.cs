@@ -13,6 +13,7 @@ namespace ubco.ovilab.HPUI.Tracking
     public class JointPositionApproximation: HandSubsystemSubscriber
     {
         private static JointPositionApproximation leftJointPositionApproximation, rightJointPositionApproximation;
+        private Transform dummyXROriginTransform;
 
         /// <summary>
         /// Approximate the joint positions of the left hand.
@@ -207,9 +208,16 @@ namespace ubco.ovilab.HPUI.Tracking
                 }
             }
 
+            if (dummyXROriginTransform == null)
+            {
+                dummyXROriginTransform = xrOrigin.transform;
+            }
 
-            Pose xrOriginPose = new Pose(xrOriginTransform.position, xrOriginTransform.rotation);
-            Vector3 handNormal = xrOriginTransform.TransformDirection(lastWristPose.up);
+            dummyXROriginTransform.position = xrOrigin.transform.position + new Vector3(0, xrOrigin.CameraYOffset, 0);
+            dummyXROriginTransform.rotation = xrOrigin.transform.rotation;
+
+            Pose xrOriginPose = new Pose(dummyXROriginTransform.position, dummyXROriginTransform.rotation);
+            Vector3 handNormal = dummyXROriginTransform.TransformDirection(lastWristPose.up);
             Pose anchorPose;
             // If only one finger, the orientation can match the corresponding finger's proximal orientation.
             // If not use the middle proximal's orientation.
@@ -222,8 +230,8 @@ namespace ubco.ovilab.HPUI.Tracking
                 anchorPose = computeKeypointJointsData[XRHandJointID.MiddleProximal].pose;
             }
 
-            Vector3 forward = Vector3.ProjectOnPlane(xrOriginTransform.TransformDirection(anchorPose.forward), handNormal);
-            Vector3 up = Vector3.Cross(Vector3.Cross(forward, xrOriginTransform.TransformDirection(anchorPose.up)), forward);
+            Vector3 forward = Vector3.ProjectOnPlane(dummyXROriginTransform.TransformDirection(anchorPose.forward), handNormal);
+            Vector3 up = Vector3.Cross(Vector3.Cross(forward, dummyXROriginTransform.TransformDirection(anchorPose.up)), forward);
 
             Quaternion rotation = Quaternion.LookRotation(forward, up);
 
@@ -243,7 +251,7 @@ namespace ubco.ovilab.HPUI.Tracking
                     // If this is null, the jointID is that of the proximal
                     if (currentPos == null)
                     {
-                        currentPos = xrOriginTransform.TransformPoint(computeKeypointJointsData[jointID].pose.position);
+                        currentPos = dummyXROriginTransform.TransformPoint(computeKeypointJointsData[jointID].pose.position);
                     }
                     else
                     {
