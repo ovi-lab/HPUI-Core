@@ -6,6 +6,16 @@ namespace ubco.ovilab.HPUI.Interaction
     public interface IHPUIInteractable : IXRSelectInteractable, IXRHoverInteractable
     {
         /// <summary>
+        /// Event triggered on tap
+        /// </summary>
+        public HPUITapEvent TapEvent { get; }
+
+        /// <summary>
+        /// Event triggered on gesture
+        /// </summary>
+        public HPUIGestureEvent GestureEvent { get; }
+
+        /// <summary>
         /// Lower z order will get higher priority.
         /// </summary>
         int zOrder { get; set; }

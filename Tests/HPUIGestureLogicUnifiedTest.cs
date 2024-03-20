@@ -481,6 +481,10 @@ namespace ubco.ovilab.HPUI.Tests
 
             bool IXRHoverInteractable.isHovered => throw new NotImplementedException();
 
+            HPUITapEvent IHPUIInteractable.TapEvent => throw new NotImplementedException();
+
+            HPUIGestureEvent IHPUIInteractable.GestureEvent => throw new NotImplementedException();
+
             event Action<InteractableRegisteredEventArgs> IXRInteractable.registered
             {
                 add
