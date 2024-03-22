@@ -18,8 +18,8 @@ MonoBehaviour:
     handedness: 2
     jointID: 13
     useSecondJointID: 1
-    secondJointID: 19
+    secondJointID: 14
     defaultJointRadius: 0.01
     offsetAngle: 0
     offsetAsRatioToRadius: 1.8
-    longitudinalOffset: 0.5
+    longitudinalOffset: 0.7

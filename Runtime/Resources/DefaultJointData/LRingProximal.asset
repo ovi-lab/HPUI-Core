@@ -22,4 +22,4 @@ MonoBehaviour:
     defaultJointRadius: 0.01
     offsetAngle: 0
     offsetAsRatioToRadius: 1.8
-    longitudinalOffset: 0.5
+    longitudinalOffset: 0.7
