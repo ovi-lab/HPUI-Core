@@ -42,7 +42,15 @@ namespace ubco.ovilab.HPUI.Interaction
         /// interactable for more than this threshold, it would be
         /// treated as as gesture.
         /// </summary>
-        public float TapTimeThreshold { get => tapTimeThreshold;  set => tapTimeThreshold = value; }
+        public float TapTimeThreshold
+        {
+            get => tapTimeThreshold;
+            set
+            {
+                tapTimeThreshold = value;
+                UpdateLogic();
+            }
+        }
 
         [Tooltip("The distance threshold at which an interaction would be treated as a gesture.")]
         [SerializeField]
@@ -53,7 +61,15 @@ namespace ubco.ovilab.HPUI.Interaction
         /// after coming into contact with a interactable, it would be
         /// treated as as gesture.
         /// </summary>
-        public float TapDistanceThreshold { get => tapDistanceThreshold; set => tapDistanceThreshold = value; }
+        public float TapDistanceThreshold
+        {
+            get => tapDistanceThreshold;
+            set
+            {
+                tapDistanceThreshold = value;
+                UpdateLogic();
+            }
+        }
 
         [SerializeField]
         [Tooltip("Event triggered on tap")]
@@ -85,7 +101,15 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Interation selection radius.
         /// </summary>
-        public float InteractionSelectionRadius { get => interactionSelectionRadius; set => interactionSelectionRadius = value; }
+        public float InteractionSelectionRadius
+        {
+            get => interactionSelectionRadius;
+            set
+            {
+                interactionSelectionRadius = value;
+                UpdateLogic();
+            }
+        }
 
         [SerializeField]
         [Tooltip("If true, select only happens for the target with highest priority.")]
@@ -103,9 +127,13 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// The visuals that are shown with the interactor.
         /// </summary>
-        public HPUIInteractorVisuals Visuals { get => visuals; set {
-                UpdateVisuals();
+        public HPUIInteractorVisuals Visuals
+        {
+            get => visuals;
+            set
+            {
                 visuals = value;
+                UpdateVisuals();
             }
         }
 
@@ -124,21 +152,18 @@ namespace ubco.ovilab.HPUI.Interaction
             base.Awake();
             keepSelectedTargetValid = true;
             physicsScene = gameObject.scene.GetPhysicsScene();
-            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
+            UpdateLogic();
         }
 
 #if UNITY_EDITOR
         /// <inheritdoc />
         protected void OnValidate()
         {
-            // When values are changed in inspector, update the values
-            if (gestureLogic != null)
+            if (Application.isPlaying)
             {
-                gestureLogic.Dispose();
+                UpdateLogic();
+                UpdateVisuals();
             }
-            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
-
-            UpdateVisuals();
         }
 #endif
 
@@ -147,6 +172,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             base.OnEnable();
             justStarted = true;
+            UpdateVisuals();
         }
 
         /// <inheritdoc />
@@ -262,7 +288,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         protected void UpdateVisuals()
         {
-            switch(visuals)
+            switch(Visuals)
             {
                 case HPUIInteractorVisuals.HoverSphere:
                 case HPUIInteractorVisuals.SelectSphere:
@@ -277,7 +303,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     }
                     string name;
                     float radius;
-                    if (visuals == HPUIInteractorVisuals.HoverSphere)
+                    if (Visuals == HPUIInteractorVisuals.HoverSphere)
                     {
                         name = "Hover";
                         radius = InteractionHoverRadius;
@@ -300,6 +326,15 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        private void UpdateLogic()
+        {
+            // When values are changed in inspector, update the values
+            if (gestureLogic != null)
+            {
+                gestureLogic.Dispose();
+            }
+            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
+        }
 
         #region IHPUIInteractor interface
         /// <inheritdoc />
