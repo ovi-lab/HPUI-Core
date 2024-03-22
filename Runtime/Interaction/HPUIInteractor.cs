@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -146,6 +148,23 @@ namespace ubco.ovilab.HPUI.Interaction
         private Collider[] overlapSphereHits = new Collider[200];
         private GameObject visualsObject;
 
+        // FIXME: debug code
+        string dataWriter;
+        public string DataWriter {
+            get
+            {
+                string toReturn = dataWriter;
+                dataWriter = "";
+                return toReturn;
+            }
+            set
+            {
+                dataWriter += "::" + value;
+            }
+        }
+
+        public event System.Action<string> data;
+
         /// <inheritdoc />
         protected override void Awake()
         {
@@ -153,6 +172,8 @@ namespace ubco.ovilab.HPUI.Interaction
             keepSelectedTargetValid = true;
             physicsScene = gameObject.scene.GetPhysicsScene();
             UpdateLogic();
+            // FIXME: debug code
+            dataWriter = "";
         }
 
 #if UNITY_EDITOR
@@ -203,10 +224,15 @@ namespace ubco.ovilab.HPUI.Interaction
                 Vector3 interactionPoint = attachTransform.position;
 
                 List<Vector3> directions = new List<Vector3>();
+                int maxAngle = 120,
+                    minAngle = -120,
+                    angleStep = 10;
 
-                for (int x = -45; x < 45; x = x + 15)
+                DataWriter = "//";
+
+                for (int x = minAngle; x < maxAngle; x = x + angleStep)
                 {
-                    for (int z = -45; z < 45; z = z + 15)
+                    for (int z = -angleStep; z < maxAngle; z = z + angleStep)
                     {
                         Vector3 direction = Quaternion.Euler(x, 0, z) * attachTransform.up;
                         bool validInteractable = false;
@@ -224,6 +250,7 @@ namespace ubco.ovilab.HPUI.Interaction
                                 hpuiInteractable.IsHoverableBy(this))
                             {
                                 validInteractable = true;
+                                DataWriter = $"{interactable.transform.name},{x},{z},{hitInfo.distance}";
                                 if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
                                 {
                                     if (hitInfo.distance < info.distance)
@@ -245,6 +272,10 @@ namespace ubco.ovilab.HPUI.Interaction
                         }
                     }
                 }
+            }
+            if (data != null)
+            {
+                data.Invoke(DataWriter);
             }
         }
 
