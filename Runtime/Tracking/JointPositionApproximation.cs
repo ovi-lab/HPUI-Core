@@ -213,7 +213,7 @@ namespace ubco.ovilab.HPUI.Tracking
                 dummyXROriginTransform = xrOrigin.transform;
             }
 
-            dummyXROriginTransform.position = xrOrigin.transform.position + new Vector3(0, xrOrigin.CameraYOffset, 0);
+            dummyXROriginTransform.position = xrOrigin.transform.position; // + new Vector3(0, xrOrigin.CameraYOffset, 0);
             dummyXROriginTransform.rotation = xrOrigin.transform.rotation;
 
             Pose xrOriginPose = new Pose(dummyXROriginTransform.position, dummyXROriginTransform.rotation);
