@@ -222,17 +222,18 @@ namespace ubco.ovilab.HPUI.Interaction
                 if (useRayCast)
                 {
                     List<Vector3> directions = new List<Vector3>();
-                    int maxAngle = 140,
+                    int maxAngle = 130,
                         minAngle = -130,
-                        angleStep = 10;
+                        angleStep = 5;
 
                     DataWriter = "//";
 
                     for (int x = minAngle; x <= maxAngle; x = x + angleStep)
                     {
-                        for (int z = -angleStep; z < maxAngle; z = z + angleStep)
+                        for (int z = minAngle; z <= maxAngle; z = z + angleStep)
                         {
-                            Vector3 direction = Quaternion.Euler(x, 0, z) * attachTransform.up;
+                            Quaternion rotation = Quaternion.AngleAxis(x, attachTransform.right) * Quaternion.AngleAxis(z, attachTransform.forward);
+                            Vector3 direction = rotation * attachTransform.up;
                             bool validInteractable = false;
                             if (Physics.Raycast(interactionPoint,
                                                 direction,
