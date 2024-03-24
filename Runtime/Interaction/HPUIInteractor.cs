@@ -210,13 +210,13 @@ namespace ubco.ovilab.HPUI.Interaction
                 Vector3 interactionPoint = attachTransform.position;
 
                 List<Vector3> directions = new List<Vector3>();
-                int maxAngle = 120,
-                    minAngle = -120,
+                int maxAngle = 140,
+                    minAngle = -130,
                     angleStep = 10;
 
                 DataWriter = "//";
 
-                for (int x = minAngle; x < maxAngle; x = x + angleStep)
+                for (int x = minAngle; x <= maxAngle; x = x + angleStep)
                 {
                     for (int z = -angleStep; z < maxAngle; z = z + angleStep)
                     {
