@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -14,26 +12,6 @@ namespace ubco.ovilab.HPUI.Interaction
     [DisallowMultipleComponent]
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
-        public enum HPUIInteractorVisuals
-        {
-            /// <summary>
-            /// No visuls are shown
-            /// </summary>
-            None,
-            /// <summary>
-            /// Show the individual raycasts for the hover detection.
-            /// </summary>
-            Ray,
-            /// <summary>
-            /// Show the sphere for the hover.
-            /// </summary>
-            HoverSphere,
-            /// <summary>
-            /// Show the sphere for the selection.
-            /// </summary>
-            SelectSphere
-        }
-
         // TODO move these to an asset?
         [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
         [SerializeField]
@@ -122,26 +100,35 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public bool SelectOnlyPriorityTarget { get => selectOnlyPriorityTarget; set => selectOnlyPriorityTarget = value; }
 
+        [Space()]
         [SerializeField]
-        [Tooltip("Set which visuals to use.")]
-        private HPUIInteractorVisuals visuals = HPUIInteractorVisuals.None;
+        [Tooltip("Show sphere visual.")]
+        private bool showSphereVisual = true;
 
         /// <summary>
-        /// The visuals that are shown with the interactor.
+        /// Show sphere visual for selection. The radius of the sphere is equal to <see cref="InteractionSelectionRadius"/>.
         /// </summary>
-        public HPUIInteractorVisuals Visuals
+        public bool ShowSphereVisual
         {
-            get => visuals;
+            get => showSphereVisual;
             set
             {
-                visuals = value;
+                showSphereVisual = value;
                 UpdateVisuals();
             }
         }
 
+        [SerializeField]
+        [Tooltip("Show sphere rays used for interaction selections.")]
+        private bool showDebugRayVisual = true;
+
+        /// <summary>
+        /// Show sphere rays used for interaction selections.
+        /// </summary>
+        public bool ShowDebugRayVisual { get => showDebugRayVisual; set => showDebugRayVisual = value; }
+
         protected IHPUIGestureLogic gestureLogic;
         private Dictionary<IHPUIInteractable, CollisionInfo> validTargets = new Dictionary<IHPUIInteractable, CollisionInfo>();
-        private bool justStarted = false;
         private Vector3 lastInteractionPoint;
         private PhysicsScene physicsScene;
         private RaycastHit[] sphereCastHits = new RaycastHit[200];
@@ -192,7 +179,6 @@ namespace ubco.ovilab.HPUI.Interaction
         protected override void OnEnable()
         {
             base.OnEnable();
-            justStarted = true;
             UpdateVisuals();
         }
 
@@ -265,7 +251,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             }
                         }
 
-                        if (Visuals == HPUIInteractorVisuals.Ray)
+                        if (ShowDebugRayVisual)
                         {
                             Color rayColor = validInteractable ? Color.green : Color.red;
                             Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionHoverRadius, rayColor);
@@ -315,46 +301,27 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <summary>
-        /// Update the visuals being showne. Called when the <see cref="Visuals"/> is updated or the component is updated in inspector.
+        /// Update the visuals being shown. Called when the <see cref="ShowSphereVisual"/> is updated or the component is updated in inspector.
         /// </summary>
         protected void UpdateVisuals()
         {
-            switch(Visuals)
+            if (!ShowSphereVisual)
             {
-                case HPUIInteractorVisuals.HoverSphere:
-                case HPUIInteractorVisuals.SelectSphere:
-                    if (visualsObject == null)
-                    {
-                        visualsObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                        visualsObject.transform.SetParent(GetAttachTransform(null), false);
-                        if (visualsObject.TryGetComponent<Collider>(out Collider debugCollider))
-                        {
-                            Destroy(debugCollider);
-                        }
-                    }
-                    string name;
-                    float radius;
-                    if (Visuals == HPUIInteractorVisuals.HoverSphere)
-                    {
-                        name = "Hover";
-                        radius = InteractionHoverRadius;
-                    }
-                    else
-                    {
-                        name = "Select";
-                        radius = InteractionSelectionRadius;
-                    }
-
-                    visualsObject.name = $"[HPUI] Visual - {name}: " + this;
-                    visualsObject.transform.localScale = Vector3.one * radius;
-                    break;
-                default:
-                    if (visualsObject != null)
-                    {
-                        Destroy(visualsObject);
-                    }
-                    break;
+                return;
             }
+
+            if (visualsObject == null)
+            {
+                visualsObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                visualsObject.transform.SetParent(GetAttachTransform(null), false);
+                if (visualsObject.TryGetComponent<Collider>(out Collider debugCollider))
+                {
+                    Destroy(debugCollider);
+                }
+            }
+
+            visualsObject.name = "[HPUI] Visual - Select: " + this;
+            visualsObject.transform.localScale = Vector3.one * InteractionSelectionRadius;
         }
 
         private void UpdateLogic()
