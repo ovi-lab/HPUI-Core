@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Utilities;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -50,6 +51,15 @@ namespace ubco.ovilab.HPUI.Interaction
                 UpdateLogic();
             }
         }
+
+        [SerializeField]
+        [Tooltip("If true, will use ray casting, else will use sphere overlap for detecting interactions.")]
+        private bool useRayCast = true;
+
+        /// <summary>
+        /// If true, will use ray casting, else will use sphere overlap for detecting interactions.
+        /// </summary>
+        public bool UseRayCast { get => useRayCast; set => useRayCast = value; }
 
         [SerializeField]
         [Tooltip("Event triggered on tap")]
@@ -209,52 +219,79 @@ namespace ubco.ovilab.HPUI.Interaction
                 Transform attachTransform = GetAttachTransform(null);
                 Vector3 interactionPoint = attachTransform.position;
 
-                List<Vector3> directions = new List<Vector3>();
-                int maxAngle = 140,
-                    minAngle = -130,
-                    angleStep = 10;
-
-                DataWriter = "//";
-
-                for (int x = minAngle; x <= maxAngle; x = x + angleStep)
+                if (useRayCast)
                 {
-                    for (int z = -angleStep; z < maxAngle; z = z + angleStep)
+                    List<Vector3> directions = new List<Vector3>();
+                    int maxAngle = 140,
+                        minAngle = -130,
+                        angleStep = 10;
+
+                    DataWriter = "//";
+
+                    for (int x = minAngle; x <= maxAngle; x = x + angleStep)
                     {
-                        Vector3 direction = Quaternion.Euler(x, 0, z) * attachTransform.up;
-                        bool validInteractable = false;
-                        if (Physics.Raycast(interactionPoint,
-                                            direction,
-                                            out RaycastHit hitInfo,
-                                            InteractionHoverRadius,
-                                            // FIXME: physics layers should be allowed to be set in inpsector
-                                            Physics.AllLayers,
-                                            // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
-                                            QueryTriggerInteraction.Ignore))
+                        for (int z = -angleStep; z < maxAngle; z = z + angleStep)
                         {
-                            if (interactionManager.TryGetInteractableForCollider(hitInfo.collider, out var interactable) &&
-                                interactable is IHPUIInteractable hpuiInteractable &&
-                                hpuiInteractable.IsHoverableBy(this))
+                            Vector3 direction = Quaternion.Euler(x, 0, z) * attachTransform.up;
+                            bool validInteractable = false;
+                            if (Physics.Raycast(interactionPoint,
+                                                direction,
+                                                out RaycastHit hitInfo,
+                                                InteractionHoverRadius,
+                                                // FIXME: physics layers should be allowed to be set in inpsector
+                                                Physics.AllLayers,
+                                                // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                                                QueryTriggerInteraction.Ignore))
                             {
-                                validInteractable = true;
-                                DataWriter = $"{interactable.transform.name},{x},{z},{hitInfo.distance}";
-                                if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
+                                if (interactionManager.TryGetInteractableForCollider(hitInfo.collider, out var interactable) &&
+                                    interactable is IHPUIInteractable hpuiInteractable &&
+                                    hpuiInteractable.IsHoverableBy(this))
                                 {
-                                    if (hitInfo.distance < info.distance)
+                                    validInteractable = true;
+                                    DataWriter = $"{interactable.transform.name},{x},{z},{hitInfo.distance}";
+                                    if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
                                     {
-                                        validTargets[hpuiInteractable] = new CollisionInfo(hitInfo.distance, hitInfo.point);
+                                        if (hitInfo.distance < info.distance)
+                                        {
+                                            validTargets[hpuiInteractable] = new CollisionInfo(hitInfo.distance, hitInfo.point);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        validTargets.Add(hpuiInteractable, new CollisionInfo(hitInfo.distance, hitInfo.point));
                                     }
                                 }
-                                else
-                                {
-                                    validTargets.Add(hpuiInteractable, new CollisionInfo(hitInfo.distance, hitInfo.point));
-                                }
+                            }
+
+                            if (ShowDebugRayVisual)
+                            {
+                                Color rayColor = validInteractable ? Color.green : Color.red;
+                                Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionHoverRadius, rayColor);
                             }
                         }
+                    }
+                }
+                else
+                {
+                    int numberOfOverlaps = physicsScene.OverlapSphere(
+                        interactionPoint,
+                        InteractionHoverRadius,
+                        overlapSphereHits,
+                        // FIXME: physics layers should be allowed to be set in inpsector
+                        Physics.AllLayers,
+                        // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                        QueryTriggerInteraction.Ignore);
 
-                        if (ShowDebugRayVisual)
+                    for (var i = 0; i < numberOfOverlaps; ++i)
+                    {
+                        Collider collider = overlapSphereHits[i];
+                        if (interactionManager.TryGetInteractableForCollider(collider, out var interactable) &&
+                            interactable is IHPUIInteractable hpuiInteractable &&
+                            !validTargets.ContainsKey(hpuiInteractable) &&
+                            hpuiInteractable.IsHoverableBy(this))
                         {
-                            Color rayColor = validInteractable ? Color.green : Color.red;
-                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionHoverRadius, rayColor);
+                            XRInteractableUtility.TryGetClosestPointOnCollider(interactable, interactionPoint, out DistanceInfo info);
+                            validTargets.Add(hpuiInteractable, new CollisionInfo(Mathf.Sqrt(info.distanceSqr), info.point));
                         }
                     }
                 }
