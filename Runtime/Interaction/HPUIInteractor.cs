@@ -219,7 +219,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 Transform attachTransform = GetAttachTransform(null);
                 Vector3 interactionPoint = attachTransform.position;
 
-                if (useRayCast)
+                if (UseRayCast)
                 {
                     List<Vector3> directions = new List<Vector3>();
                     int maxAngle = 130,

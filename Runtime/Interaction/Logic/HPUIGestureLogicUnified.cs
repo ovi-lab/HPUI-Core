@@ -117,7 +117,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        private bool ActiveInteractaableCanTriggerEvent()
+        private bool ActiveInteractableCanTriggerEvent()
         {
             return activePriorityInteractable != null && activeInteractables[activePriorityInteractable].minDistanceToInteractor < interactionSelectionRadius;
         }
@@ -149,7 +149,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             ComputeActivePriorityInteractable();
                             tapEventArgs.SetParams(interactor, activePriorityInteractable, state.startPosition + cumilativeDirection);
-                            if (ActiveInteractaableCanTriggerEvent())
+                            if (ActiveInteractableCanTriggerEvent())
                             {
                                 activePriorityInteractable.OnTap(tapEventArgs);
                             }
@@ -165,7 +165,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             gestureEventArgs.SetParams(interactor, activePriorityInteractable,
                                                        HPUIGestureState.Stopped, timeDelta, state.startTime, state.startPosition,
                                                        cumilativeDirection, cumilativeDistance, delta);
-                            if (ActiveInteractaableCanTriggerEvent())
+                            if (ActiveInteractableCanTriggerEvent())
                             {
                                 activePriorityInteractable?.OnGesture(gestureEventArgs);
                             }
@@ -256,7 +256,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             gestureEventArgs.SetParams(interactor, activePriorityInteractable,
                                                        HPUIGestureState.Started, timeDelta, state.startTime, state.startPosition,
                                                        cumilativeDirection, cumilativeDistance, delta);
-                            if (ActiveInteractaableCanTriggerEvent())
+                            if (ActiveInteractableCanTriggerEvent())
                             {
                                 activePriorityInteractable?.OnGesture(gestureEventArgs);
                             }
@@ -280,7 +280,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         gestureEventArgs.SetParams(interactor, activePriorityInteractable,
                                                    HPUIGestureState.Updated, timeDelta, state.startTime, state.startPosition,
                                                    cumilativeDirection, cumilativeDistance, delta);
-                        if (ActiveInteractaableCanTriggerEvent())
+                        if (ActiveInteractableCanTriggerEvent())
                         {
                             activePriorityInteractable?.OnGesture(gestureEventArgs);
                         }
