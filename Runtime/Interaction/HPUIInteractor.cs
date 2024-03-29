@@ -128,6 +128,8 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        public bool useConeForRayCast = true;
+
         [SerializeField]
         [Tooltip("Show sphere rays used for interaction selections.")]
         private bool showDebugRayVisual = true;
@@ -228,47 +230,78 @@ namespace ubco.ovilab.HPUI.Interaction
 
                     DataWriter = "//";
 
-                    for (int x = minAngle; x <= maxAngle; x = x + angleStep)
+                    List<(int x, int z)> angles;
+                    if (useConeForRayCast)
                     {
-                        for (int z = minAngle; z <= maxAngle; z = z + angleStep)
+                        angles = new List<(int x, int z)>
                         {
-                            Quaternion rotation = Quaternion.AngleAxis(x, attachTransform.right) * Quaternion.AngleAxis(z, attachTransform.forward);
-                            Vector3 direction = rotation * attachTransform.up;
-                            bool validInteractable = false;
-                            if (Physics.Raycast(interactionPoint,
-                                                direction,
-                                                out RaycastHit hitInfo,
-                                                InteractionHoverRadius,
-                                                // FIXME: physics layers should be allowed to be set in inpsector
-                                                Physics.AllLayers,
-                                                // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
-                                                QueryTriggerInteraction.Ignore))
+                            (-120, 105), (-120, 120), (-105, 105), (-105, 120),
+                            (-90, 105), (-90, 120), (-75, 105), (-75, 120),
+                            (-60, 105), (-60, 120), (-45, 105), (-45, 120),
+                            (-30, 120), (0, 30), (0, 45), (0, 60), (0, 75),
+                            (15, 30), (15, 45), (15, 60), (15, 75), (30, 30),
+                            (30, 45), (30, 60), (30, 75), (45, 30), (45, 45),
+                            (45, 60), (45, 75), (60, 30), (60, 45), (60, 60),
+                            (60, 75), (75, 15), (75, 30), (75, 45), (75, 60),
+                            (75, 75), (90, 15), (90, 30), (90, 45), (90, 60),
+                            (90, 75), (105, 15), (105, 30), (105, 45),
+                            (105, 60), (105, 75), (120, 15), (120, 30),
+                            (120, 45), (120, 60), (120, 75)
+                        };
+                    }
+                    else
+                    {
+                        angles = new List<(int x, int z)>();
+                        for (int x = minAngle; x <= maxAngle; x = x + angleStep)
+                        {
+                            for (int z = minAngle; z <= maxAngle; z = z + angleStep)
                             {
-                                if (interactionManager.TryGetInteractableForCollider(hitInfo.collider, out var interactable) &&
-                                    interactable is IHPUIInteractable hpuiInteractable &&
-                                    hpuiInteractable.IsHoverableBy(this))
+                                angles.Add((x, z));
+                            }
+                        }
+                    }
+
+                    foreach(var angle in angles)
+                    {
+                        int x = angle.x,
+                            z = angle.z;
+
+                        Quaternion rotation = Quaternion.AngleAxis(x, attachTransform.right) * Quaternion.AngleAxis(z, attachTransform.forward);
+                        Vector3 direction = rotation * attachTransform.up;
+                        bool validInteractable = false;
+                        if (Physics.Raycast(interactionPoint,
+                                            direction,
+                                            out RaycastHit hitInfo,
+                                            InteractionHoverRadius,
+                                            // FIXME: physics layers should be allowed to be set in inpsector
+                                            Physics.AllLayers,
+                                            // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                                            QueryTriggerInteraction.Ignore))
+                        {
+                            if (interactionManager.TryGetInteractableForCollider(hitInfo.collider, out var interactable) &&
+                                interactable is IHPUIInteractable hpuiInteractable &&
+                                hpuiInteractable.IsHoverableBy(this))
+                            {
+                                validInteractable = true;
+                                DataWriter = $"{interactable.transform.name},{x},{z},{hitInfo.distance}";
+                                if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
                                 {
-                                    validInteractable = true;
-                                    DataWriter = $"{interactable.transform.name},{x},{z},{hitInfo.distance}";
-                                    if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
+                                    if (hitInfo.distance < info.distance)
                                     {
-                                        if (hitInfo.distance < info.distance)
-                                        {
-                                            validTargets[hpuiInteractable] = new CollisionInfo(hitInfo.distance, hitInfo.point);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        validTargets.Add(hpuiInteractable, new CollisionInfo(hitInfo.distance, hitInfo.point));
+                                        validTargets[hpuiInteractable] = new CollisionInfo(hitInfo.distance, hitInfo.point);
                                     }
                                 }
+                                else
+                                {
+                                    validTargets.Add(hpuiInteractable, new CollisionInfo(hitInfo.distance, hitInfo.point));
+                                }
                             }
+                        }
 
-                            if (ShowDebugRayVisual)
-                            {
-                                Color rayColor = validInteractable ? Color.green : Color.red;
-                                Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionHoverRadius, rayColor);
-                            }
+                        if (ShowDebugRayVisual)
+                        {
+                            Color rayColor = validInteractable ? Color.green : Color.red;
+                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionHoverRadius, rayColor);
                         }
                     }
                 }
@@ -345,6 +378,10 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (!ShowSphereVisual)
             {
+                if(visualsObject != null)
+                {
+                    Destroy(visualsObject);
+                }
                 return;
             }
 
