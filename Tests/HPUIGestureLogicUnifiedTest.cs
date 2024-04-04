@@ -46,7 +46,7 @@ namespace ubco.ovilab.HPUI.Tests
         {
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f } };
 
             // First tap
@@ -73,7 +73,7 @@ namespace ubco.ovilab.HPUI.Tests
         {
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f } };
 
             // Tap and hold
@@ -100,7 +100,7 @@ namespace ubco.ovilab.HPUI.Tests
         {
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f } };
 
             // First tap
@@ -128,7 +128,7 @@ namespace ubco.ovilab.HPUI.Tests
         {
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f } };
 
             // Gesture
@@ -157,7 +157,7 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
             TestHPUIInteractable i2 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f }, {i2, SelectionRadius * 0.5f} };
 
             // Tap 1-2---1-2
@@ -194,7 +194,7 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
             TestHPUIInteractable i2 = new TestHPUIInteractable(1, true, true, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f }, {i2, SelectionRadius * 0.5f} };
 
             // Tap 1-2---1-2
@@ -231,7 +231,7 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
             TestHPUIInteractable i2 = new TestHPUIInteractable(1, true, true, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f }, {i2, SelectionRadius * 0.5f} };
 
             logic.InteractableEntering(i2);
@@ -255,7 +255,7 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(1, true, true, OnTapCallback, OnGestureCallback);
             TestHPUIInteractable i2 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f }, {i2, SelectionRadius * 0.5f} };
 
             logic.InteractableEntering(i1);
@@ -282,7 +282,7 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
             TestHPUIInteractable i2 = new TestHPUIInteractable(0, false, false, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f }, {i2, SelectionRadius * 0.5f} };
 
             logic.InteractableEntering(i2);
@@ -320,7 +320,7 @@ namespace ubco.ovilab.HPUI.Tests
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, false, false, OnTapCallback, OnGestureCallback);
             TestHPUIInteractable i2 = new TestHPUIInteractable(0, false, false, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 0.5f }, {i2, SelectionRadius * 0.5f} };
 
             // Tap not handled by any interactable
@@ -356,7 +356,7 @@ namespace ubco.ovilab.HPUI.Tests
         {
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, false, OnTapCallback, OnGestureCallback);
-            IHPUIGestureLogic logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
+            HPUIGestureLogicUnified logic = new HPUIGestureLogicUnified(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius);
             Dictionary<IHPUIInteractable, float> updates = new Dictionary<IHPUIInteractable, float>() { { i1, SelectionRadius * 2 } };
 
             // The intertaction doesn't reach radius.
