@@ -198,14 +198,14 @@ namespace ubco.ovilab.HPUI.Interaction
         protected override void OnHoverEntering(HoverEnterEventArgs args)
         {
             base.OnHoverEntering(args);
-            gestureLogic.OnHoverEntering(args.interactableObject as IHPUIInteractable);
+            gestureLogic.InteractableEntering(args.interactableObject as IHPUIInteractable);
         }
 
         /// <inheritdoc />
         protected override void OnHoverExiting(HoverExitEventArgs args)
         {
             base.OnHoverExiting(args);
-            gestureLogic.OnHoverExiting(args.interactableObject as IHPUIInteractable);
+            gestureLogic.InteractableExiting(args.interactableObject as IHPUIInteractable);
         }
 
         /// <inheritdoc />

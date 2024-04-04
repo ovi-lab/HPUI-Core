@@ -5,15 +5,15 @@ namespace ubco.ovilab.HPUI.Interaction
 {
     public interface IHPUIGestureLogic: IDisposable
     {
-        /// <summary>
-        /// To be called by <see cref="IXRSelectInteractor.OnSelectEntering"/> controlling this <see cref="HPUIGestureLogic"/>
-        /// </summary>
-        public void OnHoverEntering(IHPUIInteractable interactable);
+        // /// <summary>
+        // /// To be called by <see cref="IXRSelectInteractor.OnSelectEntering"/> controlling this <see cref="HPUIGestureLogic"/>
+        // /// </summary>
+        // public void InteractableEntering(IHPUIInteractable interactable);
 
-        /// <summary>
-        /// To be called by <see cref="IXRSelectInteractor.OnSelectExiting"/> controlling this <see cref="HPUIGestureLogic"/>
-        /// </summary>
-        public void OnHoverExiting(IHPUIInteractable interactable);
+        // /// <summary>
+        // /// To be called by <see cref="IXRSelectInteractor.OnSelectExiting"/> controlling this <see cref="HPUIGestureLogic"/>
+        // /// </summary>
+        // public void InteractableExiting(IHPUIInteractable interactable);
 
         /// <summary>
         /// Update method to be called from an interactor. Updates the states of the <see cref="IHPUIInteractable"/> selected by

@@ -43,7 +43,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void OnHoverEntering(IHPUIInteractable interactable)
+        public void InteractableEntering(IHPUIInteractable interactable)
         {
             if (interactable == null)
             {
@@ -84,9 +84,12 @@ namespace ubco.ovilab.HPUI.Interaction
             ComputeCurrectTrackingInteractable();
         }
 
+        // NOTE: This is called when a new interactable enters/exits
         private void ComputeCurrectTrackingInteractable()
         {
-            // Any target that is active should be ok for this?
+            // Any target that is active should be ok for this
+            // Giving priority to the ones that was the oldest enetered
+            // This minimizes the tracking interactable changing
             IHPUIInteractable interactableToTrack = activeInteractables
                 .Where(kvp => kvp.Value.active)
                 .OrderBy(kvp => kvp.Value.startTime)
@@ -99,16 +102,18 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        // NOTE: This gets called only within the tapdistancethreshold window.
+        // Thus using distance as opposed to start time to pick the target that is the most ideal.
         private void ComputeActivePriorityInteractable()
         {
             // Targets not selected within the priority window
             // (defaults to tapdistancethreshold), will not get any
             // events.  For targets selected withing the window, first
-            // prioritize the zOrder, then the time.
+            // prioritize the zOrder, then the distance.
             IHPUIInteractable interactableToBeActive = activeInteractables
                 .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && kvp.Value.validTarget)
                 .OrderBy(kvp => kvp.Key.zOrder)
-                .ThenBy(kvp => kvp.Value.startTime)
+                .ThenBy(kvp => kvp.Value.minDistanceToInteractor)
                 .FirstOrDefault().Key;
 
             if (interactableToBeActive != activePriorityInteractable)
@@ -123,7 +128,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void OnHoverExiting(IHPUIInteractable interactable)
+        public void InteractableExiting(IHPUIInteractable interactable)
         {
             if (interactable == null)
             {
