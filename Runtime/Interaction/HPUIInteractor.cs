@@ -195,20 +195,6 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        protected override void OnHoverEntering(HoverEnterEventArgs args)
-        {
-            base.OnHoverEntering(args);
-            gestureLogic.InteractableEntering(args.interactableObject as IHPUIInteractable);
-        }
-
-        /// <inheritdoc />
-        protected override void OnHoverExiting(HoverExitEventArgs args)
-        {
-            base.OnHoverExiting(args);
-            gestureLogic.InteractableExiting(args.interactableObject as IHPUIInteractable);
-        }
-
-        /// <inheritdoc />
         public override void PreprocessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
             base.PreprocessInteractor(updatePhase);
@@ -330,18 +316,11 @@ namespace ubco.ovilab.HPUI.Interaction
                     }
                 }
             }
+            gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.distance));
+
             if (data != null)
             {
                 data.Invoke(DataWriter);
-            }
-        }
-
-        /// <inheritdoc />
-        public override void ProcessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
-        {
-            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
-            {
-                gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.distance));
             }
         }
 
@@ -406,7 +385,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 gestureLogic.Dispose();
             }
-            gestureLogic = new HPUIGestureLogicUnified(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
+            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
         }
 
         #region IHPUIInteractor interface
