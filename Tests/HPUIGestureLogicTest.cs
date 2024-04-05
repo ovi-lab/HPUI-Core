@@ -141,7 +141,7 @@ namespace ubco.ovilab.HPUI.Tests
             updates[i1] = OutsideSelectionRadius;
             logic.Update(updates);
 
-            updates[i1] = SelectionRadius * 0.5f;
+            updates[i1] = InsideSelectionRadius;
             logic.Update(updates);
 
             updates[i1] = OutsideSelectionRadius;

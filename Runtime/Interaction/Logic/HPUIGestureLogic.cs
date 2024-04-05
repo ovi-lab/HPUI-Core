@@ -20,6 +20,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private float startTime, cumilativeDistance, timeDelta;
         private Vector2 delta, previousPosition, cumilativeDirection;
+        private bool selectionHappenedLastFrame = false;
+        private int activeInteractables = 0;
 
         private IHPUIInteractable activePriorityInteractable, currentTrackingInteractable;
         private Dictionary<IHPUIInteractable, HPUIInteractionState> trackingInteractables = new Dictionary<IHPUIInteractable, HPUIInteractionState>();
@@ -61,6 +63,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         trackingInteractables.Add(interactable, state);
                     }
 
+                    activeInteractables++;
                     updateTrackingInteractable = true;
                 }
 
@@ -79,6 +82,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             startTime = Time.time;
                             interactorGestureState = HPUIGesture.Tap;
+                            updateTrackingInteractable = true;
                         }
 
                         // Selectable only if within the tapTimeThreshold.
@@ -95,16 +99,21 @@ namespace ubco.ovilab.HPUI.Interaction
                 else
                 {
                     state.active = false;
+                    activeInteractables--;
                     updateTrackingInteractable = true;
                 }
             }
+
+            Debug.Log($"=== {selectionHappening} {selectionHappenedLastFrame} {interactorGestureState}  {updateTrackingInteractable} {activeInteractables}");
 
             // Selection exited
             // NOTE: If a gesture happened just on the threshold of
             // the tap (i.e., time/distance just went over threshold
             // and selected existed) it will be treated as a tap.
-            if (!selectionHappening)
+            if (selectionHappenedLastFrame && !selectionHappening)
             {
+                selectionHappenedLastFrame = false;
+                Debug.Log($"-- params: cumm. dist: {cumilativeDistance}, time delta: {timeDelta}");
                 switch (interactorGestureState)
                 {
                     case HPUIGesture.Tap:
@@ -117,6 +126,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 Reset();
                 return;
             }
+            selectionHappenedLastFrame = selectionHappening;
 
             if (interactorGestureState == HPUIGesture.None)
             {
