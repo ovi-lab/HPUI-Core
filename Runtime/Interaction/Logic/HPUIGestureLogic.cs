@@ -104,8 +104,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
             }
 
-            Debug.Log($"=== {selectionHappening} {selectionHappenedLastFrame} {interactorGestureState}  {updateTrackingInteractable} {activeInteractables}");
-
             // Selection exited
             // NOTE: If a gesture happened just on the threshold of
             // the tap (i.e., time/distance just went over threshold

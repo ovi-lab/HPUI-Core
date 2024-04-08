@@ -108,6 +108,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     public class HPUIGestureEventArgs: HPUIInteractionEventArgs
     {
+        // TODO: Documentation
         public HPUIGestureState State { get; private set; }
         public float TimeDelta { get; private set; }
         public float StartTime { get; private set; }

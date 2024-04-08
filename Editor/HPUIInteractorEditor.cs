@@ -38,7 +38,6 @@ namespace ubco.ovilab.HPUI.Editor
             base.DrawInspector();
 
             EditorGUILayout.Space();
-
             hpuiInteractablesExpanded = EditorGUILayout.Foldout(hpuiInteractablesExpanded, EditorGUIUtility.TrTempContent("HPUI Events"), true);
             if (hpuiInteractablesExpanded)
             {
@@ -50,6 +49,14 @@ namespace ubco.ovilab.HPUI.Editor
                     }
                 }
             }
+        }
+
+        /// <inheritdoc />
+        protected override void DrawDerivedProperties()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("HPUI Configurations", EditorStyles.boldLabel);
+            base.DrawDerivedProperties();
         }
 
         /// <inheritdoc />
