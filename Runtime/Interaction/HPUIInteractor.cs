@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Utilities;
+using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -11,6 +12,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(XRHandTrackingEvents))]
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
         // TODO move these to an asset?
@@ -147,6 +149,16 @@ namespace ubco.ovilab.HPUI.Interaction
         private Collider[] overlapSphereHits = new Collider[200];
         private GameObject visualsObject;
 
+        private List<(int x, int z)> allAngles;
+        private XRHandTrackingEvents xrHandTrackingEvents;
+        private Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
+        private List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
+        {
+            XRHandJointID.IndexProximal , XRHandJointID.MiddleProximal, XRHandJointID.RingProximal, XRHandJointID.LittleProximal
+        };
+        private bool recievedNewJointData = false;
+        private List<(int x, int z)> activeFingerAngles;
+
         // FIXME: debug code
         string dataWriter;
         public string DataWriter {
@@ -173,6 +185,45 @@ namespace ubco.ovilab.HPUI.Interaction
             UpdateLogic();
             // FIXME: debug code
             dataWriter = "";
+
+            // FIXME: put these in a better place?
+            int maxAngle = 130,
+                minAngle = -130,
+                angleStep = 5;
+
+            allAngles = new List<(int x, int z)>();
+            for (int x = minAngle; x <= maxAngle; x = x + angleStep)
+            {
+                for (int z = minAngle; z <= maxAngle; z = z + angleStep)
+                {
+                    allAngles.Add((x, z));
+                }
+            }
+
+            foreach(XRHandJointID id in trackedJoints)
+            {
+                jointLocations.Add(id, Vector3.zero);
+            }
+
+            xrHandTrackingEvents = GetComponent<XRHandTrackingEvents>();
+            xrHandTrackingEvents.handedness = handedness switch {
+                InteractorHandedness.Right => Handedness.Right,
+                InteractorHandedness.Left => Handedness.Left,
+                _ => Handedness.Invalid
+            };
+            xrHandTrackingEvents.jointsUpdated.AddListener(UpdateJointsData);
+        }
+
+        protected void UpdateJointsData(XRHandJointsUpdatedEventArgs args)
+        {
+            foreach(XRHandJointID id in trackedJoints)
+            {
+                if ( args.hand.GetJoint(id).TryGetPose(out Pose pose) )
+                {
+                    jointLocations[id] = pose.position;
+                    recievedNewJointData = true;
+                }
+            }
         }
 
 #if UNITY_EDITOR
@@ -210,41 +261,35 @@ namespace ubco.ovilab.HPUI.Interaction
                 if (UseRayCast)
                 {
                     List<Vector3> directions = new List<Vector3>();
-                    int maxAngle = 130,
-                        minAngle = -130,
-                        angleStep = 5;
-
                     DataWriter = "//";
 
                     List<(int x, int z)> angles;
                     if (useConeForRayCast)
                     {
-                        angles = new List<(int x, int z)>
+                        if (recievedNewJointData)
                         {
-                            (-120, 105), (-120, 120), (-105, 105), (-105, 120),
-                            (-90, 105), (-90, 120), (-75, 105), (-75, 120),
-                            (-60, 105), (-60, 120), (-45, 105), (-45, 120),
-                            (-30, 120), (0, 30), (0, 45), (0, 60), (0, 75),
-                            (15, 30), (15, 45), (15, 60), (15, 75), (30, 30),
-                            (30, 45), (30, 60), (30, 75), (45, 30), (45, 45),
-                            (45, 60), (45, 75), (60, 30), (60, 45), (60, 60),
-                            (60, 75), (75, 15), (75, 30), (75, 45), (75, 60),
-                            (75, 75), (90, 15), (90, 30), (90, 45), (90, 60),
-                            (90, 75), (105, 15), (105, 30), (105, 45),
-                            (105, 60), (105, 75), (120, 15), (120, 30),
-                            (120, 45), (120, 60), (120, 75)
-                        };
+                            recievedNewJointData = false;
+                            // TODO: is this enough?
+                            XRHandJointID activeFinger = (trackedJoints
+                                     .Select(j => new {item = j, pos = (jointLocations[j] - transform.position).magnitude})
+                                     .OrderBy(el => el.pos)
+                                     .First()
+                                     .item);
+
+                            activeFingerAngles = activeFinger switch
+                            {
+                                XRHandJointID.IndexProximal => HPUIInteractorRayAngles.IndexAngles,
+                                XRHandJointID.MiddleProximal => HPUIInteractorRayAngles.MiddleAngles,
+                                XRHandJointID.RingProximal => HPUIInteractorRayAngles.IndexAngles,
+                                XRHandJointID.LittleProximal => HPUIInteractorRayAngles.LittleAngles,
+                                _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
+                            };
+                        }
+                        angles = activeFingerAngles;
                     }
                     else
                     {
-                        angles = new List<(int x, int z)>();
-                        for (int x = minAngle; x <= maxAngle; x = x + angleStep)
-                        {
-                            for (int z = minAngle; z <= maxAngle; z = z + angleStep)
-                            {
-                                angles.Add((x, z));
-                            }
-                        }
+                        angles = allAngles;
                     }
 
                     foreach(var angle in angles)
@@ -422,8 +467,49 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.distance = distance;
                 this.point = point;
             }
-
         }
+    }
+
+    internal static class HPUIInteractorRayAngles
+    {
+
+        // TODO: Cite source!
+        // These are computed based on data collected during studies
+
+        public static List<(int x, int z)> IndexAngles = new List<(int x, int z)>() {
+            (-120, 90), (-120, 105), (-105, 90), (-105, 105), (-105, 120),
+            (-90, 90), (-90, 105), (-90, 120), (-75, 90), (-75, 105), (-75, 120),
+            (-60, 90), (-60, 105), (-60, 120), (-45, 90), (-45, 105), (-45, 120),
+            (-30, 90), (-30, 105), (-30, 120), (-15, 75), (-15, 90), (-15, 105),
+            (-15, 120), (0, 75), (0, 90), (0, 105), (0, 120), (15, 75), (15, 90),
+            (15, 105), (15, 120), (30, 75), (30, 90), (30, 105), (45, 75), (45, 90),
+            (45, 105), (60, 75), (60, 90), (75, 60), (75, 75), (75, 90), (90, 60),
+            (90, 75), (90, 90), (105, 45), (105, 60), (105, 75), (105, 90), (120, 30),
+            (120, 45), (120, 60), (120, 75), (120, 90)
+        };
+        public static List<(int x, int z)> MiddleAngles = new List<(int x, int z)>() {
+            (-120, 105), (-120, 120), (-105, 105), (-105, 120), (-90, 105), (-90, 120),
+            (-75, 105), (-75, 120), (-60, 105), (-60, 120), (-45, 105), (-45, 120),
+            (15, 75), (30, 45), (30, 60), (30, 75), (45, 30), (45, 45), (45, 60),
+            (45, 75), (60, 15), (60, 30), (60, 45), (60, 60), (60, 75), (75, 15),
+            (75, 30), (75, 45), (75, 60), (75, 75), (90, 15), (90, 30), (90, 45),
+            (90, 60), (90, 75), (105, 15), (105, 30), (105, 45), (105, 60), (105, 75),
+            (120, 15), (120, 30), (120, 45), (120, 60), (120, 75)
+        };
+        public static List<(int x, int z)> RingAngles = new List<(int x, int z)>() {
+            (-120, 105), (-120, 120), (-105, 105), (-105, 120), (-90, 105), (-90, 120),
+            (-75, 105), (-75, 120), (-60, 105), (-60, 120), (-45, 105), (-45, 120),
+            (-30, 105), (-30, 120), (-15, 105), (-15, 120), (15, 60), (30, 45),
+            (30, 60), (30, 75), (45, 45), (45, 60), (45, 75), (60, 30), (60, 45),
+            (60, 60), (60, 75), (75, 15), (75, 30), (75, 45), (75, 60), (75, 75),
+            (90, 15), (90, 30), (90, 45), (90, 60), (90, 75), (105, 0), (105, 15),
+            (105, 30), (105, 45), (105, 60), (105, 75), (120, 15), (120, 30),
+            (120, 45), (120, 60), (120, 75)
+        };
+        public static List<(int x, int z)> LittleAngles = new List<(int x, int z)>() {
+            (60, 15), (60, 30), (75, 0), (75, 15), (75, 30), (90, 0), (90, 15), (90, 30),
+            (90, 45), (105, 0), (105, 15), (105, 30), (105, 45), (120, 15), (120, 30)
+        };
     }
 }
  
