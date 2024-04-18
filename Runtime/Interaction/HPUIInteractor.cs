@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Utilities;
@@ -160,17 +161,17 @@ namespace ubco.ovilab.HPUI.Interaction
         private List<(int x, int z)> activeFingerAngles;
 
         // FIXME: debug code
-        string dataWriter;
+        StringBuilder dataWriter = new StringBuilder(65000);
         public string DataWriter {
             get
             {
-                string toReturn = dataWriter;
-                dataWriter = "";
+                string toReturn = dataWriter.ToString();
+                dataWriter.Clear();
                 return toReturn;
             }
             set
             {
-                dataWriter += "::" + value;
+                dataWriter.AppendFormat("::{0}", value);
             }
         }
 
@@ -183,8 +184,6 @@ namespace ubco.ovilab.HPUI.Interaction
             keepSelectedTargetValid = true;
             physicsScene = gameObject.scene.GetPhysicsScene();
             UpdateLogic();
-            // FIXME: debug code
-            dataWriter = "";
 
             // FIXME: put these in a better place?
             int maxAngle = 130,
