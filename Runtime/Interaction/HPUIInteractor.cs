@@ -16,6 +16,21 @@ namespace ubco.ovilab.HPUI.Interaction
     [RequireComponent(typeof(XRHandTrackingEvents))]
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
+        /// <inheritdoc />
+        public new InteractorHandedness handedness
+        {
+            get => base.handedness;
+            set
+            {
+                bool doReset = base.handedness != value;
+                base.handedness = value;
+                if (doReset)
+                {
+                    ResetAngleFunctions();
+                }
+            }
+        }
+
         // TODO move these to an asset?
         [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
         [SerializeField]
@@ -150,15 +165,16 @@ namespace ubco.ovilab.HPUI.Interaction
         private Collider[] overlapSphereHits = new Collider[200];
         private GameObject visualsObject;
 
-        private List<(int x, int z)> allAngles;
+        private List<(int x, int z)> allAngles,
+            activeFingerAngles;
         private XRHandTrackingEvents xrHandTrackingEvents;
         private Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
         private List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
             XRHandJointID.IndexProximal , XRHandJointID.MiddleProximal, XRHandJointID.RingProximal, XRHandJointID.LittleProximal
         };
-        private bool recievedNewJointData = false;
-        private List<(int x, int z)> activeFingerAngles;
+        private bool recievedNewJointData = false,
+            flipZAngles = false;
 
         // FIXME: debug code
         StringBuilder dataWriter = new StringBuilder(65000);
@@ -199,17 +215,15 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
             }
 
+            // Avoid null ref exception before hand tracking gets going
+            activeFingerAngles = allAngles;
+
             foreach(XRHandJointID id in trackedJoints)
             {
                 jointLocations.Add(id, Vector3.zero);
             }
 
-            xrHandTrackingEvents = GetComponent<XRHandTrackingEvents>();
-            xrHandTrackingEvents.handedness = handedness switch {
-                InteractorHandedness.Right => Handedness.Right,
-                InteractorHandedness.Left => Handedness.Left,
-                _ => Handedness.Invalid
-            };
+            ResetAngleFunctions();
             xrHandTrackingEvents.jointsUpdated.AddListener(UpdateJointsData);
         }
 
@@ -223,6 +237,17 @@ namespace ubco.ovilab.HPUI.Interaction
                     recievedNewJointData = true;
                 }
             }
+        }
+
+        protected void ResetAngleFunctions()
+        {
+            xrHandTrackingEvents = GetComponent<XRHandTrackingEvents>();
+            xrHandTrackingEvents.handedness = handedness switch {
+                InteractorHandedness.Right => Handedness.Right,
+                InteractorHandedness.Left => Handedness.Left,
+                _ => Handedness.Invalid
+            };
+            flipZAngles = handedness == InteractorHandedness.Left;
         }
 
 #if UNITY_EDITOR
@@ -294,7 +319,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     foreach(var angle in angles)
                     {
                         int x = angle.x,
-                            z = angle.z;
+                            z = flipZAngles ? -angle.z : angle.z;
 
                         Quaternion rotation = Quaternion.AngleAxis(x, attachTransform.right) * Quaternion.AngleAxis(z, attachTransform.forward);
                         Vector3 direction = rotation * attachTransform.up;
