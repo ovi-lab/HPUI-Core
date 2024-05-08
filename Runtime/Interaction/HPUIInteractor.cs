@@ -157,6 +157,15 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public bool ShowDebugRayVisual { get => showDebugRayVisual; set => showDebugRayVisual = value; }
 
+        [SerializeField]
+        [Tooltip("The HPUIInteractorRayAngles asset to use when using cone")]
+        private HPUIInteractorRayAngles coneRayAngles;
+
+        /// <summary>
+        /// The HPUIInteractorRayAngles asset to use when using cone
+        /// </summary>
+        public HPUIInteractorRayAngles ConeRayAngles { get => coneRayAngles; set => coneRayAngles = value; }
+
         protected IHPUIGestureLogic gestureLogic;
         private Dictionary<IHPUIInteractable, CollisionInfo> validTargets = new Dictionary<IHPUIInteractable, CollisionInfo>();
         private Vector3 lastInteractionPoint;
@@ -165,7 +174,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private Collider[] overlapSphereHits = new Collider[200];
         private GameObject visualsObject;
 
-        private List<(int x, int z)> allAngles,
+        private List<HPUIInteractorRayAngle> allAngles,
             activeFingerAngles;
         private XRHandTrackingEvents xrHandTrackingEvents;
         private Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
@@ -206,12 +215,12 @@ namespace ubco.ovilab.HPUI.Interaction
                 minAngle = -130,
                 angleStep = 5;
 
-            allAngles = new List<(int x, int z)>();
+            allAngles = new List<HPUIInteractorRayAngle>();
             for (int x = minAngle; x <= maxAngle; x = x + angleStep)
             {
                 for (int z = minAngle; z <= maxAngle; z = z + angleStep)
                 {
-                    allAngles.Add((x, z));
+                    allAngles.Add(new HPUIInteractorRayAngle(x, z));
                 }
             }
 
@@ -287,7 +296,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     List<Vector3> directions = new List<Vector3>();
                     DataWriter = "//";
 
-                    List<(int x, int z)> angles;
+                    List<HPUIInteractorRayAngle> angles;
                     if (useConeForRayCast)
                     {
                         if (recievedNewJointData)
@@ -302,10 +311,10 @@ namespace ubco.ovilab.HPUI.Interaction
 
                             activeFingerAngles = activeFinger switch
                             {
-                                XRHandJointID.IndexProximal => HPUIInteractorRayAngles.IndexAngles,
-                                XRHandJointID.MiddleProximal => HPUIInteractorRayAngles.MiddleAngles,
-                                XRHandJointID.RingProximal => HPUIInteractorRayAngles.IndexAngles,
-                                XRHandJointID.LittleProximal => HPUIInteractorRayAngles.LittleAngles,
+                                XRHandJointID.IndexProximal => coneRayAngles.IndexAngles,
+                                XRHandJointID.MiddleProximal => coneRayAngles.MiddleAngles,
+                                XRHandJointID.RingProximal => coneRayAngles.IndexAngles,
+                                XRHandJointID.LittleProximal => coneRayAngles.LittleAngles,
                                 _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
                             };
                         }
@@ -492,48 +501,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.point = point;
             }
         }
-    }
-
-    internal static class HPUIInteractorRayAngles
-    {
-
-        // TODO: Cite source!
-        // These are computed based on data collected during studies
-
-        public static List<(int x, int z)> IndexAngles = new List<(int x, int z)>() {
-            (-120, 90), (-120, 105), (-105, 90), (-105, 105), (-105, 120),
-            (-90, 90), (-90, 105), (-90, 120), (-75, 90), (-75, 105), (-75, 120),
-            (-60, 90), (-60, 105), (-60, 120), (-45, 90), (-45, 105), (-45, 120),
-            (-30, 90), (-30, 105), (-30, 120), (-15, 75), (-15, 90), (-15, 105),
-            (-15, 120), (0, 75), (0, 90), (0, 105), (0, 120), (15, 75), (15, 90),
-            (15, 105), (15, 120), (30, 75), (30, 90), (30, 105), (45, 75), (45, 90),
-            (45, 105), (60, 75), (60, 90), (75, 60), (75, 75), (75, 90), (90, 60),
-            (90, 75), (90, 90), (105, 45), (105, 60), (105, 75), (105, 90), (120, 30),
-            (120, 45), (120, 60), (120, 75), (120, 90)
-        };
-        public static List<(int x, int z)> MiddleAngles = new List<(int x, int z)>() {
-            (-120, 105), (-120, 120), (-105, 105), (-105, 120), (-90, 105), (-90, 120),
-            (-75, 105), (-75, 120), (-60, 105), (-60, 120), (-45, 105), (-45, 120),
-            (15, 75), (30, 45), (30, 60), (30, 75), (45, 30), (45, 45), (45, 60),
-            (45, 75), (60, 15), (60, 30), (60, 45), (60, 60), (60, 75), (75, 15),
-            (75, 30), (75, 45), (75, 60), (75, 75), (90, 15), (90, 30), (90, 45),
-            (90, 60), (90, 75), (105, 15), (105, 30), (105, 45), (105, 60), (105, 75),
-            (120, 15), (120, 30), (120, 45), (120, 60), (120, 75)
-        };
-        public static List<(int x, int z)> RingAngles = new List<(int x, int z)>() {
-            (-120, 105), (-120, 120), (-105, 105), (-105, 120), (-90, 105), (-90, 120),
-            (-75, 105), (-75, 120), (-60, 105), (-60, 120), (-45, 105), (-45, 120),
-            (-30, 105), (-30, 120), (-15, 105), (-15, 120), (15, 60), (30, 45),
-            (30, 60), (30, 75), (45, 45), (45, 60), (45, 75), (60, 30), (60, 45),
-            (60, 60), (60, 75), (75, 15), (75, 30), (75, 45), (75, 60), (75, 75),
-            (90, 15), (90, 30), (90, 45), (90, 60), (90, 75), (105, 0), (105, 15),
-            (105, 30), (105, 45), (105, 60), (105, 75), (120, 15), (120, 30),
-            (120, 45), (120, 60), (120, 75)
-        };
-        public static List<(int x, int z)> LittleAngles = new List<(int x, int z)>() {
-            (60, 15), (60, 30), (75, 0), (75, 15), (75, 30), (90, 0), (90, 15), (90, 30),
-            (90, 45), (105, 0), (105, 15), (105, 30), (105, 45), (120, 15), (120, 30)
-        };
     }
 }
  

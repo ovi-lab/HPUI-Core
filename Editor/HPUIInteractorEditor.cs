@@ -13,9 +13,11 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomEditor(typeof(HPUIInteractor), true)]
     public class HPUIInteractorEditor: XRBaseInteractorEditor
     {
+        protected readonly string defaultConeRayAnglesAsset = "Packages/ubc.ok.ovilab.hpui-core/Runtime/Resources/HPUIInteractorRayAngles_union.asset";
         private HPUIInteractor t;
         protected List<SerializedProperty> eventProperties;
-        protected List<string> eventPropertyNames = new List<string>() { "tapEvent", "gestureEvent"};
+        protected SerializedProperty coneRayAnglesProperty;
+        protected List<string> eventPropertyNames = new List<string>() { "tapEvent", "gestureEvent", "coneRayAngles"};
 
         protected bool hpuiInteractablesExpanded;
 
@@ -30,6 +32,8 @@ namespace ubco.ovilab.HPUI.Editor
             {
                 eventProperties.Add(serializedObject.FindProperty(eventName));
             }
+
+            coneRayAnglesProperty = serializedObject.FindProperty("coneRayAngles");
         }
 
         /// <inheritdoc />
@@ -57,6 +61,19 @@ namespace ubco.ovilab.HPUI.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("HPUI Configurations", EditorStyles.boldLabel);
             base.DrawDerivedProperties();
+            bool isEnabled = GUI.enabled;
+            GUI.enabled = t.useConeForRayCast;
+            if (t.ConeRayAngles == null && t.useConeForRayCast)
+            {
+                EditorGUILayout.HelpBox("Cone Ray Angles cannot be empty when using cone", MessageType.Warning);
+                if (GUILayout.Button("Use default asset"))
+                {
+                    coneRayAnglesProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<HPUIInteractorRayAngles>(defaultConeRayAnglesAsset);
+                    serializedObject.ApplyModifiedProperties();
+                }
+            }
+            EditorGUILayout.PropertyField(coneRayAnglesProperty);
+            GUI.enabled = isEnabled;
         }
 
         /// <inheritdoc />

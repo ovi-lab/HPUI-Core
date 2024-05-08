@@ -7,7 +7,7 @@ namespace ubco.ovilab.HPUI.Tracking
     /// <summary>
     /// <see cref="ScriptableObject"/> container class that holds a <see cref="JointFollowerData"/> value.
     /// </summary>
-    [CreateAssetMenu(fileName = "JointFollowerData", menuName = "HPUI/JointFollowerData", order = 1)]
+    [CreateAssetMenu(fileName = "JointFollowerData", menuName = "HPUI/Joint Follower Data", order = 1)]
     public class JointFollowerDatum: Datum<JointFollowerData>
     {
     }
