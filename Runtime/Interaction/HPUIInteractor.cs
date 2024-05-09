@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Utilities;
 using UnityEngine.XR.Hands;
+using Unity.XR.CoreUtils;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -166,6 +167,15 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public HPUIInteractorRayAngles ConeRayAngles { get => coneRayAngles; set => coneRayAngles = value; }
 
+        [SerializeField]
+        [Tooltip("(optional) XR Origin transform. If not set, will attempt to find XROrigin and use its transform.")]
+        private Transform xrOriginTransform;
+
+        /// <summary>
+        /// XR Origin transform. If not set, will attempt to find XROrigin and use its transform.
+        /// </summary>
+        public Transform XROriginTransform { get => xrOriginTransform; set => xrOriginTransform = value; }
+
         protected IHPUIGestureLogic gestureLogic;
         private Dictionary<IHPUIInteractable, CollisionInfo> validTargets = new Dictionary<IHPUIInteractable, CollisionInfo>();
         private Vector3 lastInteractionPoint;
@@ -180,7 +190,10 @@ namespace ubco.ovilab.HPUI.Interaction
         private Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
         private List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
-            XRHandJointID.IndexProximal , XRHandJointID.MiddleProximal, XRHandJointID.RingProximal, XRHandJointID.LittleProximal
+            XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal,
+            XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal,
+            XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal,
+            XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal
         };
         private bool recievedNewJointData = false,
             flipZAngles = false;
@@ -233,6 +246,14 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
             ResetAngleFunctions();
+            if (XROriginTransform == null)
+            {
+                XROriginTransform = FindObjectOfType<XROrigin>()?.transform;
+                if (XROriginTransform == null)
+                {
+                    Debug.LogError($"XR Origin not found! Manually set value for XROriginTransform");
+                }
+            }
             xrHandTrackingEvents.jointsUpdated.AddListener(UpdateJointsData);
         }
 
@@ -242,7 +263,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 if ( args.hand.GetJoint(id).TryGetPose(out Pose pose) )
                 {
-                    jointLocations[id] = pose.position;
+                    jointLocations[id] = xrOriginTransform.TransformPoint(pose.position);
                     recievedNewJointData = true;
                 }
             }
@@ -302,7 +323,6 @@ namespace ubco.ovilab.HPUI.Interaction
                         if (recievedNewJointData)
                         {
                             recievedNewJointData = false;
-                            // TODO: is this enough?
                             XRHandJointID activeFinger = (trackedJoints
                                      .Select(j => new {item = j, pos = (jointLocations[j] - transform.position).magnitude})
                                      .OrderBy(el => el.pos)
@@ -311,10 +331,10 @@ namespace ubco.ovilab.HPUI.Interaction
 
                             activeFingerAngles = activeFinger switch
                             {
-                                XRHandJointID.IndexProximal => coneRayAngles.IndexAngles,
-                                XRHandJointID.MiddleProximal => coneRayAngles.MiddleAngles,
-                                XRHandJointID.RingProximal => coneRayAngles.IndexAngles,
-                                XRHandJointID.LittleProximal => coneRayAngles.LittleAngles,
+                                XRHandJointID.IndexProximal or XRHandJointID.IndexIntermediate or XRHandJointID.IndexDistal => ConeRayAngles.IndexAngles,
+                                XRHandJointID.MiddleProximal or XRHandJointID.MiddleIntermediate or XRHandJointID.MiddleDistal => ConeRayAngles.MiddleAngles,
+                                XRHandJointID.RingProximal or XRHandJointID.RingIntermediate or XRHandJointID.RingDistal => ConeRayAngles.RingAngles,
+                                XRHandJointID.LittleProximal or XRHandJointID.LittleIntermediate or XRHandJointID.LittleDistal => ConeRayAngles.LittleAngles,
                                 _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
                             };
                         }
