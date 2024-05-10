@@ -13,7 +13,7 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomEditor(typeof(HPUIInteractor), true)]
     public class HPUIInteractorEditor: XRBaseInteractorEditor
     {
-        protected readonly string defaultConeRayAnglesAsset = "Packages/ubc.ok.ovilab.hpui-core/Runtime/Resources/HPUIInteractorRayAngles_union.asset";
+        protected readonly string defaultConeRayAnglesAsset = "Packages/ubc.ok.ovilab.hpui-core/Runtime/Resources/HPUIInteractorRayAngles_intersection.asset";
         private HPUIInteractor t;
         protected List<SerializedProperty> eventProperties;
         protected SerializedProperty coneRayAnglesProperty;
