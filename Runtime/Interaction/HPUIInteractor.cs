@@ -318,6 +318,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     DataWriter = "//";
 
                     List<HPUIInteractorRayAngle> angles;
+                    // TODO: Move this logic to its own component
                     if (useConeForRayCast)
                     {
                         if (recievedNewJointData)
