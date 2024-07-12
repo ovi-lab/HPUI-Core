@@ -296,9 +296,6 @@ namespace ubco.ovilab.HPUI.Interaction
             continuousSurfaceCreatedEvent?.Invoke(new HPUIContinuousSurfaceCreatedEventArgs(this));
         }
 
-        // FIXME: Debug
-        public UnityEngine.Events.UnityEvent todo;
-
         /// <inheritdoc />
         public override void ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
@@ -346,12 +343,12 @@ namespace ubco.ovilab.HPUI.Interaction
                             kpJointFollower.SetPose(newPose1, Pose.identity, false);
 
                             // FIXME: Debug code
-                            {
-                                var obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                                obj.transform.localScale = Vector3.one * 0.005f;
-                                obj.transform.position = kpJointFollower.transform.position;
-                                obj.transform.rotation = kpJointFollower.transform.rotation;
-                            }
+                            // {
+                            //     var obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                            //     obj.transform.localScale = Vector3.one * 0.005f;
+                            //     obj.transform.position = kpJointFollower.transform.position;
+                            //     obj.transform.rotation = kpJointFollower.transform.rotation;
+                            // }
                         }
 
                         jointID = jointFollower.JointFollowerDatumProperty.Value.jointID;
@@ -366,24 +363,24 @@ namespace ubco.ovilab.HPUI.Interaction
                         jointFollower.SetPose(newPose1, newPose2, useSecondJointID);
 
                         // FIXME: Debug code
-                        {
-                            var obj1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                            obj1.transform.localScale = Vector3.one * 0.005f;
-                            obj1.transform.position = jointFollower.transform.position;
-                            obj1.transform.rotation = jointFollower.transform.rotation;
+                        // {
+                        //     var obj1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        //     obj1.transform.localScale = Vector3.one * 0.005f;
+                        //     obj1.transform.position = jointFollower.transform.position;
+                        //     obj1.transform.rotation = jointFollower.transform.rotation;
 
-                            obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                            obj1.transform.localScale = Vector3.one * 0.005f;
-                            obj1.transform.position = newPose1.position;
-                            obj1.transform.rotation = newPose1.rotation;
+                        //     obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                        //     obj1.transform.localScale = Vector3.one * 0.005f;
+                        //     obj1.transform.position = newPose1.position;
+                        //     obj1.transform.rotation = newPose1.rotation;
 
-                            obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                            obj1.transform.localScale = Vector3.one * 0.005f;
-                            obj1.transform.position = newPose2.position;
-                            obj1.transform.rotation = newPose2.rotation;
+                        //     obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                        //     obj1.transform.localScale = Vector3.one * 0.005f;
+                        //     obj1.transform.position = newPose2.position;
+                        //     obj1.transform.rotation = newPose2.rotation;
 
-                            // todo?.Invoke();
-                        }
+                        //     // todo?.Invoke();
+                        // }
                         
                         ExecuteCalibration(X_size, y_size, keypointsCache);
                         approximationComputeState = ApproximationComputeState.Computing;
