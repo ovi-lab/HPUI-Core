@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using ubco.ovilab.HPUI.Tracking;
-using ubco.ovilab.HPUI.UI;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -30,8 +28,8 @@ namespace ubco.ovilab.HPUI.Interaction
 	[SerializeField] private float offset = 0.0005f;
         [Tooltip("The number of bones to use per vertex in the SkinnedMeshRenderer.")]
         [SerializeField] private byte numberOfBonesPerVertex = 3;
-        [Tooltip("The joints that will be used for the SkinnedMeshRenderer.")]
-        [SerializeField] private List<XRHandJointID> keypointJoints;
+        [Tooltip("The keypoints that will be used for the SkinnedMeshRenderer.")]
+        [SerializeField] private List<DeformableSurfaceKeypoint> keypointsData;
         [Tooltip("(Optional) The default material to use for the surface.")]
         [SerializeField] private Material defaultMaterial;
         [Tooltip("(Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.")]
@@ -93,7 +91,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// The joints that will be used for the SkinnedMeshRenderer.
         /// </summary>
-        public List<XRHandJointID> KeypointJoints { get => keypointJoints; set => keypointJoints = value; }
+        public List<DeformableSurfaceKeypoint> KeypointsData { get => keypointsData; set => keypointsData = value; }
 
         /// <summary>
         /// (Optional) The default material to use for the surface.
@@ -144,13 +142,34 @@ namespace ubco.ovilab.HPUI.Interaction
         internal void SetupKeypoints()
         {
             KeypointTransforms = new List<Transform>();
-            foreach (XRHandJointID jointID in KeypointJoints)
+            foreach (DeformableSurfaceKeypoint joint in KeypointsData)
             {
-                GameObject obj = new GameObject($"{Handedness}_{jointID}");
-                JointFollower jointFollower = obj.AddComponent<JointFollower>();
-                jointFollower.SetData(new JointFollowerData(Handedness, jointID, 0, 0, 0));
+                Transform keypoint;
+                GameObject obj;
+                JointFollower jointFollower;
+                switch(joint.keypointType)
+                {
+                    case DeformableSurfaceKeypoint.KeypointsOptions.JointFollowerData:
+                        JointFollowerData jointFollowerData = joint.jointFollowerData;
+                        obj = new GameObject($"{Handedness}_{jointFollowerData.jointID}");
+                        jointFollower = obj.AddComponent<JointFollower>();
+                        jointFollower.SetData(jointFollowerData);
+                        keypoint = obj.transform;
+                        break;
+                    case DeformableSurfaceKeypoint.KeypointsOptions.JointID:
+                        XRHandJointID jointID = joint.jointID;
+                        obj = new GameObject($"{Handedness}_{jointID}");
+                        jointFollower = obj.AddComponent<JointFollower>();
+                        jointFollower.SetData(new JointFollowerData(Handedness, jointID, 0, 0, 0));
+                        keypoint = obj.transform;
+                        break;
+                    case DeformableSurfaceKeypoint.KeypointsOptions.Transform:
+                        keypoint = joint.jointTransform;
+                        break;
+                    default:
+                        throw new InvalidOperationException("How did this even happen?");
+                }
 
-                Transform keypoint = obj.transform;
                 keypoint.parent = this.transform;
                 KeypointTransforms.Add(keypoint);
             }
@@ -174,11 +193,12 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 for (int i = 0; i < KeypointTransforms.Count; ++i)
                 {
-                    if (KeypointTransforms[i] != transform)
+                    if (KeypointTransforms[i] != transform && KeypointsData[i].keypointType != DeformableSurfaceKeypoint.KeypointsOptions.Transform)
                     {
                         Destroy(KeypointTransforms[i].gameObject);
                     }
                 }
+                KeypointTransforms.Clear();
             }
         }
 

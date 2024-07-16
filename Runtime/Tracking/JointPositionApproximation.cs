@@ -308,7 +308,16 @@ namespace ubco.ovilab.HPUI.Tracking
                     approximationComputeState = ApproximationComputeState.DataCollection;
                     break;
                 case ApproximationComputeState.DataCollection:
-                    IEnumerable<XRHandJointID> keypointsUsed = continuousInteractable.KeypointJoints.Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
+                    IEnumerable<XRHandJointID> keypointsUsed = continuousInteractable.KeypointsData
+                        .Where(kp => kp.keypointType != DeformableSurfaceKeypoint.KeypointsOptions.Transform)
+                        .Select(kp => kp.keypointType switch
+                        {
+                            DeformableSurfaceKeypoint.KeypointsOptions.JointID => new List<XRHandJointID>(){kp.jointID},
+                            DeformableSurfaceKeypoint.KeypointsOptions.JointFollowerData => kp.jointFollowerData.Value.JointsUsed(),
+                            _ => throw new InvalidOperationException()
+                        })
+                        .SelectMany(kps => kps)
+                        .Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
                     if (jointFollower.JointFollowerDatumProperty.Value.useSecondJointID)
                     {
                         keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);

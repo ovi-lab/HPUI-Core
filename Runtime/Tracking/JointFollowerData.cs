@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
@@ -39,6 +40,17 @@ namespace ubco.ovilab.HPUI.Tracking
             this.offsetAngle = offsetAngle;
             this.offsetAsRatioToRadius = offsetAsRationToRadius;
             this.longitudinalOffset = longitudinalOffset;
+        }
+
+        public IEnumerable<XRHandJointID> JointsUsed()
+        {
+            List<XRHandJointID> usedJoints = new();
+            usedJoints.Add(jointID);
+            if (useSecondJointID)
+            {
+                usedJoints.Add(secondJointID);
+            }
+            return usedJoints;
         }
     }
 }
