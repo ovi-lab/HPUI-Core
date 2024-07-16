@@ -3,6 +3,8 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Utilities;
 using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;

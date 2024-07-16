@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using ubco.ovilab.HPUI.Tracking;
 using UnityEngine;
 using UnityEngine.XR.Hands;
-using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Filtering;
 
 namespace ubco.ovilab.HPUI.Interaction

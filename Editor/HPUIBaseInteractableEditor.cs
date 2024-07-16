@@ -1,6 +1,6 @@
 using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
-using UnityEditor.XR.Interaction.Toolkit;
+using UnityEditor.XR.Interaction.Toolkit.Interactables;
 using System.Collections.Generic;
 using UnityEngine;
 using ubco.ovilab.HPUI.Tracking;

@@ -9,19 +9,21 @@ namespace ubco.ovilab.HPUI.Editor
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return EditorGUIUtility.singleLineHeight * 8 + EditorGUIUtility.standardVerticalSpacing * 9;
+            return EditorGUIUtility.singleLineHeight * 9 + EditorGUIUtility.standardVerticalSpacing * 10;
         }
 
+        // FIXME: This seems to ignore the foldout the DatumPropertyDrawer has
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
             float itemHeight = (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing);
 
-            position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label);
+            EditorGUI.PrefixLabel(position, label);
 
             EditorGUI.indentLevel++;
 
             var rect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+            rect.y += itemHeight;
             EditorGUI.PropertyField(rect, property.FindPropertyRelative("handedness"));
             rect.y += itemHeight;
             EditorGUI.PropertyField(rect, property.FindPropertyRelative("jointID"));

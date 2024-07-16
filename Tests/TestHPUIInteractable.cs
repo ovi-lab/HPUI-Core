@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using ubco.ovilab.HPUI.Interaction;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit;
 
 namespace ubco.ovilab.HPUI.Tests
