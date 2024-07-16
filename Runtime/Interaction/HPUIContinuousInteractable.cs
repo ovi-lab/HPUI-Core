@@ -148,6 +148,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 Transform keypoint;
                 GameObject obj;
                 JointFollower jointFollower;
+                bool setParent = true;
                 switch(joint.keypointType)
                 {
                     case DeformableSurfaceKeypoint.KeypointsOptions.JointFollowerData:
@@ -165,13 +166,17 @@ namespace ubco.ovilab.HPUI.Interaction
                         keypoint = obj.transform;
                         break;
                     case DeformableSurfaceKeypoint.KeypointsOptions.Transform:
+                        setParent = false;
                         keypoint = joint.jointTransform;
                         break;
                     default:
                         throw new InvalidOperationException("How did this even happen?");
                 }
 
-                keypoint.parent = this.transform;
+                if (setParent)
+                {
+                    keypoint.parent = this.transform;
+                }
                 KeypointTransforms.Add(keypoint);
             }
 
