@@ -350,7 +350,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             JointFollower kpJointFollower = t.GetComponent<JointFollower>();
                             jointID = kpJointFollower.JointFollowerDatumProperty.Value.jointID;
                             newPose1 = keypointPoses[jointID];
-                            kpJointFollower.SetPose(newPose1, Pose.identity, false);
+                            kpJointFollower.PublicSetPose(newPose1, Pose.identity, false);
 
                             // FIXME: Debug code
                             // {
@@ -370,7 +370,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             newPose2 = keypointPoses[jointID];
                         }
-                        jointFollower.SetPose(newPose1, newPose2, useSecondJointID);
+                        jointFollower.PublicSetPose(newPose1, newPose2, useSecondJointID);
 
                         // FIXME: Debug code
                         // {

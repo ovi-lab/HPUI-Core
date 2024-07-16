@@ -152,6 +152,11 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <summary>
         /// This method uses the jointFollowerDataValue and sets the poses.
         /// </summary>
+        public void PublicSetPose(Pose mainJointPose, Pose secondJointPose, bool secondPoseSuccess)
+        {
+            SetPose(mainJointPose, secondJointPose, secondPoseSuccess);
+        }
+        
         protected void SetPose(Pose mainJointPose, Pose secondJointPose, bool secondPoseSuccess)
         {
             JointFollowerData jointFollowerDataValue = jointFollowerData.Value;
@@ -172,5 +177,6 @@ namespace ubco.ovilab.HPUI.Tracking
             TargetTransform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
             TargetTransform.position = mainJointPose.position + jointPlaneOffset * (cachedRadius * jointFollowerDataValue.offsetAsRatioToRadius) + jointLongitudianlOffset;
         }
+
     }
 }
