@@ -29,22 +29,6 @@ namespace ubco.ovilab.HPUI.Editor
             uiProp = serializedObject.FindProperty("ui");
         }
 
-        /// <inheritdoc />
-        protected override void DrawCoreConfiguration()
-        {
-            base.DrawCoreConfiguration();
-            EditorGUILayout.PropertyField(uiProp);
-            if (uiProp.objectReferenceValue == null)
-            {
-                if (GUILayout.Button(new GUIContent("Instantiate & add UI", "Instantiate UI for continuous interface generation and add it")))
-                {
-                    GameObject uiObj = PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(UIPrefab)) as GameObject;
-                    uiProp.objectReferenceValue = uiObj.GetComponent<HPUIContinuousInteractableUI>();
-                    Debug.Log($"[[[{uiProp.objectReferenceValue}]]]");
-                }
-            }
-        }
-
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
@@ -54,13 +38,6 @@ namespace ubco.ovilab.HPUI.Editor
                 foreach (Object t in targets)
                 {
                     (t as HPUIContinuousInteractable)?.ManualRecompute();
-                }
-            }
-            if (GUILayout.Button(new GUIContent("Automated recompute", "Intiate the process to estimate the joint locations and generate the surface")))
-            {
-                foreach (Object t in targets)
-                {
-                    (t as HPUIContinuousInteractable)?.AutomatedRecompute();
                 }
             }
             GUI.enabled = true;

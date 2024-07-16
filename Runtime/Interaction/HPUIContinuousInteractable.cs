@@ -17,8 +17,6 @@ namespace ubco.ovilab.HPUI.Interaction
     [DisallowMultipleComponent]
     public class HPUIContinuousInteractable: HPUIBaseInteractable
     {
-        private enum ApproximationComputeState { None, Starting, DataCollection, Computing, Finished}
-
         //TODO: make following configs an asset
         [Space()]
         [Header("Continuous surface configuration")]
@@ -38,9 +36,6 @@ namespace ubco.ovilab.HPUI.Interaction
         [SerializeField] private Material defaultMaterial;
         [Tooltip("(Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.")]
 	[SerializeField] private MeshFilter filter;
-        [Tooltip("(Optional) Will be used to provide feedback during setup.")]
-        [SerializeField] private HPUIContinuousInteractableUI ui;
-
         /// <inheritdoc />
         public override Vector2 boundsMax { get => surfaceCollidersManager?.boundsMax ?? Vector2.zero; }
 
@@ -110,37 +105,14 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public MeshFilter Filter { get => filter; set => filter = value; }
 
-        private List<Transform> keypointsCache;
+        /// <summary>
+        /// The keypointTransforms used by this continuous interactable;
+        /// </summary>
+        public List<Transform> KeypointTransforms { get; private set; }
+
         private DeformableSurfaceCollidersManager surfaceCollidersManager;
         private GameObject collidersRoot;
         private JointFollower jointFollower;
-        private JointPositionApproximation jointPositionApproximation;
-        private ApproximationComputeState approximationComputeState = ApproximationComputeState.Starting;
-
-        public JointPositionApproximation JointPositionApproximation {
-            get
-            {
-                if (jointPositionApproximation == null && jointFollower != null)
-                {
-                    jointPositionApproximation = jointFollower.JointFollowerDatumProperty.Value.handedness switch
-                        {
-                            Handedness.Left => JointPositionApproximation.LeftJointPositionApproximation,
-                            Handedness.Right => JointPositionApproximation.RightJointPositionApproximation,
-                            _ => throw new InvalidOperationException("Handedness value not valid)")
-                        };
-                }
-                return jointPositionApproximation;
-            }
-            set => jointPositionApproximation = value; }
-
-        /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
-        /// </summary>
-        protected override void Awake()
-        {
-            base.Awake();
-            jointFollower = GetComponent<JointFollower>();
-        }
 
         /// <inheritdoc />
         public override Transform GetAttachTransform(IXRInteractor interactor)
@@ -167,11 +139,11 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <summary>
-        /// Setup and return the list of keypoints to be used for the <see cref="SkinnedMeshRenderer"/>.
+        /// Setup the list of keypoints to be used for the <see cref="SkinnedMeshRenderer"/>.
         /// </summary>
-        private List<Transform> SetupKeypoints()
+        internal void SetupKeypoints()
         {
-            List<Transform> keypointTransforms = new List<Transform>();
+            KeypointTransforms = new List<Transform>();
             foreach (XRHandJointID jointID in KeypointJoints)
             {
                 GameObject obj = new GameObject($"{Handedness}_{jointID}");
@@ -180,7 +152,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 Transform keypoint = obj.transform;
                 keypoint.parent = this.transform;
-                keypointTransforms.Add(keypoint);
+                KeypointTransforms.Add(keypoint);
             }
 
             if (Filter == null)
@@ -191,22 +163,20 @@ namespace ubco.ovilab.HPUI.Interaction
                 skinNode.transform.localPosition = Vector3.zero;
                 skinNode.transform.localRotation = Quaternion.identity;
             }
-
-            return keypointTransforms;
         }
 
         /// <summary>
         /// Destroy the keypoint objects
         /// </summary>
-        private void ClearKeypointsCache()
+        internal void ClearKeypointsCache()
         {
-            if (keypointsCache != null)
+            if (KeypointTransforms != null)
             {
-                for (int i = 0; i < keypointsCache.Count; ++i)
+                for (int i = 0; i < KeypointTransforms.Count; ++i)
                 {
-                    if (keypointsCache[i] != transform)
+                    if (KeypointTransforms[i] != transform)
                     {
-                        Destroy(keypointsCache[i].gameObject);
+                        Destroy(KeypointTransforms[i].gameObject);
                     }
                 }
             }
@@ -221,37 +191,24 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             colliders.Clear();
             ClearKeypointsCache();
-            keypointsCache = SetupKeypoints();
-            StartCoroutine(DelayedExecuteCalibration(X_size, y_size, keypointsCache));
+            SetupKeypoints();
+            StartCoroutine(DelayedExecuteCalibration());
         }
 
-        /// <summary>
-        /// Restart the automated compuation procedure.
-        /// </summary>
-        public void AutomatedRecompute()
-        {
-            if (jointFollower == null)
-            {
-                Debug.LogWarning($"Not running Approximation routine as there is no JointFollower");
-                return;
-            }
-            JointPositionApproximation?.Reset();
-            approximationComputeState = ApproximationComputeState.Starting;
-        }
 
         /// <summary>
         /// Generate the mesh after a short wait.
         /// </summary>
-        private IEnumerator DelayedExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
+        private IEnumerator DelayedExecuteCalibration()
         {
             yield return new WaitForSeconds(0.1f);
-            ExecuteCalibration(x_size, y_size, keypoints);
+            ExecuteCalibration();
         }
 
         /// <summary>
         /// Generate the mesh.
         /// </summary>
-        private void ExecuteCalibration(float x_size, float y_size, List<Transform> keypoints)
+        internal void ExecuteCalibration()
         {
             if (Filter.mesh != null)
             {
@@ -266,7 +223,7 @@ namespace ubco.ovilab.HPUI.Interaction
             float step_size = y_size / Y_divisions;
 	    X_divisions = (int)(x_size / step_size);
 
-            DeformableSurface.GenerateMesh(x_size, y_size, X_divisions, Y_divisions, Offset, Filter, keypoints, NumberOfBonesPerVertex);
+            DeformableSurface.GenerateMesh(x_size, y_size, X_divisions, Y_divisions, Offset, Filter, KeypointTransforms, NumberOfBonesPerVertex);
 
             if (DefaultMaterial != null)
             {
@@ -300,131 +257,5 @@ namespace ubco.ovilab.HPUI.Interaction
             continuousSurfaceCreatedEvent?.Invoke(new HPUIContinuousSurfaceCreatedEventArgs(this));
         }
 
-        /// <inheritdoc />
-        public override void ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase updatePhase)
-        {
-            base.ProcessInteractable(updatePhase);
-            if (updatePhase != XRInteractionUpdateOrder.UpdatePhase.Late || approximationComputeState == ApproximationComputeState.None)
-            {
-                return;
-            }
-
-            if (jointFollower == null)
-            {
-                Debug.LogWarning($"Not running Approximation routine as there is no JointFollower");
-                return;
-            }
-
-            switch (approximationComputeState)
-            {
-                case ApproximationComputeState.Starting:
-                    colliders.Clear();
-                    ClearKeypointsCache();
-                    ui?.Show();
-                    approximationComputeState = ApproximationComputeState.DataCollection;
-                    break;
-                case ApproximationComputeState.DataCollection:
-                    IEnumerable<XRHandJointID> keypointsUsed = KeypointJoints.Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
-                    if (jointFollower.JointFollowerDatumProperty.Value.useSecondJointID)
-                    {
-                        keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);
-                    }
-
-                    if (JointPositionApproximation.TryComputePoseForKeyPoints(keypointsUsed.ToList(),
-                                                                              out Dictionary<XRHandJointID, Pose> keypointPoses,
-                                                                              out float percentageDone))
-                    {
-                        ui?.Hide();
-                        keypointsCache = SetupKeypoints();
-
-                        foreach (Transform t in keypointsCache)
-                        {
-                            t.GetComponent<JointFollower>().enabled = false;
-                        }
-                        jointFollower.enabled = false;
-
-                        Pose newPose1, newPose2 = Pose.identity;
-                        XRHandJointID jointID;
-                        foreach (Transform t in keypointsCache)
-                        {
-                            JointFollower kpJointFollower = t.GetComponent<JointFollower>();
-                            jointID = kpJointFollower.JointFollowerDatumProperty.Value.jointID;
-                            newPose1 = keypointPoses[jointID];
-                            kpJointFollower.SetPose(newPose1, Pose.identity, false);
-
-                            // FIXME: Debug code
-                            // {
-                            //     var obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                            //     obj.transform.localScale = Vector3.one * 0.005f;
-                            //     obj.transform.position = kpJointFollower.transform.position;
-                            //     obj.transform.rotation = kpJointFollower.transform.rotation;
-                            // }
-                        }
-
-                        jointID = jointFollower.JointFollowerDatumProperty.Value.jointID;
-                        newPose1 = keypointPoses[jointID];
-
-                        jointID = jointFollower.JointFollowerDatumProperty.Value.secondJointID;
-                        bool useSecondJointID = jointFollower.JointFollowerDatumProperty.Value.useSecondJointID;
-                        if (useSecondJointID)
-                        {
-                            newPose2 = keypointPoses[jointID];
-                        }
-                        jointFollower.SetPose(newPose1, newPose2, useSecondJointID);
-
-                        // FIXME: Debug code
-                        // {
-                        //     var obj1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        //     obj1.transform.localScale = Vector3.one * 0.005f;
-                        //     obj1.transform.position = jointFollower.transform.position;
-                        //     obj1.transform.rotation = jointFollower.transform.rotation;
-
-                        //     obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                        //     obj1.transform.localScale = Vector3.one * 0.005f;
-                        //     obj1.transform.position = newPose1.position;
-                        //     obj1.transform.rotation = newPose1.rotation;
-
-                        //     obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                        //     obj1.transform.localScale = Vector3.one * 0.005f;
-                        //     obj1.transform.position = newPose2.position;
-                        //     obj1.transform.rotation = newPose2.rotation;
-
-                        //     // todo?.Invoke();
-                        // }
-                        
-                        ExecuteCalibration(X_size, y_size, keypointsCache);
-                        approximationComputeState = ApproximationComputeState.Computing;
-                    }
-                    else
-                    {
-                        if (ui != null)
-                        {
-                            ui.TextMessage = "Processing hand pose";
-                            if (percentageDone > 1)
-                            {
-                                ui.InProgress();
-                            }
-                            else
-                            {
-                                ui.SetProgress(percentageDone);
-                            }
-                        }
-                    }
-                    break;
-                case ApproximationComputeState.Computing:
-                    approximationComputeState = ApproximationComputeState.Finished;
-                    break;
-                case ApproximationComputeState.Finished:
-                    foreach (Transform t in keypointsCache)
-                    {
-                        t.GetComponent<JointFollower>().enabled = true;
-                    }
-                    jointFollower.enabled = true;
-                    approximationComputeState = ApproximationComputeState.None;
-                    break;
-                default:
-                    break;
-            }
-        }
     }
 }

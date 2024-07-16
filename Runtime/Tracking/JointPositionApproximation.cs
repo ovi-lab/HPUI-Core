@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ubco.ovilab.HPUI.Interaction;
+using ubco.ovilab.HPUI.UI;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.XR.Hands;
@@ -12,36 +14,11 @@ namespace ubco.ovilab.HPUI.Tracking
     /// </summary>
     public class JointPositionApproximation: HandSubsystemSubscriber
     {
-        private static JointPositionApproximation leftJointPositionApproximation, rightJointPositionApproximation;
+        [Tooltip("(Optional) Will be used to provide feedback during setup.")]
+        [SerializeField] private HPUIContinuousInteractableUI ui;
+
+        private enum ApproximationComputeState { None, Starting, DataCollection, Computing, Finished }
         private Transform dummyXROriginTransform;
-
-        /// <summary>
-        /// Approximate the joint positions of the left hand.
-        /// </summary>
-        public static JointPositionApproximation LeftJointPositionApproximation {
-            get
-            {
-                if (leftJointPositionApproximation == null)
-                {
-                    leftJointPositionApproximation = InstantiateObj(Handedness.Left);
-                }
-                return leftJointPositionApproximation;
-            }
-        }
-
-        /// <summary>
-        /// Approximate the joint positions of the right hand.
-        /// </summary>
-        public static JointPositionApproximation RightJointPositionApproximation {
-            get
-            {
-                if (rightJointPositionApproximation == null)
-                {
-                    rightJointPositionApproximation = InstantiateObj(Handedness.Right);
-                }
-                return rightJointPositionApproximation;
-            }
-        }
 
         /// <inheritdoc />
         public override Handedness Handedness
@@ -56,16 +33,26 @@ namespace ubco.ovilab.HPUI.Tracking
         {
             XRHandJointID.IndexProximal, XRHandJointID.MiddleProximal, XRHandJointID.RingProximal, XRHandJointID.LittleProximal
         };
-        private Handedness handedness; // TODO make this work for both hands
+
+        private Handedness handedness;
         private Dictionary<XRHandJointID, (float mean, float mae, bool stable)> jointsLengthEsitmation = new Dictionary<XRHandJointID, (float, float, bool)>();
         private Dictionary<XRHandJointID, Queue<float>> jointsLastLengths = new Dictionary<XRHandJointID, Queue<float>>();
         private Dictionary<XRHandJointID, (Queue<Vector3> positions, Pose pose, bool stable)> computeKeypointJointsData = new Dictionary<XRHandJointID, (Queue<Vector3> poses, Pose pose, bool stable)>();
         private Pose lastWristPose;
         private bool recievedLastWristPose = false;
 
+        private ApproximationComputeState approximationComputeState = ApproximationComputeState.Starting;
+        private JointFollower jointFollower;
+        private HPUIContinuousInteractable continuousInteractable;
+
         /// <inheritdoc />
         protected override void ProcessJointData(XRHandSubsystem subsystem)
         {
+            if (jointFollower == null || !enabled)
+            {
+                return;
+            }
+
             XRHand hand = handedness switch
             {
                 Handedness.Left => subsystem.leftHand,
@@ -270,20 +257,158 @@ namespace ubco.ovilab.HPUI.Tracking
             return true;
         }
 
-        public void Reset()
+        /// <summary>
+        /// Restart the automated compuation procedure.
+        /// </summary>
+        public void AutomatedRecompute()
         {
+            approximationComputeState = ApproximationComputeState.Starting;
             computeKeypointJointsData.Clear();
             jointsLengthEsitmation.Clear();
             jointsLastLengths.Clear();
             computeKeypointJointsData.Clear();
         }
 
-        private static JointPositionApproximation InstantiateObj(Handedness handedness)
+        /// <summary>
+        /// See <see cref="MonoBehaviour"/>.
+        /// </summary>
+        protected override void OnEnable()
         {
-            GameObject obj = new GameObject($"JointPositionApproximation_{handedness}");
-            JointPositionApproximation jointPositionApproximation = obj.AddComponent<JointPositionApproximation>();
-            jointPositionApproximation.handedness = handedness;
-            return jointPositionApproximation;
+            jointFollower = GetComponent<JointFollower>();
+            continuousInteractable = GetComponent<HPUIContinuousInteractable>();
+
+            // FIXME: figure out a better way for this socery!
+            if (jointFollower != null && continuousInteractable != null)
+            {
+                handedness = jointFollower.Handedness;
+                base.OnEnable();
+            }
+            else
+            {
+                enabled = false;
+            }
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (jointFollower == null)
+            {
+                Debug.LogWarning($"Not running Approximation routine as there is no JointFollower");
+                return;
+            }
+
+            switch (approximationComputeState)
+            {
+                case ApproximationComputeState.Starting:
+                    continuousInteractable.colliders.Clear();
+                    continuousInteractable.ClearKeypointsCache();
+                    ui?.Show();
+                    approximationComputeState = ApproximationComputeState.DataCollection;
+                    break;
+                case ApproximationComputeState.DataCollection:
+                    IEnumerable<XRHandJointID> keypointsUsed = continuousInteractable.KeypointJoints.Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
+                    if (jointFollower.JointFollowerDatumProperty.Value.useSecondJointID)
+                    {
+                        keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);
+                    }
+
+                    if (TryComputePoseForKeyPoints(keypointsUsed.ToList(),
+                                                   out Dictionary<XRHandJointID, Pose> keypointPoses,
+                                                   out float percentageDone))
+                    {
+                        ui?.Hide();
+                        continuousInteractable.SetupKeypoints();
+
+                        foreach (Transform t in continuousInteractable.KeypointTransforms)
+                        {
+                            t.GetComponent<JointFollower>().enabled = false;
+                        }
+                        jointFollower.enabled = false;
+
+                        Pose newPose1, newPose2 = Pose.identity;
+                        XRHandJointID jointID;
+                        foreach (Transform t in continuousInteractable.KeypointTransforms)
+                        {
+                            JointFollower kpJointFollower = t.GetComponent<JointFollower>();
+                            jointID = kpJointFollower.JointFollowerDatumProperty.Value.jointID;
+                            newPose1 = keypointPoses[jointID];
+                            kpJointFollower.InternalSetPose(newPose1, Pose.identity, false);
+
+                            // FIXME: Debug code
+                            // {
+                            //     var obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                            //     obj.transform.localScale = Vector3.one * 0.005f;
+                            //     obj.transform.position = kpJointFollower.transform.position;
+                            //     obj.transform.rotation = kpJointFollower.transform.rotation;
+                            // }
+                        }
+
+                        jointID = jointFollower.JointFollowerDatumProperty.Value.jointID;
+                        newPose1 = keypointPoses[jointID];
+
+                        jointID = jointFollower.JointFollowerDatumProperty.Value.secondJointID;
+                        bool useSecondJointID = jointFollower.JointFollowerDatumProperty.Value.useSecondJointID;
+                        if (useSecondJointID)
+                        {
+                            newPose2 = keypointPoses[jointID];
+                        }
+                        jointFollower.InternalSetPose(newPose1, newPose2, useSecondJointID);
+
+                        // FIXME: Debug code
+                        // {
+                        //     var obj1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        //     obj1.transform.localScale = Vector3.one * 0.005f;
+                        //     obj1.transform.position = jointFollower.transform.position;
+                        //     obj1.transform.rotation = jointFollower.transform.rotation;
+
+                        //     obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                        //     obj1.transform.localScale = Vector3.one * 0.005f;
+                        //     obj1.transform.position = newPose1.position;
+                        //     obj1.transform.rotation = newPose1.rotation;
+
+                        //     obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                        //     obj1.transform.localScale = Vector3.one * 0.005f;
+                        //     obj1.transform.position = newPose2.position;
+                        //     obj1.transform.rotation = newPose2.rotation;
+
+                        //     // todo?.Invoke();
+                        // }
+                        
+                        continuousInteractable.ExecuteCalibration();
+                        approximationComputeState = ApproximationComputeState.Computing;
+                    }
+                    else
+                    {
+                        if (ui != null)
+                        {
+                            ui.TextMessage = "Processing hand pose";
+                            if (percentageDone > 1)
+                            {
+                                ui.InProgress();
+                            }
+                            else
+                            {
+                                ui.SetProgress(percentageDone);
+                            }
+                        }
+                    }
+                    break;
+                case ApproximationComputeState.Computing:
+                    approximationComputeState = ApproximationComputeState.Finished;
+                    break;
+                case ApproximationComputeState.Finished:
+                    foreach (Transform t in continuousInteractable.KeypointTransforms)
+                    {
+                        t.GetComponent<JointFollower>().enabled = true;
+                    }
+                    jointFollower.enabled = true;
+                    approximationComputeState = ApproximationComputeState.None;
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
