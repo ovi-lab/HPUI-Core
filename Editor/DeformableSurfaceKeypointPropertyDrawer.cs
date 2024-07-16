@@ -8,8 +8,6 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomPropertyDrawer(typeof(DeformableSurfaceKeypoint), true)]
     public class DeformableSurfaceKeypointPropertyDrawer: PropertyDrawer
     {
-        private float heightFactor = 1;
-
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             GetTargetAndTypeProps(property, out SerializedProperty typeProp, out SerializedProperty targetProp);

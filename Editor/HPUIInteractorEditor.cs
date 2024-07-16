@@ -1,10 +1,11 @@
 using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
-using UnityEditor.XR.Interaction.Toolkit;
+using UnityEditor.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using System.Collections.Generic;
 using ubco.ovilab.HPUI.Tracking;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
+
 using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI.Editor

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.XR.Hands;
-using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Utilities;
 
 namespace ubco.ovilab.HPUI.Interaction
