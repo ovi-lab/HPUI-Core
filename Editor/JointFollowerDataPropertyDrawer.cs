@@ -7,26 +7,40 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomPropertyDrawer(typeof(JointFollowerData))]
     public class JointFollowerDataPropertyDrawer : PropertyDrawer
     {
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUIUtility.singleLineHeight * 8 + EditorGUIUtility.standardVerticalSpacing * 9;
+        }
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
+            float itemHeight = (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing);
 
             position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label);
 
             EditorGUI.indentLevel++;
 
-            EditorGUILayout.PropertyField(property.FindPropertyRelative("handedness"));
-            EditorGUILayout.PropertyField(property.FindPropertyRelative("jointID"));
+            var rect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("handedness"));
+            rect.y += itemHeight;
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("jointID"));
             SerializedProperty useSecondJointIDProp = property.FindPropertyRelative("useSecondJointID");
-            EditorGUILayout.PropertyField(useSecondJointIDProp);
+            rect.y += itemHeight;
+            EditorGUI.PropertyField(rect, useSecondJointIDProp);
             bool guiEnabled = GUI.enabled;
             GUI.enabled = useSecondJointIDProp.boolValue;
-            EditorGUILayout.PropertyField(property.FindPropertyRelative("secondJointID"));
+            rect.y += itemHeight;
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("secondJointID"));
             GUI.enabled = guiEnabled;
-            EditorGUILayout.PropertyField(property.FindPropertyRelative("defaultJointRadius"));
-            EditorGUILayout.PropertyField(property.FindPropertyRelative("offsetAngle"));
-            EditorGUILayout.PropertyField(property.FindPropertyRelative("offsetAsRatioToRadius"));
-            EditorGUILayout.PropertyField(property.FindPropertyRelative("longitudinalOffset"));
+            rect.y += itemHeight;
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("defaultJointRadius"));
+            rect.y += itemHeight;
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("offsetAngle"));
+            rect.y += itemHeight;
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("offsetAsRatioToRadius"));
+            rect.y += itemHeight;
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("longitudinalOffset"));
 
             EditorGUI.indentLevel--;
             EditorGUI.EndProperty();
