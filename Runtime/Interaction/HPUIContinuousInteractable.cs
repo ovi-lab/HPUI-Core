@@ -15,7 +15,6 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(JointFollower))]
     public class HPUIContinuousInteractable: HPUIBaseInteractable
     {
         private enum ApproximationComputeState { None, Starting, DataCollection, Computing, Finished}
@@ -121,7 +120,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public JointPositionApproximation JointPositionApproximation {
             get
             {
-                if (jointPositionApproximation == null)
+                if (jointPositionApproximation == null && jointFollower != null)
                 {
                     jointPositionApproximation = jointFollower.JointFollowerDatumProperty.Value.handedness switch
                         {
@@ -231,7 +230,12 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public void AutomatedRecompute()
         {
-            JointPositionApproximation.Reset();
+            if (jointFollower == null)
+            {
+                Debug.LogWarning($"Not running Approximation routine as there is no JointFollower");
+                return;
+            }
+            JointPositionApproximation?.Reset();
             approximationComputeState = ApproximationComputeState.Starting;
         }
 
@@ -302,6 +306,12 @@ namespace ubco.ovilab.HPUI.Interaction
             base.ProcessInteractable(updatePhase);
             if (updatePhase != XRInteractionUpdateOrder.UpdatePhase.Late || approximationComputeState == ApproximationComputeState.None)
             {
+                return;
+            }
+
+            if (jointFollower == null)
+            {
+                Debug.LogWarning($"Not running Approximation routine as there is no JointFollower");
                 return;
             }
 
