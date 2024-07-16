@@ -149,6 +149,11 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
+        internal void InternalSetPose(Pose mainJointPose, Pose secondJointPose, bool secondPoseSuccess)
+        {
+            SetPose(mainJointPose, secondJointPose, secondPoseSuccess);
+        }
+
         /// <summary>
         /// This method uses the jointFollowerDataValue and sets the poses.
         /// </summary>
