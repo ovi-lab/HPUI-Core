@@ -20,7 +20,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private float startTime, cumilativeDistance, timeDelta;
         private Vector2 delta, previousPosition, cumilativeDirection;
-        private bool selectionHappenedLastFrame = false;
+        private bool selectionHappenedLastFrame = false,
+            useHuristic = false;
         private int activeInteractables = 0;
 
         private IHPUIInteractable activePriorityInteractable, currentTrackingInteractable;
@@ -31,9 +32,10 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Initializes a new instance of the with the thrshold values.
         /// </summary>
-        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float interactionSelectionRadius)
+        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float interactionSelectionRadius, bool useHuristic)
         {
             this.interactor = interactor;
+            this.useHuristic = useHuristic;
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
             this.interactionSelectionRadius = interactionSelectionRadius;
@@ -41,14 +43,14 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void Update(IDictionary<IHPUIInteractable, float> distances)
+        public void Update(IDictionary<IHPUIInteractable, HPUIInteractionData> distances)
         {
             bool updateTrackingInteractable = false;
             bool selectionHappening = false;
             foreach(IHPUIInteractable interactable in distances.Keys.Union(trackingInteractables.Keys))
             {
                 bool isTracked = trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state);
-                bool isInFrame = distances.TryGetValue(interactable, out float distance);
+                bool isInFrame = distances.TryGetValue(interactable, out HPUIInteractionData interactionData);
 
                 // Target entered hover state
                 if (!isTracked || !state.active)
@@ -69,12 +71,17 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (isInFrame)
                 {
-                    if (distance < state.minDistanceToInteractor)
+                    if (interactionData.distance < state.minDistanceToInteractor)
                     {
-                        state.minDistanceToInteractor = distance;
+                        state.minDistanceToInteractor = interactionData.distance;
                     }
 
-                    if (distance < interactionSelectionRadius)
+                    if (interactionData.huristic < state.huristic)
+                    {
+                        state.huristic = interactionData.huristic;
+                    }
+
+                    if (interactionData.distance < interactionSelectionRadius)
                     {
                         selectionHappening = true;
 
@@ -188,7 +195,7 @@ namespace ubco.ovilab.HPUI.Interaction
             IHPUIInteractable interactableToBeActive = trackingInteractables
                 .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && kvp.Value.selectableTarget)
                 .OrderBy(kvp => kvp.Key.zOrder)
-                .ThenBy(kvp => kvp.Value.minDistanceToInteractor)
+                .ThenBy(kvp => useHuristic? kvp.Value.huristic : kvp.Value.minDistanceToInteractor)
                 .FirstOrDefault().Key;
 
             if (interactableToBeActive != activePriorityInteractable)
@@ -285,6 +292,7 @@ namespace ubco.ovilab.HPUI.Interaction
             public bool active,
                 selectableTarget;
             public float minDistanceToInteractor;
+            public float huristic;
 
             public HPUIInteractionState()
             {
@@ -293,6 +301,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.active = true;
                 this.selectableTarget = false;
                 this.minDistanceToInteractor = float.MaxValue;
+                this.huristic = float.MaxValue;
             }
         }
     }
