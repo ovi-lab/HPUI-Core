@@ -392,6 +392,11 @@ namespace ubco.ovilab.HPUI.Interaction
             UpdateVisuals();
         }
 
+
+        //FIXME: debug code
+        public Transform o1, o2, o3;
+        public LineRenderer lineRenderer;
+
         /// <inheritdoc />
         public override void PreprocessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
@@ -459,6 +464,9 @@ namespace ubco.ovilab.HPUI.Interaction
                                 var secondItem = activePhalanges.Where(el => el.item != firstItem.item && relatedFignerJoints.Contains(el.item)).First();
                                 Vector3 segmentVectorNormalized = (firstItem.pos - secondItem.pos).normalized;
                                 Vector3 point = Vector3.Dot((thumbTipPos - secondItem.pos), segmentVectorNormalized) * segmentVectorNormalized + secondItem.pos;
+                                o1.position = firstItem.pos;
+                                o2.position = secondItem.pos;
+                                o3.position = point;
 
                                 Vector3 up = point - thumbTipPos;
                                 Vector3 right = Vector3.Cross(up, attachTransform.forward);
@@ -493,6 +501,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     // var direction_ = Quaternion.AngleAxis(x_, attachTransform.right) * Quaternion.AngleAxis(z_, attachTransform.forward) * attachTransform.up;
 
                     // Debug.DrawLine(interactionPoint, interactionPoint + direction_.normalized * InteractionHoverRadius * 2, Color.blue);
+
 
                     foreach(Vector3 direction in directions)
                     {
@@ -530,16 +539,32 @@ namespace ubco.ovilab.HPUI.Interaction
                         if (ShowDebugRayVisual)
                         {
                             Color rayColor = validInteractable ? Color.green : Color.red;
-                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionHoverRadius, rayColor);
+                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionSelectionRadius, rayColor);
                         }
                     }
+
+                    float xEndPoint = 0, yEndPoint = 0, zEndPoint = 0, count = 0;
 
                     foreach (KeyValuePair<IHPUIInteractable, List<InteractionInfo>> kvp in tempValidTargets)
                     {
                         InteractionInfo smallest = kvp.Value.OrderBy(el => el.distance).First();
                         smallest.huristic = 1 / kvp.Value.Count;
+                        foreach(InteractionInfo i in kvp.Value)
+                        {
+                            xEndPoint += i.point.x;
+                            yEndPoint += i.point.y;
+                            zEndPoint += i.point.z;
+                            count++;
+                        }
+
                         validTargets.Add(kvp.Key, smallest);
                         ListPool<InteractionInfo>.Release(kvp.Value);
+                    }
+
+                    if (lineRenderer != null)
+                    {
+                        lineRenderer.SetPosition(0, attachTransform.position);
+                        lineRenderer.SetPosition(1, new Vector3(xEndPoint, yEndPoint, zEndPoint) / count);
                     }
 
                     tempValidTargets.Clear();
