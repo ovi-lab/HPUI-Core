@@ -20,7 +20,43 @@ namespace ubco.ovilab.HPUI.Interaction
     [RequireComponent(typeof(XRHandTrackingEvents))]
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
-        public enum RayCastTechniqueEnum { Cone, SegmentVector, FullRange }
+        /// <summary>
+        /// When using ray cast based interactions the technique that can be used.
+        /// </summary>
+        public enum RayCastTechniqueEnum {
+            /// <summary>
+            /// Use the <see cref="coneRayAngles"/> to compute the rays.
+            /// </summary>
+            Cone,
+            /// <summary>
+            /// <see cref="GetAttachtransform">attach transform</see> to projection of thumb tip on the closest segment would be the center ray.
+            /// </summary>
+            SegmentVector,
+            /// <summary>
+            /// <see cref="GetAttachtransform">attach transform</see> up would be the center ray.
+            /// </summary>
+            FullRange
+        }
+
+        /// <summary>
+        /// The parameters used to compute the ray angles when <see cref="RayCastTechnique.SegmentVector"/>
+        /// or <see cref="RayCastTechnique.FullRange"/> are used.
+        /// </summary>
+        [System.Serializable]
+        public struct RayAngleParams
+        {
+            public int maxAngle;
+            public int minAngle;
+            public int angleStep;
+
+            public RayAngleParams(int maxAngle, int minAngle, int angleStep) : this()
+            {
+                this.maxAngle = maxAngle;
+                this.minAngle = minAngle;
+                this.angleStep = angleStep;
+            }
+        }
+
 
         /// <inheritdoc />
         public new InteractorHandedness handedness
@@ -192,6 +228,24 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public Transform XROriginTransform { get => xrOriginTransform; set => xrOriginTransform = value; }
 
+        [SerializeField]
+        [Tooltip("Ray configuration for FullRange ray technique")]
+        private RayAngleParams fullRangeRayParameters;
+
+        /// <summary>
+        /// Ray configuration for FullRange ray technique
+        /// </summary>
+        public RayAngleParams FullRangeRayParameters { get => fullRangeRayParameters; set => fullRangeRayParameters = value; }
+
+        [SerializeField]
+        [Tooltip("Ray configuration for Segment Vector ray technique")]
+        private RayAngleParams segmentVectorRayParameters;
+
+        /// <summary>
+        /// Ray configuration for Segment Vector ray technique.
+        /// </summary>
+        public RayAngleParams SegmentVectorRayParameters { get => segmentVectorRayParameters; set => segmentVectorRayParameters = value; }
+
         protected IHPUIGestureLogic gestureLogic;
         private Dictionary<IHPUIInteractable, InteractionInfo> validTargets = new Dictionary<IHPUIInteractable, InteractionInfo>();
         private Vector3 lastInteractionPoint;
@@ -208,6 +262,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private XRHandTrackingEvents xrHandTrackingEvents;
         private Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
+
+        // Used with the RayCastTechnique.SegmentVector, and RayCastTechnique.FullRange
         private List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
             XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip,
@@ -265,15 +321,10 @@ namespace ubco.ovilab.HPUI.Interaction
             physicsScene = gameObject.scene.GetPhysicsScene();
             UpdateLogic();
 
-            // FIXME: put these in a better place?
-            int maxAngle = 130,
-                minAngle = -130,
-                angleStep = 5;
-
             allAngles = new List<HPUIInteractorRayAngle>();
-            for (int x = minAngle; x <= maxAngle; x = x + angleStep)
+            for (int x = FullRangeRayParameters.minAngle; x <= FullRangeRayParameters.maxAngle; x = x + FullRangeRayParameters.angleStep)
             {
-                for (int z = minAngle; z <= maxAngle; z = z + angleStep)
+                for (int z = FullRangeRayParameters.minAngle; z <= FullRangeRayParameters.maxAngle; z = z + FullRangeRayParameters.angleStep)
                 {
                     allAngles.Add(new HPUIInteractorRayAngle(x, z));
                 }
@@ -413,15 +464,11 @@ namespace ubco.ovilab.HPUI.Interaction
                                 Vector3 right = Vector3.Cross(up, attachTransform.forward);
                                 Vector3 forward = Vector3.Cross(up, right);
 
-                                // FIXME: put these in a better place?
-                                int maxAngle = 20,
-                                minAngle = -20,
-                                angleStep = 5;
                                 List<Vector3> tempDirections = new List<Vector3>();
 
-                                for (int x = minAngle; x <= maxAngle; x = x + angleStep)
+                                for (int x = SegmentVectorRayParameters.minAngle; x <= SegmentVectorRayParameters.maxAngle; x = x + SegmentVectorRayParameters.angleStep)
                                 {
-                                    for (int z = minAngle; z <= maxAngle; z = z + angleStep)
+                                    for (int z = SegmentVectorRayParameters.minAngle; z <= SegmentVectorRayParameters.maxAngle; z = z + SegmentVectorRayParameters.angleStep)
                                     {
                                         tempDirections.Add(HPUIInteractorRayAngle.GetDirection(x, z, right, forward, up, flipZAngles));
                                     }
