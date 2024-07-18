@@ -8,6 +8,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Utilities;
 using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;
+using UnityEngine.Pool;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -202,6 +203,9 @@ namespace ubco.ovilab.HPUI.Interaction
         private List<HPUIInteractorRayAngle> allAngles,
             activeFingerAngles;
         private IEnumerable<Vector3> cachedDirections = new List<Vector3>();
+        // Used when computing the centroid
+        private Dictionary<IHPUIInteractable, List<InteractionInfo>> tempValidTargets = new();
+
         private XRHandTrackingEvents xrHandTrackingEvents;
         private Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
         private List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
@@ -404,7 +408,27 @@ namespace ubco.ovilab.HPUI.Interaction
                                 var secondItem = activePhalanges.Where(el => el.item != firstItem.item && relatedFignerJoints.Contains(el.item)).First();
                                 Vector3 segmentVectorNormalized = (firstItem.pos - secondItem.pos).normalized;
                                 Vector3 point = Vector3.Dot((thumbTipPos - secondItem.pos), segmentVectorNormalized) * segmentVectorNormalized + secondItem.pos;
-                                directions = new List<Vector3>(){point - thumbTipPos};
+
+                                Vector3 up = point - thumbTipPos;
+                                Vector3 right = Vector3.Cross(up, attachTransform.forward);
+                                Vector3 forward = Vector3.Cross(up, right);
+
+                                // FIXME: put these in a better place?
+                                int maxAngle = 20,
+                                minAngle = -20,
+                                angleStep = 5;
+                                List<Vector3> tempDirections = new List<Vector3>();
+
+                                for (int x = minAngle; x <= maxAngle; x = x + angleStep)
+                                {
+                                    for (int z = minAngle; z <= maxAngle; z = z + angleStep)
+                                    {
+                                        tempDirections.Add(HPUIInteractorRayAngle.GetDirection(x, z, right, forward, up, flipZAngles));
+                                    }
+                                }
+
+                                directions = tempDirections;
+
                                 cachedDirections = directions;
                             }
                             else
@@ -422,8 +446,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     // var direction_ = Quaternion.AngleAxis(x_, attachTransform.right) * Quaternion.AngleAxis(z_, attachTransform.forward) * attachTransform.up;
 
                     // Debug.DrawLine(interactionPoint, interactionPoint + direction_.normalized * InteractionHoverRadius * 2, Color.blue);
-
-                    Dictionary<IHPUIInteractable, List<InteractionInfo>> tempValidTargets = new Dictionary<IHPUIInteractable, List<InteractionInfo>>();
 
                     foreach(Vector3 direction in directions)
                     {
@@ -450,7 +472,7 @@ namespace ubco.ovilab.HPUI.Interaction
                                 List<InteractionInfo> infoList;
                                 if (!tempValidTargets.TryGetValue(hpuiInteractable, out infoList))
                                 {
-                                    infoList = new List<InteractionInfo>();
+                                    infoList = ListPool<InteractionInfo>.Get();
                                     tempValidTargets.Add(hpuiInteractable, infoList);
                                 }
 
@@ -470,7 +492,10 @@ namespace ubco.ovilab.HPUI.Interaction
                         InteractionInfo smallest = kvp.Value.OrderBy(el => el.distance).First();
                         smallest.huristic = 1 / kvp.Value.Count;
                         validTargets.Add(kvp.Key, smallest);
+                        ListPool<InteractionInfo>.Release(kvp.Value);
                     }
+
+                    tempValidTargets.Clear();
                 }
                 else
                 {
