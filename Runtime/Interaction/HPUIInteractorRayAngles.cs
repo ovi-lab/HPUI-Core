@@ -30,13 +30,18 @@ namespace ubco.ovilab.HPUI.Interaction
             this.z = z;
         }
 
-        public Vector3 GetDirection(Transform attachTransform, bool flipZAngles)
+        public static Vector3 GetDirection(int x, int z, Vector3 right, Vector3 forward, Vector3 up, bool flipZAngles)
         {
             int x_ = x,
                 z_ = flipZAngles ? -z : z;
 
-            Quaternion rotation = Quaternion.AngleAxis(x_, attachTransform.right) * Quaternion.AngleAxis(z_, attachTransform.forward);
-            return rotation * attachTransform.up;
+            Quaternion rotation = Quaternion.AngleAxis(x_, right) * Quaternion.AngleAxis(z_, forward);
+            return rotation * up;
+        }
+
+        public Vector3 GetDirection(Transform attachTransform, bool flipZAngles)
+        {
+            return GetDirection(x, z, attachTransform.right, attachTransform.forward, attachTransform.up, flipZAngles);
         }
     }
 }
