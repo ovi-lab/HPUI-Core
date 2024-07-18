@@ -19,14 +19,12 @@ namespace ubco.ovilab.HPUI.Editor
         {
             "continuousSurfaceCreatedEvent",
             "boundsCollider", // NOTE: this is not relevant to the HPUIContinuousInteractable.
-            "ui"
         }).ToList();
 
         protected override void OnEnable()
         {
             base.OnEnable();
             t = target as HPUIContinuousInteractable;
-            uiProp = serializedObject.FindProperty("ui");
         }
 
         public override void OnInspectorGUI()
