@@ -192,7 +192,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public Transform XROriginTransform { get => xrOriginTransform; set => xrOriginTransform = value; }
 
         protected IHPUIGestureLogic gestureLogic;
-        private Dictionary<IHPUIInteractable, CollisionInfo> validTargets = new Dictionary<IHPUIInteractable, CollisionInfo>();
+        private Dictionary<IHPUIInteractable, InteractionInfo> validTargets = new Dictionary<IHPUIInteractable, InteractionInfo>();
         private Vector3 lastInteractionPoint;
         private PhysicsScene physicsScene;
         private RaycastHit[] sphereCastHits = new RaycastHit[200];
@@ -423,7 +423,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                     // Debug.DrawLine(interactionPoint, interactionPoint + direction_.normalized * InteractionHoverRadius * 2, Color.blue);
 
-                    Dictionary<IHPUIInteractable, List<CollisionInfo>> tempValidTargets = new Dictionary<IHPUIInteractable, List<CollisionInfo>>();
+                    Dictionary<IHPUIInteractable, List<InteractionInfo>> tempValidTargets = new Dictionary<IHPUIInteractable, List<InteractionInfo>>();
 
                     foreach(Vector3 direction in directions)
                     {
@@ -447,14 +447,14 @@ namespace ubco.ovilab.HPUI.Interaction
                                     HPUIInteractorRayAngle angle = activeFingerAngles[directions.TakeWhile(el => el == direction).Count()];
                                     DataWriter = $"{interactable.transform.name},{angle.x},{angle.z},{hitInfo.distance}";
                                 }
-                                List<CollisionInfo> infoList;
+                                List<InteractionInfo> infoList;
                                 if (!tempValidTargets.TryGetValue(hpuiInteractable, out infoList))
                                 {
-                                    infoList = new List<CollisionInfo>();
+                                    infoList = new List<InteractionInfo>();
                                     tempValidTargets.Add(hpuiInteractable, infoList);
                                 }
 
-                                infoList.Add(new CollisionInfo(hitInfo.distance, hitInfo.point));
+                                infoList.Add(new InteractionInfo(hitInfo.distance, hitInfo.point));
                             }
                         }
 
@@ -465,10 +465,10 @@ namespace ubco.ovilab.HPUI.Interaction
                         }
                     }
 
-                    foreach (KeyValuePair<IHPUIInteractable, List<CollisionInfo>> kvp in tempValidTargets)
+                    foreach (KeyValuePair<IHPUIInteractable, List<InteractionInfo>> kvp in tempValidTargets)
                     {
-                        CollisionInfo smallest = kvp.Value.OrderBy(el => el.distance).First();
-                        // smallest.distance = 1 / kvp.Value.Count;
+                        InteractionInfo smallest = kvp.Value.OrderBy(el => el.distance).First();
+                        smallest.huristic = 1 / kvp.Value.Count;
                         validTargets.Add(kvp.Key, smallest);
                     }
                 }
@@ -492,12 +492,12 @@ namespace ubco.ovilab.HPUI.Interaction
                             hpuiInteractable.IsHoverableBy(this))
                         {
                             XRInteractableUtility.TryGetClosestPointOnCollider(interactable, interactionPoint, out DistanceInfo info);
-                            validTargets.Add(hpuiInteractable, new CollisionInfo(Mathf.Sqrt(info.distanceSqr), info.point));
+                            validTargets.Add(hpuiInteractable, new InteractionInfo(Mathf.Sqrt(info.distanceSqr), info.point));
                         }
                     }
                 }
             }
-            gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.distance));
+            gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.huristic)));
 
             if (data != null)
             {
@@ -525,7 +525,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public override bool CanSelect(IXRSelectInteractable interactable)
         {
-            bool canSelect = validTargets.TryGetValue(interactable as IHPUIInteractable, out CollisionInfo info) &&
+            bool canSelect = validTargets.TryGetValue(interactable as IHPUIInteractable, out InteractionInfo info) &&
                 info.distance < interactionSelectionRadius &&
                 ProcessSelectFilters(interactable);
             return canSelect && (!SelectOnlyPriorityTarget || gestureLogic.IsPriorityTarget(interactable as IHPUIInteractable));
@@ -566,7 +566,9 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 gestureLogic.Dispose();
             }
-            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius);
+
+            // If using raycast, use huristic
+            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHuristic: useRayCast);
         }
 
         #region IHPUIInteractor interface
@@ -585,7 +587,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public Vector3 GetCollisionPoint(IHPUIInteractable interactable)
         {
-            if (validTargets.TryGetValue(interactable, out CollisionInfo info))
+            if (validTargets.TryGetValue(interactable, out InteractionInfo info))
             {
                 return info.point;
             }
@@ -593,15 +595,17 @@ namespace ubco.ovilab.HPUI.Interaction
         }
         #endregion
 
-        struct CollisionInfo
+        struct InteractionInfo
         {
             public float distance;
             public Vector3 point;
+            public float huristic;
 
-            public CollisionInfo(float distance, Vector3 point) : this()
+            public InteractionInfo(float distance, Vector3 point, float huristic=0) : this()
             {
                 this.distance = distance;
                 this.point = point;
+                this.huristic = huristic;
             }
         }
     }
