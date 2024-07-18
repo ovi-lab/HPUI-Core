@@ -20,7 +20,7 @@ namespace ubco.ovilab.HPUI.Interaction
     [RequireComponent(typeof(XRHandTrackingEvents))]
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
-        public enum RayCastTechniqueEnum { cone, phalange, all }
+        public enum RayCastTechniqueEnum { Cone, SegmentVector, FullRange }
 
         /// <inheritdoc />
         public new InteractorHandedness handedness
@@ -87,7 +87,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
         [SerializeField]
         [Tooltip("Ray cast technique to use.")]
-        private RayCastTechniqueEnum rayCastTechnique = RayCastTechniqueEnum.all;
+        private RayCastTechniqueEnum rayCastTechnique = RayCastTechniqueEnum.FullRange;
 
         public RayCastTechniqueEnum RayCastTechnique {
             get => rayCastTechnique;
@@ -362,7 +362,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     // TODO: Move this logic to its own component
                     switch(RayCastTechnique)
                     {
-                        case RayCastTechniqueEnum.cone:
+                        case RayCastTechniqueEnum.Cone:
                             if (recievedNewJointData)
                             {
                                 recievedNewJointData = false;
@@ -386,11 +386,11 @@ namespace ubco.ovilab.HPUI.Interaction
                             directions = activeFingerAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
                             cachedDirections = directions;
                             break;
-                        case RayCastTechniqueEnum.all:
+                        case RayCastTechniqueEnum.FullRange:
                             directions = allAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
                             cachedDirections = directions;
                             break;
-                        case RayCastTechniqueEnum.phalange:
+                        case RayCastTechniqueEnum.SegmentVector:
                             if (recievedNewJointData)
                             {
                                 recievedNewJointData = false;
@@ -464,7 +464,7 @@ namespace ubco.ovilab.HPUI.Interaction
                                 hpuiInteractable.IsHoverableBy(this))
                             {
                                 validInteractable = true;
-                                if (RayCastTechnique == RayCastTechniqueEnum.cone || RayCastTechnique == RayCastTechniqueEnum.all)
+                                if (RayCastTechnique == RayCastTechniqueEnum.Cone || RayCastTechnique == RayCastTechniqueEnum.FullRange)
                                 {
                                     HPUIInteractorRayAngle angle = activeFingerAngles[directions.TakeWhile(el => el == direction).Count()];
                                     DataWriter = $"{interactable.transform.name},{angle.x},{angle.z},{hitInfo.distance}";
