@@ -19,7 +19,7 @@ namespace ubco.ovilab.HPUI.Interaction
     [RequireComponent(typeof(XRHandTrackingEvents))]
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
-        public enum RayCastTechnique { cone, phalange, all }
+        public enum RayCastTechniqueEnum { cone, phalange, all }
 
         /// <inheritdoc />
         public new InteractorHandedness handedness
@@ -83,6 +83,19 @@ namespace ubco.ovilab.HPUI.Interaction
         /// If true, will use ray casting, else will use sphere overlap for detecting interactions.
         /// </summary>
         public bool UseRayCast { get => useRayCast; set => useRayCast = value; }
+
+        [SerializeField]
+        [Tooltip("Ray cast technique to use.")]
+        private RayCastTechniqueEnum rayCastTechnique = RayCastTechniqueEnum.all;
+
+        public RayCastTechniqueEnum RayCastTechnique {
+            get => rayCastTechnique;
+            set
+            {
+                rayCastTechnique = value;
+                UpdateLogic();
+            }
+        }
 
         [SerializeField]
         [Tooltip("Event triggered on tap")]
@@ -150,8 +163,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 UpdateVisuals();
             }
         }
-
-        public RayCastTechnique rayCastTechnique = RayCastTechnique.all;
 
         [SerializeField]
         [Tooltip("Show sphere rays used for interaction selections.")]
@@ -345,35 +356,37 @@ namespace ubco.ovilab.HPUI.Interaction
                     DataWriter = "//";
 
                     // TODO: Move this logic to its own component
-                    switch(rayCastTechnique)
+                    switch(RayCastTechnique)
                     {
-                        case RayCastTechnique.cone:
+                        case RayCastTechniqueEnum.cone:
                             if (recievedNewJointData)
                             {
                                 recievedNewJointData = false;
+                                Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip];
                                 XRHandJointID activeFinger = (trackedJoints
-                                         .Select(j => new {item = j, pos = (jointLocations[j] - transform.position).magnitude})
+                                         .Where(j => j != XRHandJointID.ThumbTip)
+                                         .Select(j => new {item = j, pos = (jointLocations[j] - thumbTipPos).magnitude})
                                          .OrderBy(el => el.pos)
                                          .First()
                                          .item);
 
                                 activeFingerAngles = activeFinger switch
                                 {
-                                    XRHandJointID.IndexProximal or XRHandJointID.IndexIntermediate or XRHandJointID.IndexDistal => ConeRayAngles.IndexAngles,
-                                    XRHandJointID.MiddleProximal or XRHandJointID.MiddleIntermediate or XRHandJointID.MiddleDistal => ConeRayAngles.MiddleAngles,
-                                    XRHandJointID.RingProximal or XRHandJointID.RingIntermediate or XRHandJointID.RingDistal => ConeRayAngles.RingAngles,
-                                    XRHandJointID.LittleProximal or XRHandJointID.LittleIntermediate or XRHandJointID.LittleDistal => ConeRayAngles.LittleAngles,
+                                    XRHandJointID.IndexProximal or XRHandJointID.IndexIntermediate or XRHandJointID.IndexDistal or XRHandJointID.IndexTip => ConeRayAngles.IndexAngles,
+                                    XRHandJointID.MiddleProximal or XRHandJointID.MiddleIntermediate or XRHandJointID.MiddleDistal or XRHandJointID.MiddleTip => ConeRayAngles.MiddleAngles,
+                                    XRHandJointID.RingProximal or XRHandJointID.RingIntermediate or XRHandJointID.RingDistal or XRHandJointID.RingTip => ConeRayAngles.RingAngles,
+                                    XRHandJointID.LittleProximal or XRHandJointID.LittleIntermediate or XRHandJointID.LittleDistal or XRHandJointID.LittleTip => ConeRayAngles.LittleAngles,
                                     _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
                                 };
                             }
                             directions = activeFingerAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
                             cachedDirections = directions;
                             break;
-                        case RayCastTechnique.all:
+                        case RayCastTechniqueEnum.all:
                             directions = allAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
                             cachedDirections = directions;
                             break;
-                        case RayCastTechnique.phalange:
+                        case RayCastTechniqueEnum.phalange:
                             if (recievedNewJointData)
                             {
                                 recievedNewJointData = false;
@@ -410,6 +423,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
                     // Debug.DrawLine(interactionPoint, interactionPoint + direction_.normalized * InteractionHoverRadius * 2, Color.blue);
 
+                    Dictionary<IHPUIInteractable, List<CollisionInfo>> tempValidTargets = new Dictionary<IHPUIInteractable, List<CollisionInfo>>();
+
                     foreach(Vector3 direction in directions)
                     {
                         bool validInteractable = false;
@@ -427,22 +442,19 @@ namespace ubco.ovilab.HPUI.Interaction
                                 hpuiInteractable.IsHoverableBy(this))
                             {
                                 validInteractable = true;
-                                if (rayCastTechnique == RayCastTechnique.cone || rayCastTechnique == RayCastTechnique.all)
+                                if (RayCastTechnique == RayCastTechniqueEnum.cone || RayCastTechnique == RayCastTechniqueEnum.all)
                                 {
                                     HPUIInteractorRayAngle angle = activeFingerAngles[directions.TakeWhile(el => el == direction).Count()];
                                     DataWriter = $"{interactable.transform.name},{angle.x},{angle.z},{hitInfo.distance}";
                                 }
-                                if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
+                                List<CollisionInfo> infoList;
+                                if (!tempValidTargets.TryGetValue(hpuiInteractable, out infoList))
                                 {
-                                    if (hitInfo.distance < info.distance)
-                                    {
-                                        validTargets[hpuiInteractable] = new CollisionInfo(hitInfo.distance, hitInfo.point);
-                                    }
+                                    infoList = new List<CollisionInfo>();
+                                    tempValidTargets.Add(hpuiInteractable, infoList);
                                 }
-                                else
-                                {
-                                    validTargets.Add(hpuiInteractable, new CollisionInfo(hitInfo.distance, hitInfo.point));
-                                }
+
+                                infoList.Add(new CollisionInfo(hitInfo.distance, hitInfo.point));
                             }
                         }
 
@@ -451,6 +463,13 @@ namespace ubco.ovilab.HPUI.Interaction
                             Color rayColor = validInteractable ? Color.green : Color.red;
                             Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionHoverRadius, rayColor);
                         }
+                    }
+
+                    foreach (KeyValuePair<IHPUIInteractable, List<CollisionInfo>> kvp in tempValidTargets)
+                    {
+                        CollisionInfo smallest = kvp.Value.OrderBy(el => el.distance).First();
+                        // smallest.distance = 1 / kvp.Value.Count;
+                        validTargets.Add(kvp.Key, smallest);
                     }
                 }
                 else
