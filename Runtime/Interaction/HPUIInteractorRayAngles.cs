@@ -29,6 +29,15 @@ namespace ubco.ovilab.HPUI.Interaction
             this.x = x;
             this.z = z;
         }
+
+        public Vector3 GetDirection(Transform attachTransform, bool flipZAngles)
+        {
+            int x_ = x,
+                z_ = flipZAngles ? -z : z;
+
+            Quaternion rotation = Quaternion.AngleAxis(x_, attachTransform.right) * Quaternion.AngleAxis(z_, attachTransform.forward);
+            return rotation * attachTransform.up;
+        }
     }
 }
  

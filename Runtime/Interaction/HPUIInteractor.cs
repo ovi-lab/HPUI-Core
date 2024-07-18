@@ -19,6 +19,8 @@ namespace ubco.ovilab.HPUI.Interaction
     [RequireComponent(typeof(XRHandTrackingEvents))]
     public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
     {
+        public enum RayCastTechnique { cone, phalange, all }
+
         /// <inheritdoc />
         public new InteractorHandedness handedness
         {
@@ -149,7 +151,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        public bool useConeForRayCast = true;
+        public RayCastTechnique rayCastTechnique = RayCastTechnique.all;
 
         [SerializeField]
         [Tooltip("Show sphere rays used for interaction selections.")]
@@ -188,15 +190,38 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private List<HPUIInteractorRayAngle> allAngles,
             activeFingerAngles;
+        private IEnumerable<Vector3> cachedDirections = new List<Vector3>();
         private XRHandTrackingEvents xrHandTrackingEvents;
         private Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
         private List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
-            XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal,
-            XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal,
-            XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal,
-            XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal
+            XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip,
+            XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip,
+            XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip,
+            XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip,
+            XRHandJointID.ThumbTip
         };
+
+        private Dictionary<XRHandJointID, List<XRHandJointID>> tarckedJointsToRelatedFingerJoints = new ()
+        {
+            {XRHandJointID.IndexProximal, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
+            {XRHandJointID.IndexIntermediate, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
+            {XRHandJointID.IndexDistal, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
+            {XRHandJointID.IndexTip, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
+            {XRHandJointID.MiddleProximal, new List<XRHandJointID>() {XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip}},
+            {XRHandJointID.MiddleIntermediate, new List<XRHandJointID>() {XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip}},
+            {XRHandJointID.MiddleDistal, new List<XRHandJointID>() {XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip}},
+            {XRHandJointID.MiddleTip, new List<XRHandJointID>() {XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip}},
+            {XRHandJointID.RingProximal, new List<XRHandJointID>() {XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip}},
+            {XRHandJointID.RingIntermediate, new List<XRHandJointID>() {XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip}},
+            {XRHandJointID.RingDistal, new List<XRHandJointID>() {XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip}},
+            {XRHandJointID.RingTip, new List<XRHandJointID>() {XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip}},
+            {XRHandJointID.LittleProximal, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
+            {XRHandJointID.LittleIntermediate, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
+            {XRHandJointID.LittleDistal, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
+            {XRHandJointID.LittleTip, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
+        };
+
         private bool recievedNewJointData = false,
             flipZAngles = false;
 
@@ -316,45 +341,77 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (UseRayCast)
                 {
-                    List<Vector3> directions = new List<Vector3>();
+                    IEnumerable<Vector3> directions;
                     DataWriter = "//";
 
-                    List<HPUIInteractorRayAngle> angles;
                     // TODO: Move this logic to its own component
-                    if (useConeForRayCast)
+                    switch(rayCastTechnique)
                     {
-                        if (recievedNewJointData)
-                        {
-                            recievedNewJointData = false;
-                            XRHandJointID activeFinger = (trackedJoints
-                                     .Select(j => new {item = j, pos = (jointLocations[j] - transform.position).magnitude})
-                                     .OrderBy(el => el.pos)
-                                     .First()
-                                     .item);
-
-                            activeFingerAngles = activeFinger switch
+                        case RayCastTechnique.cone:
+                            if (recievedNewJointData)
                             {
-                                XRHandJointID.IndexProximal or XRHandJointID.IndexIntermediate or XRHandJointID.IndexDistal => ConeRayAngles.IndexAngles,
-                                XRHandJointID.MiddleProximal or XRHandJointID.MiddleIntermediate or XRHandJointID.MiddleDistal => ConeRayAngles.MiddleAngles,
-                                XRHandJointID.RingProximal or XRHandJointID.RingIntermediate or XRHandJointID.RingDistal => ConeRayAngles.RingAngles,
-                                XRHandJointID.LittleProximal or XRHandJointID.LittleIntermediate or XRHandJointID.LittleDistal => ConeRayAngles.LittleAngles,
-                                _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
-                            };
-                        }
-                        angles = activeFingerAngles;
-                    }
-                    else
-                    {
-                        angles = allAngles;
-                    }
+                                recievedNewJointData = false;
+                                XRHandJointID activeFinger = (trackedJoints
+                                         .Select(j => new {item = j, pos = (jointLocations[j] - transform.position).magnitude})
+                                         .OrderBy(el => el.pos)
+                                         .First()
+                                         .item);
 
-                    foreach(var angle in angles)
-                    {
-                        int x = angle.x,
-                            z = flipZAngles ? -angle.z : angle.z;
+                                activeFingerAngles = activeFinger switch
+                                {
+                                    XRHandJointID.IndexProximal or XRHandJointID.IndexIntermediate or XRHandJointID.IndexDistal => ConeRayAngles.IndexAngles,
+                                    XRHandJointID.MiddleProximal or XRHandJointID.MiddleIntermediate or XRHandJointID.MiddleDistal => ConeRayAngles.MiddleAngles,
+                                    XRHandJointID.RingProximal or XRHandJointID.RingIntermediate or XRHandJointID.RingDistal => ConeRayAngles.RingAngles,
+                                    XRHandJointID.LittleProximal or XRHandJointID.LittleIntermediate or XRHandJointID.LittleDistal => ConeRayAngles.LittleAngles,
+                                    _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
+                                };
+                            }
+                            directions = activeFingerAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
+                            cachedDirections = directions;
+                            break;
+                        case RayCastTechnique.all:
+                            directions = allAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
+                            cachedDirections = directions;
+                            break;
+                        case RayCastTechnique.phalange:
+                            if (recievedNewJointData)
+                            {
+                                recievedNewJointData = false;
+                                Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip];
+                                var activePhalanges = (trackedJoints
+                                                       .Where(j => j != XRHandJointID.ThumbTip)
+                                                       .Select(j => new {
+                                                               item = j,
+                                                               pos = jointLocations[j],
+                                                               dist = (jointLocations[j] - thumbTipPos).magnitude
+                                                           })
+                                                       .OrderBy(el => el.dist));
+                                var firstItem = activePhalanges.First();
+                                List<XRHandJointID> relatedFignerJoints = tarckedJointsToRelatedFingerJoints[firstItem.item];
+                                var secondItem = activePhalanges.Where(el => el.item != firstItem.item && relatedFignerJoints.Contains(el.item)).First();
+                                Vector3 segmentVectorNormalized = (firstItem.pos - secondItem.pos).normalized;
+                                Vector3 point = Vector3.Dot((thumbTipPos - secondItem.pos), segmentVectorNormalized) * segmentVectorNormalized + secondItem.pos;
+                                directions = new List<Vector3>(){point - thumbTipPos};
+                                cachedDirections = directions;
+                            }
+                            else
+                            {
+                                directions = cachedDirections;
+                            }
+                            break;
+                        default:
+                            directions = cachedDirections;
+                            break;
+                    }
+                    // float x_ = (float)angles.Select(a => a.x).Average();
+                    // float z_ = (float)angles.Select(a => a.z).Average();
 
-                        Quaternion rotation = Quaternion.AngleAxis(x, attachTransform.right) * Quaternion.AngleAxis(z, attachTransform.forward);
-                        Vector3 direction = rotation * attachTransform.up;
+                    // var direction_ = Quaternion.AngleAxis(x_, attachTransform.right) * Quaternion.AngleAxis(z_, attachTransform.forward) * attachTransform.up;
+
+                    // Debug.DrawLine(interactionPoint, interactionPoint + direction_.normalized * InteractionHoverRadius * 2, Color.blue);
+
+                    foreach(Vector3 direction in directions)
+                    {
                         bool validInteractable = false;
                         if (Physics.Raycast(interactionPoint,
                                             direction,
@@ -370,7 +427,11 @@ namespace ubco.ovilab.HPUI.Interaction
                                 hpuiInteractable.IsHoverableBy(this))
                             {
                                 validInteractable = true;
-                                DataWriter = $"{interactable.transform.name},{x},{z},{hitInfo.distance}";
+                                if (rayCastTechnique == RayCastTechnique.cone || rayCastTechnique == RayCastTechnique.all)
+                                {
+                                    HPUIInteractorRayAngle angle = activeFingerAngles[directions.TakeWhile(el => el == direction).Count()];
+                                    DataWriter = $"{interactable.transform.name},{angle.x},{angle.z},{hitInfo.distance}";
+                                }
                                 if (validTargets.TryGetValue(hpuiInteractable, out CollisionInfo info))
                                 {
                                     if (hitInfo.distance < info.distance)

@@ -63,8 +63,8 @@ namespace ubco.ovilab.HPUI.Editor
             EditorGUILayout.LabelField("HPUI Configurations", EditorStyles.boldLabel);
             base.DrawDerivedProperties();
             bool isEnabled = GUI.enabled;
-            GUI.enabled = t.useConeForRayCast;
-            if (t.ConeRayAngles == null && t.useConeForRayCast)
+            GUI.enabled = t.rayCastTechnique == HPUIInteractor.RayCastTechnique.cone;
+            if (t.ConeRayAngles == null && t.rayCastTechnique == HPUIInteractor.RayCastTechnique.cone)
             {
                 EditorGUILayout.HelpBox("Cone Ray Angles cannot be empty when using cone", MessageType.Warning);
                 if (GUILayout.Button("Use default asset"))
