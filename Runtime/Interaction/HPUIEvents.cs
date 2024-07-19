@@ -19,6 +19,50 @@ namespace ubco.ovilab.HPUI.Interaction
     }
 
     #region events classes
+    /// <summary>
+    /// Event class that reports hover events
+    /// </summary>
+    public class HPUIHoverUpdateEvent : UnityEvent<HPUIHoverUpdateEventArgs>
+    {}
+
+    // NOTE: This is used instead of the IXRHoverStrength* interfaces as those
+    // interfaces don't report the data being exposed here.
+    /// <summary>
+    /// Event data associated with a Hover update on HPUI
+    /// </summary>
+    public class HPUIHoverUpdateEventArgs
+    {
+        /// <summary>
+        /// Instantiate hover event.
+        /// </summary>
+        public HPUIHoverUpdateEventArgs(IHPUIInteractor interactorObject, Vector3 hoverPoint, Vector3 attachPoint)
+        {
+            this.interactorObject = interactorObject;
+            this.hoverPoint = hoverPoint;
+            this.attachPoint = attachPoint;
+        }
+
+        /// <summary>
+        /// The Interactor associated with the interaction event.
+        /// </summary>
+        public IHPUIInteractor interactorObject { get; set; }
+
+        /// <summary>
+        /// The endpoint of the hover. This is generally the centroid when
+        /// the interactor is hovering on targets.
+        /// </summary>
+        public Vector3 hoverPoint { get; set; }
+
+        /// <summary>
+        /// The location of the attach transform.
+        /// <seealso cref="XRBaseInteractor.GetAttachTransform"/>
+        /// </summary>
+        public Vector3 attachPoint { get; set; }
+    }
+
+    /// <summary>
+    /// Base event class for tap/gesture events
+    /// </summary>
     public class HPUIInteractionEvent<T>: UnityEvent<T> where T: HPUIInteractionEventArgs
     {
         protected int eventsCount = 0;

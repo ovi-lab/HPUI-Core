@@ -149,6 +149,13 @@ namespace ubco.ovilab.HPUI.Interaction
         public HPUIGestureEvent GestureEvent { get => gestureEvent; set => gestureEvent = value; }
 
         [SerializeField]
+        [Tooltip("Event triggered on hover update.")]
+        private HPUIHoverUpdateEvent hoverUpdateEvent = new HPUIHoverUpdateEvent();
+
+        /// <inheritdoc />
+        public HPUIHoverUpdateEvent HoverUpdateEvent { get => hoverUpdateEvent; set => hoverUpdateEvent = value; }
+
+        [SerializeField]
         [Tooltip("Interation hover radius.")]
         private float interactionHoverRadius = 0.015f;
 
@@ -395,7 +402,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
         //FIXME: debug code
         public Transform o1, o2, o3;
-        public LineRenderer lineRenderer;
 
         /// <inheritdoc />
         public override void PreprocessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
@@ -561,10 +567,12 @@ namespace ubco.ovilab.HPUI.Interaction
                         ListPool<InteractionInfo>.Release(kvp.Value);
                     }
 
-                    if (lineRenderer != null)
+                    if (validTargets.Count > 0)
                     {
-                        lineRenderer.SetPosition(0, attachTransform.position);
-                        lineRenderer.SetPosition(1, new Vector3(xEndPoint, yEndPoint, zEndPoint) / count);
+                        HoverUpdateEvent?.Invoke(new HPUIHoverUpdateEventArgs(
+                                                     this,
+                                                     new Vector3(xEndPoint, yEndPoint, zEndPoint) / count,
+                                                     attachTransform.position));
                     }
 
                     tempValidTargets.Clear();
@@ -580,6 +588,9 @@ namespace ubco.ovilab.HPUI.Interaction
                         // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
                         QueryTriggerInteraction.Ignore);
 
+                    Vector3 hoverPoint = attachTransform.position;
+                    float shortestInteractableDist = float.MaxValue;
+
                     for (var i = 0; i < numberOfOverlaps; ++i)
                     {
                         Collider collider = overlapSphereHits[i];
@@ -589,9 +600,23 @@ namespace ubco.ovilab.HPUI.Interaction
                             hpuiInteractable.IsHoverableBy(this))
                         {
                             XRInteractableUtility.TryGetClosestPointOnCollider(interactable, interactionPoint, out DistanceInfo info);
-                            validTargets.Add(hpuiInteractable, new InteractionInfo(Mathf.Sqrt(info.distanceSqr), info.point));
+                            float dist = Mathf.Sqrt(info.distanceSqr);
+                            validTargets.Add(hpuiInteractable, new InteractionInfo(dist, info.point));
+                            if (dist < shortestInteractableDist)
+                            {
+                                hoverPoint = info.point;
+                            }
                         }
                     }
+
+                    if (validTargets.Count > 0)
+                    {
+                        HoverUpdateEvent?.Invoke(new HPUIHoverUpdateEventArgs(
+                                                     this,
+                                                     hoverPoint,
+                                                     attachTransform.position));
+                    }
+
                 }
             }
             gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.huristic)));
