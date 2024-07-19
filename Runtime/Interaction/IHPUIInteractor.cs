@@ -16,6 +16,11 @@ namespace ubco.ovilab.HPUI.Interaction
         public HPUIGestureEvent GestureEvent { get; }
 
         /// <summary>
+        /// Event that triggers with hover strength data
+        /// </summary>
+        public HPUIHoverUpdateEvent HoverUpdateEvent { get; }
+
+        /// <summary>
         /// This is called when a tap event occurs on the interactable.
         /// </summary>
         void OnTap(HPUITapEventArgs args);
