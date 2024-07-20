@@ -8,8 +8,9 @@ namespace ubco.ovilab.HPUI.CustomMeshUtils
     {
         [SerializeField] private SkinnedMeshRenderer customHPUIMesh;
         [SerializeField] private int meshXRes;
-        [SerializeField] private int meshYRes;
+        
         private CustomMeshCollidersManager collidersManager;
+        public int MeshXRes => meshXRes;
         
         protected override void OnEnable()
         {
@@ -19,7 +20,7 @@ namespace ubco.ovilab.HPUI.CustomMeshUtils
 
         public void CreateCollidersMatrix()
         {
-            collidersManager.SetupColliders(customHPUIMesh);
+            collidersManager.SetupColliders(customHPUIMesh, this);
         }
     }
 }
