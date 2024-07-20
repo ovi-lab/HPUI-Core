@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ubco.ovilab.HPUI.CustomMeshUtils
+namespace ubco.ovilab.HPUI.StaticMesh
 {
     [CreateAssetMenu(fileName = "VertexRemapData", menuName = "CustomMesh/VertexData")]
     public class VertexRemapData : ScriptableObject

@@ -5,15 +5,16 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Jobs;
 
-namespace ubco.ovilab.HPUI.CustomMeshUtils
+namespace ubco.ovilab.HPUI.StaticMesh
 {
     /// <summary>
     /// Component to manage the colliders for a given rectangular custom mesh, based on <see cref="Interaction.DeformableSurfaceCollidersManager"/>
     /// </summary>
-    public class CustomMeshCollidersManager : MonoBehaviour
+    public class StaticMeshCollidersManager : MonoBehaviour
     {
         [SerializeField] private VertexRemapData vertexRemapData;
 
+        //FIXME: Debug Code
         // [SerializeField] private GameObject rectifiedVertexDS;
         // [SerializeField, Range(0, 120)] private int id;
         
@@ -22,16 +23,21 @@ namespace ubco.ovilab.HPUI.CustomMeshUtils
         private NativeArray<int> remapped_vertices_data;
         private TransformAccessArray colliderObjects;
         private Mesh tempMesh;
-        private bool generatedColliders;
         private SkinnedMeshRenderer targetMesh;
+        private bool generatedColliders;
         private float scaleFactor = 0.001f;
         private int meshXRes, meshYRes;
         
         private void Update()
         {
-            if (!generatedColliders || !isActiveAndEnabled) return;
-
+            if (!generatedColliders)
+            {
+                return;
+            }
+            
             UpdateColliderPositions();
+            
+            //FIXME: Debug Code
             // rectifiedVertexDS.transform.localPosition = vertices[remappedVertices[id]];
         }
 
@@ -42,7 +48,7 @@ namespace ubco.ovilab.HPUI.CustomMeshUtils
             remapped_vertices_data.Dispose();
         }
 
-        public void SetupColliders(SkinnedMeshRenderer keyboardMesh, HPUICustomMesh hpuiCustomMesh)
+        public void SetupColliders(SkinnedMeshRenderer keyboardMesh, HPUIStaticContinuousInteractable hpuiStaticContinuousInteractable)
         {
             targetMesh = keyboardMesh;
             tempMesh = new Mesh(); 
@@ -53,18 +59,13 @@ namespace ubco.ovilab.HPUI.CustomMeshUtils
                 throw new ArgumentException("Missing Vertex Remap Data Asset! Create a new one or provide an existing one!");
             }
             
-            if (vertexRemapData.RemappedVertices.Length <= 0)
-            {
-                VertexRemapper.GetRectifiedIndices(vertexRemapData, tempMesh);
-            }
-            
             tempMesh.GetVertices(vertices);
             tempMesh.GetNormals(normals);
             
             remapped_vertices_data = new NativeArray<int>(vertexRemapData.RemappedVertices, Allocator.Persistent);
             
             
-            meshXRes = hpuiCustomMesh.MeshXRes;
+            meshXRes = hpuiStaticContinuousInteractable.MeshXRes;
             meshYRes = vertices.Count / meshXRes;
             
             float xWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[1]]);
@@ -139,6 +140,44 @@ namespace ubco.ovilab.HPUI.CustomMeshUtils
                 col.localPosition = temppos;
                 col.localRotation = Quaternion.LookRotation(Normals[RemappedIndices[i]], upwards);
             }
+        }
+
+
+        public void RemapVertices()
+        {
+            targetMesh = GetComponent<HPUIStaticContinuousInteractable>().StaticHPUIMesh;
+            tempMesh = new Mesh(); 
+            if(targetMesh==null)
+            {
+                Debug.LogError("Please assign static mesh to the HPUI Static Continuous Interactable Component first!");
+                return;
+            }
+            targetMesh.BakeMesh(tempMesh, true);
+            GetRectifiedIndices(vertexRemapData, tempMesh);
+        }
+        
+        private static void GetRectifiedIndices(VertexRemapData remapData, Mesh mesh)
+        {
+            int vertexCount = mesh.vertexCount;
+            Vector3[] vertices = mesh.vertices;
+            int[] correctedIndices = new int[vertexCount];
+            List<(Vector3 vertex, int index)> indexedVertices = new List<(Vector3 vertex, int index)>(vertexCount);
+            for (int i = 0; i < vertexCount; i++)
+            {
+                indexedVertices.Add((vertices[i], i));
+            }
+            indexedVertices.Sort((a, b) =>
+            {
+                if (Math.Abs(a.vertex.y - b.vertex.y) > 0.00001)
+                    return a.vertex.y.CompareTo(b.vertex.y);
+                return b.vertex.x.CompareTo(a.vertex.x);
+            });
+
+            for (int i = 0; i < vertexCount; i++)
+            {
+                correctedIndices[i] = indexedVertices[i].index;
+            }
+            remapData.RemappedVertices = correctedIndices;
         }
     }
 }
