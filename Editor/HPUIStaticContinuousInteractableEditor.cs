@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using ubco.ovilab.HPUI.CustomMeshUtils;
+using ubco.ovilab.HPUI.StaticMesh;
 using ubco.ovilab.HPUI.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -8,11 +8,11 @@ using UnityEngine;
 namespace UnityLibrary
 {
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(HPUICustomMesh))]
-    public class HPUICustomMeshEditor : HPUIBaseInteractableEditor
+    [CustomEditor(typeof(HPUIStaticContinuousInteractable))]
+    public class HPUIStaticContinuousInteractableEditor : HPUIBaseInteractableEditor
     {
-        private HPUICustomMesh t;
-        private SerializedProperty customMesh;
+        private HPUIStaticContinuousInteractable t;
+        private SerializedProperty staticMesh;
         private SerializedProperty meshXRes;
         
         protected override List<string> EventPropertyNames => base.EventPropertyNames.Union(new List<string>()
@@ -25,8 +25,8 @@ namespace UnityLibrary
         protected override void OnEnable()
         {
             base.OnEnable();
-            t = (HPUICustomMesh)target;
-            customMesh = serializedObject.FindProperty("customHPUIMesh");
+            t = (HPUIStaticContinuousInteractable)target;
+            staticMesh = serializedObject.FindProperty("staticHPUIMesh");
             meshXRes = serializedObject.FindProperty("meshXRes");
         }
 
@@ -35,17 +35,8 @@ namespace UnityLibrary
             base.DrawProperties();
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Custom Mesh Configurations", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(customMesh);
+            EditorGUILayout.PropertyField(staticMesh);
             EditorGUILayout.PropertyField(meshXRes);
-        }
-
-        public override void OnInspectorGUI()
-        {
-            if (GUILayout.Button("Set Colliders Matrix"))
-            {
-                t.CreateCollidersMatrix();
-            }
-            base.OnInspectorGUI();
         }
     }
 }
