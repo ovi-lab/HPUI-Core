@@ -128,7 +128,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {}
 
         /// <inheritdoc />
-        public override Vector2 ComputeInteractorPostion(IHPUIInteractor interactor)
+        public override Vector2 ComputeInteractorPosition(IHPUIInteractor interactor)
         {
             // TODO: add value from pointOnPlane (the point on the collider)
             DistanceInfo distanceInfo = GetDistanceOverride(this, interactor.GetCollisionPoint(this));

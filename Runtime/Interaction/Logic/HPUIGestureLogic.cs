@@ -99,7 +99,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         }
 
                         state.startTime = Time.time;
-                        state.startPosition = interactable.ComputeInteractorPostion(interactor);
+                        state.startPosition = interactable.ComputeInteractorPosition(interactor);
                     }
                 }
                 // Target exited hover state
@@ -153,12 +153,12 @@ namespace ubco.ovilab.HPUI.Interaction
                 {
                     currentTrackingInteractable = interactableToTrack;
                     // If interactable change, we need to restart tracking, hence skipping a frame
-                    previousPosition = currentTrackingInteractable.ComputeInteractorPostion(interactor);
+                    previousPosition = currentTrackingInteractable.ComputeInteractorPosition(interactor);
                     return;
                 }
             }
 
-            Vector2 currentPosition = currentTrackingInteractable.ComputeInteractorPostion(interactor);
+            Vector2 currentPosition = currentTrackingInteractable.ComputeInteractorPosition(interactor);
             delta = previousPosition - currentPosition;
             timeDelta = Time.time - startTime;
             cumilativeDistance += delta.magnitude;

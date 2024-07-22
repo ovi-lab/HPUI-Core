@@ -41,6 +41,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 normals_native.Dispose();
             }
+            colliderObjects.Dispose();
         }
 
         /// <inheritdoc />
