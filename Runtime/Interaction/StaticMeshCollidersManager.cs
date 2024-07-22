@@ -65,7 +65,7 @@ namespace ubco.ovilab.HPUI.Interaction
             
             remapped_vertices_data = new NativeArray<int>(vertexRemapData.RemappedVertices, Allocator.Persistent);
             
-            meshXRes = hpuiStaticContinuousInteractable.MeshXRes;
+            meshXRes = hpuiStaticContinuousInteractable.MeshXResolution;
             meshYRes = vertices.Count / meshXRes;
             float xWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[1]]);
             float yWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[meshXRes]]);
