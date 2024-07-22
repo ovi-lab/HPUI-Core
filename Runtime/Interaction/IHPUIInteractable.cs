@@ -33,10 +33,11 @@ namespace ubco.ovilab.HPUI.Interaction
         Vector2 boundsMin { get; }
 
         /// <summary>
-        /// Get the projection of the interactors position on the xz plane of this interactable, normalized.
-        /// the returned Vector2 - (x, z) on the xz-plane, relative to the center of the interactable.
+        /// Get the projection of the interactors position on the xz plane of this interactable.
+        /// the returned Vector2 - (x, z) on the xz-plane, relative to the center of the
+        /// interactable in Unity units.
         /// </summary>
-        Vector2 ComputeInteractorPostion(IHPUIInteractor interactor);
+        Vector2 ComputeInteractorPosition(IHPUIInteractor interactor);
 
         /// <summary>
         /// This is called when a tap event occurs on the interactable.

@@ -26,7 +26,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
         /// <summary>
         /// The collider used to compute the bounds of the interactable.
-        /// /// <seealso cref="ComputeInteractorPostion"/>
+        /// /// <seealso cref="ComputeInteractorPosition"/>
         /// </summary>
         public Collider BoundsCollider { get => boundsCollider; set => boundsCollider = value; }
 
@@ -117,7 +117,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
         #region IHPUIInteractable interface
         /// <inheritdoc />
-        public virtual Vector2 ComputeInteractorPostion(IHPUIInteractor interactor)
+        public virtual Vector2 ComputeInteractorPosition(IHPUIInteractor interactor)
         {
             Vector3 closestPointOnCollider = GetDistanceOverride(this, interactor.GetCollisionPoint(this)).point;
             Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
