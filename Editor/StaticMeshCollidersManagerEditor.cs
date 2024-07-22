@@ -1,13 +1,12 @@
-using System;
 using UnityEngine;
 using UnityEditor;
-using ubco.ovilab.HPUI.StaticMesh;
+using ubco.ovilab.HPUI.Interaction;
 
-namespace UnityLibrary
+namespace ubco.ovilab.HPUI.Editor
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(StaticMeshCollidersManager))]
-    public class StaticMeshCollidersManagerEditor : Editor
+    public class StaticMeshCollidersManagerEditor : UnityEditor.Editor
     {
         private StaticMeshCollidersManager t;
 
