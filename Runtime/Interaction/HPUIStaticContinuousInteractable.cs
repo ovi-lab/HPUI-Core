@@ -8,10 +8,10 @@ namespace ubco.ovilab.HPUI.Interaction
     {
         [SerializeField] private SkinnedMeshRenderer staticHPUIMesh;
         
-        [SerializeField] private int meshXRes;
+        [SerializeField] private int meshXResolution;
         
         private StaticMeshCollidersManager collidersManager;
-        public int MeshXRes => meshXRes;
+        public int MeshXResolution => meshXResolution;
         public SkinnedMeshRenderer StaticHPUIMesh => staticHPUIMesh;
         
         protected override void OnEnable()

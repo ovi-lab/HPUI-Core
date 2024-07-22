@@ -11,13 +11,12 @@ namespace ubco.ovilab.HPUI.Editor
     {
         private HPUIStaticContinuousInteractable t;
         private SerializedProperty staticMesh;
-        private SerializedProperty meshXRes;
+        private SerializedProperty meshXResolution;
         
         protected override List<string> EventPropertyNames => base.EventPropertyNames.Union(new List<string>()
         {
-            "continuousSurfaceCreatedEvent",
-            "boundsCollider", // NOTE: this is not relevant to the HPUICustomMesh.
-            "ui"
+            "staticMesh",
+            "meshXResolution"
         }).ToList();
         
         protected override void OnEnable()
@@ -25,7 +24,7 @@ namespace ubco.ovilab.HPUI.Editor
             base.OnEnable();
             t = (HPUIStaticContinuousInteractable)target;
             staticMesh = serializedObject.FindProperty("staticHPUIMesh");
-            meshXRes = serializedObject.FindProperty("meshXRes");
+            meshXResolution = serializedObject.FindProperty("meshXResolution");
         }
 
         protected override void DrawProperties()
@@ -34,7 +33,7 @@ namespace ubco.ovilab.HPUI.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Custom Mesh Configurations", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(staticMesh);
-            EditorGUILayout.PropertyField(meshXRes);
+            EditorGUILayout.PropertyField(meshXResolution);
         }
     }
 }
