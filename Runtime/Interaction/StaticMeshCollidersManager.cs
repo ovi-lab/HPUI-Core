@@ -5,7 +5,7 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Jobs;
 
-namespace ubco.ovilab.HPUI.StaticMesh
+namespace ubco.ovilab.HPUI.Interaction
 {
     /// <summary>
     /// Component to manage the colliders for a given rectangular custom mesh, based on <see cref="Interaction.DeformableSurfaceCollidersManager"/>
@@ -27,7 +27,8 @@ namespace ubco.ovilab.HPUI.StaticMesh
         private bool generatedColliders;
         private float scaleFactor = 0.001f;
         private int meshXRes, meshYRes;
-        
+        private Dictionary<Collider, Vector2> colliderCoords = new Dictionary<Collider, Vector2>();
+
         private void Update()
         {
             if (!generatedColliders)
@@ -64,36 +65,51 @@ namespace ubco.ovilab.HPUI.StaticMesh
             
             remapped_vertices_data = new NativeArray<int>(vertexRemapData.RemappedVertices, Allocator.Persistent);
             
-            
             meshXRes = hpuiStaticContinuousInteractable.MeshXRes;
             meshYRes = vertices.Count / meshXRes;
-            
             float xWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[1]]);
             float yWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[meshXRes]]);
+            float offsetX = xWidth * meshXRes * 0.5f;
+            float offsetY = yWidth * meshYRes * 0.5f;
             Transform[] colliderTransforms = new Transform[vertices.Count];
             Transform meshTransform = targetMesh.gameObject.transform;
-            for (int i = 0; i < remapped_vertices_data.Length; i++)
-            {
-                int x = i % meshXRes;
-                int y = i / meshXRes;
-                GameObject col = new GameObject();
-                col.AddComponent<BoxCollider>();
-                col.name = "X: " + x + "; Y: " + y + ";";
-                col.transform.parent = meshTransform;
-                col.transform.localPosition = vertices[remapped_vertices_data[i]];
-                Vector3 targetScale = Vector3.one * scaleFactor;
-                targetScale.x = xWidth;
-                targetScale.y = yWidth;
-                col.transform.localScale = targetScale;
-                col.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
-                colliderTransforms[i] = col.transform;
-            }
+            InitCollidersState(meshTransform, xWidth, yWidth, colliderTransforms, offsetX, offsetY);
             colliderObjects = new TransformAccessArray(colliderTransforms);
             vertices_native = new NativeArray<Vector3>(vertices.ToArray(), Allocator.Persistent);
             normals_native = new NativeArray<Vector3>(normals.ToArray(), Allocator.Persistent);
             generatedColliders = true;
         }
 
+        private void InitCollidersState(Transform meshTransform, float xWidth, float yWidth, Transform[] colliderTransforms
+            , float offsetX, float offsetY)
+        {
+            for (int i = 0; i < remapped_vertices_data.Length; i++)
+            {
+                int x = i % meshXRes;
+                int y = i / meshXRes;
+                GameObject colliderGameObject = new GameObject();
+                Collider col = colliderGameObject.AddComponent<BoxCollider>();
+                colliderGameObject.name = "X: " + x + "; Y: " + y + ";";
+                colliderGameObject.transform.parent = meshTransform;
+                colliderGameObject.transform.localPosition = vertices[remapped_vertices_data[i]];
+                Vector3 targetScale = Vector3.one * scaleFactor;
+                targetScale.x = xWidth;
+                targetScale.y = yWidth;
+                colliderGameObject.transform.localScale = targetScale;
+                colliderGameObject.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
+                colliderTransforms[i] = colliderGameObject.transform;
+                colliderCoords.Add(col, new Vector2(xWidth * x - offsetX, yWidth * y - offsetY));
+            }
+        }
+
+        public Vector2 GetSurfacePointForCollider(Collider col)
+        {
+            if (!colliderCoords.TryGetValue(col, out Vector2 coordsForCol))
+            {
+                throw new ArgumentException("Unknown {collider.name}");
+            }
+            return coordsForCol;
+        }
         
         protected void UpdateColliderPositions()
         {

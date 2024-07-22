@@ -1,7 +1,7 @@
-using ubco.ovilab.HPUI.Interaction;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
-namespace ubco.ovilab.HPUI.StaticMesh
+namespace ubco.ovilab.HPUI.Interaction
 {
     [RequireComponent(typeof(StaticMeshCollidersManager))]
     public class HPUIStaticContinuousInteractable : HPUIBaseInteractable
@@ -18,11 +18,19 @@ namespace ubco.ovilab.HPUI.StaticMesh
         {
             base.OnEnable();
             collidersManager = GetComponent<StaticMeshCollidersManager>();
-            collidersManager.SetupColliders(staticHPUIMesh, this);
+            Debug.Assert(collidersManager!=null);
+            collidersManager.SetupColliders(StaticHPUIMesh, this);
         }
 
+        /// <inheritdoc />
         protected override void ComputeSurfaceBounds()
         {
+        }
+        
+        public override Vector2 ComputeInteractorPosition(IHPUIInteractor interactor)
+        {
+            DistanceInfo distanceInfo = GetDistanceOverride(this, interactor.GetCollisionPoint(this));
+            return collidersManager.GetSurfacePointForCollider(distanceInfo.collider);
         }
     }
 }
