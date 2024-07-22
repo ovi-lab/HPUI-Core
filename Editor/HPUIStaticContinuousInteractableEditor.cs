@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using ubco.ovilab.HPUI.StaticMesh;
-using ubco.ovilab.HPUI.Editor;
+using ubco.ovilab.HPUI.Interaction;
 using UnityEditor;
-using UnityEngine;
 
-namespace UnityLibrary
+namespace ubco.ovilab.HPUI.Editor
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(HPUIStaticContinuousInteractable))]

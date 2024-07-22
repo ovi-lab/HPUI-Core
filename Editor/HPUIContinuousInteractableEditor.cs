@@ -3,7 +3,6 @@ using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
 using System.Collections.Generic;
 using System.Linq;
-using ubco.ovilab.HPUI.UI;
 
 namespace ubco.ovilab.HPUI.Editor
 {
