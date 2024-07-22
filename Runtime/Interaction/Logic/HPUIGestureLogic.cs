@@ -19,7 +19,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private IHPUIInteractor interactor;
 
         private float startTime, cumilativeDistance, timeDelta;
-        private Vector2 delta, previousPosition, cumilativeDirection;
+        private Vector2 delta, currentPosition, previousPosition, cumilativeDirection;
         private bool selectionHappenedLastFrame = false,
             useHuristic = false;
         private int activeInteractables = 0;
@@ -158,7 +158,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
             }
 
-            Vector2 currentPosition = currentTrackingInteractable.ComputeInteractorPosition(interactor);
+            currentPosition = currentTrackingInteractable.ComputeInteractorPosition(interactor);
             delta = previousPosition - currentPosition;
             timeDelta = Time.time - startTime;
             cumilativeDistance += delta.magnitude;
@@ -257,7 +257,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
                 gestureEventArgs.SetParams(interactor, activePriorityInteractable,
                                            gestureState, timeDelta, state.startTime, state.startPosition,
-                                           cumilativeDirection, cumilativeDistance, delta);
+                                           cumilativeDirection, cumilativeDistance, delta,
+                                           currentTrackingInteractable, currentPosition);
 
                 if (activePriorityInteractable != null)
                 {

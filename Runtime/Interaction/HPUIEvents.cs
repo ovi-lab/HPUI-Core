@@ -161,6 +161,8 @@ namespace ubco.ovilab.HPUI.Interaction
         public Vector2 CumilativeDirection { get; private set; }
         public float CumilativeDistance { get; private set; }
         public Vector2 DeltaDirection { get; private set; }
+        public IHPUIInteractable CurrentTrackingInteractable{ get; private set; }
+        public Vector2 CurrentTrackingInteractablePoint { get; private set; }
 
         public override void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, Vector2 position)
         {
@@ -168,7 +170,8 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUIGestureState state, float timeDelta, float startTime,
-                              Vector2 startPosition, Vector2 cumilativeDirection, float cumilativeDistance, Vector2 deltaDirection)
+                              Vector2 startPosition, Vector2 cumilativeDirection, float cumilativeDistance, Vector2 deltaDirection,
+                              IHPUIInteractable currentTrackingInteractable, Vector2 currentTrackingInteractablePoint)
         {
             base.SetParams(interactor, interactable, startPosition + cumilativeDirection);
             State = state;
@@ -178,6 +181,8 @@ namespace ubco.ovilab.HPUI.Interaction
             CumilativeDirection = cumilativeDirection;
             CumilativeDistance = cumilativeDistance;
             DeltaDirection = deltaDirection;
+            CurrentTrackingInteractable = currentTrackingInteractable;
+            CurrentTrackingInteractablePoint = CurrentTrackingInteractablePoint;
         }
     }
 
