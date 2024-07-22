@@ -31,7 +31,7 @@ namespace ubco.ovilab.HPUI.Editor
         {
             base.DrawProperties();
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Custom Mesh Configurations", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Static Mesh Configurations", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(staticMesh);
             EditorGUILayout.PropertyField(meshXResolution);
         }
