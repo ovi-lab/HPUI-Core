@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -49,7 +50,7 @@ namespace ubco.ovilab.HPUI.Interaction
             remapped_vertices_data.Dispose();
         }
 
-        public void SetupColliders(SkinnedMeshRenderer keyboardMesh, HPUIStaticContinuousInteractable hpuiStaticContinuousInteractable)
+        public List<Collider> SetupColliders(SkinnedMeshRenderer keyboardMesh, HPUIStaticContinuousInteractable hpuiStaticContinuousInteractable)
         {
             targetMesh = keyboardMesh;
             tempMesh = new Mesh(); 
@@ -78,6 +79,8 @@ namespace ubco.ovilab.HPUI.Interaction
             vertices_native = new NativeArray<Vector3>(vertices.ToArray(), Allocator.Persistent);
             normals_native = new NativeArray<Vector3>(normals.ToArray(), Allocator.Persistent);
             generatedColliders = true;
+
+            return colliderCoords.Keys.ToList();
         }
 
         private void InitCollidersState(Transform meshTransform, float xWidth, float yWidth, Transform[] colliderTransforms
