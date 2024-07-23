@@ -182,7 +182,7 @@ namespace ubco.ovilab.HPUI.Interaction
             CumilativeDistance = cumilativeDistance;
             DeltaDirection = deltaDirection;
             CurrentTrackingInteractable = currentTrackingInteractable;
-            CurrentTrackingInteractablePoint = CurrentTrackingInteractablePoint;
+            CurrentTrackingInteractablePoint = currentTrackingInteractablePoint;
         }
     }
 
