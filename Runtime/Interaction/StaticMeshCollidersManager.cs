@@ -14,7 +14,8 @@ namespace ubco.ovilab.HPUI.Interaction
     public class StaticMeshCollidersManager : MonoBehaviour
     {
         [SerializeField] private VertexRemapData vertexRemapData;
-
+        [SerializeField] private bool flippedAndNormalisedCoordinates;
+        
         //FIXME: Debug Code
         // [SerializeField] private GameObject rectifiedVertexDS;
         // [SerializeField, Range(0, 120)] private int id;
@@ -48,6 +49,7 @@ namespace ubco.ovilab.HPUI.Interaction
             vertices_native.Dispose();
             normals_native.Dispose();
             remapped_vertices_data.Dispose();
+            colliderObjects.Dispose();
         }
 
         public List<Collider> SetupColliders(SkinnedMeshRenderer keyboardMesh, HPUIStaticContinuousInteractable hpuiStaticContinuousInteractable)
@@ -101,7 +103,16 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderGameObject.transform.localScale = targetScale;
                 colliderGameObject.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
                 colliderTransforms[i] = colliderGameObject.transform;
-                colliderCoords.Add(col, new Vector2(xWidth * x - offsetX, yWidth * y - offsetY));
+                Vector2 coords = Vector2.zero;
+                if (flippedAndNormalisedCoordinates)
+                {
+                    coords = new Vector2((float)((meshXRes - 1) - x)/meshXRes, (float)((meshYRes - 1) - y)/meshYRes);
+                }
+                else
+                {
+                     coords = new Vector2(xWidth * x - offsetX, yWidth * y - offsetY);
+                }
+                colliderCoords.Add(col, coords);
             }
         }
 
