@@ -14,12 +14,12 @@ namespace ubco.ovilab.HPUI.Interaction
         public int MeshXResolution => meshXResolution;
         public SkinnedMeshRenderer StaticHPUIMesh => staticHPUIMesh;
         
-        protected override void OnEnable()
+        protected override void Awake()
         {
-            base.OnEnable();
+            base.Awake();
             collidersManager = GetComponent<StaticMeshCollidersManager>();
             Debug.Assert(collidersManager!=null);
-            collidersManager.SetupColliders(StaticHPUIMesh, this);
+            colliders.AddRange(collidersManager.SetupColliders(StaticHPUIMesh, this));
         }
 
         /// <inheritdoc />
