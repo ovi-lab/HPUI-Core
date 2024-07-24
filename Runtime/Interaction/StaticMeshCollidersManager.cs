@@ -14,7 +14,6 @@ namespace ubco.ovilab.HPUI.Interaction
     public class StaticMeshCollidersManager : MonoBehaviour
     {
         [SerializeField] private VertexRemapData vertexRemapData;
-        [SerializeField] private bool flippedAndNormalisedCoordinates;
         
         //FIXME: Debug Code
         // [SerializeField] private GameObject rectifiedVertexDS;
@@ -30,6 +29,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private float scaleFactor = 0.001f;
         private int meshXRes, meshYRes;
         private Dictionary<Collider, Vector2> colliderCoords = new Dictionary<Collider, Vector2>();
+        private Dictionary<Collider, Vector2> colliderCoordsNormalisedAndFlipped = new Dictionary<Collider, Vector2>();
 
         private void Update()
         {
@@ -103,24 +103,31 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderGameObject.transform.localScale = targetScale;
                 colliderGameObject.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
                 colliderTransforms[i] = colliderGameObject.transform;
-                Vector2 coords = Vector2.zero;
-                if (flippedAndNormalisedCoordinates)
-                {
-                    coords = new Vector2((float)((meshXRes - 1) - x)/meshXRes, (float)((meshYRes - 1) - y)/meshYRes);
-                }
-                else
-                {
-                     coords = new Vector2(xWidth * x - offsetX, yWidth * y - offsetY);
-                }
+                Vector2 coords = new Vector2((float)((meshXRes - 1) - x)/meshXRes, (float)((meshYRes - 1) - y)/meshYRes);
+                colliderCoordsNormalisedAndFlipped.Add(col, coords);
+                coords = new Vector2(xWidth * x - offsetX, yWidth * y - offsetY);
                 colliderCoords.Add(col, coords);
             }
         }
 
-        public Vector2 GetSurfacePointForCollider(Collider col)
+        public Vector2 GetSurfacePointForCollider(Collider col, bool flippedAndNormalisedCoords = false)
         {
-            if (!colliderCoords.TryGetValue(col, out Vector2 coordsForCol))
+            Vector2 coordsForCol;
+            if (flippedAndNormalisedCoords)
             {
-                throw new ArgumentException("Unknown {collider.name}");
+                if (!colliderCoordsNormalisedAndFlipped.TryGetValue(col, out coordsForCol))
+                {
+                    throw new ArgumentException("Unknown {collider.name}");
+                }
+
+            }
+            else
+            {
+                if (!colliderCoords.TryGetValue(col, out coordsForCol))
+                {
+                    throw new ArgumentException("Unknown {collider.name}");
+                }
+
             }
             return coordsForCol;
         }

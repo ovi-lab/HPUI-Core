@@ -31,7 +31,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public override Vector2 ComputeInteractorPosition(IHPUIInteractor interactor)
         {
             DistanceInfo distanceInfo = GetDistanceOverride(this, interactor.GetCollisionPoint(this));
-            return collidersManager.GetSurfacePointForCollider(distanceInfo.collider);
+            return collidersManager.GetSurfacePointForCollider(distanceInfo.collider, true);
         }
     }
 }
