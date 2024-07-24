@@ -119,16 +119,22 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 selectionHappenedLastFrame = false;
                 Debug.Log($"-- params: cumm. dist: {cumilativeDistance}, time delta: {timeDelta}");
-                switch (interactorGestureState)
+                try
                 {
-                    case HPUIGesture.Tap:
-                        TriggerTapEvent();
-                        break;
-                    case HPUIGesture.Gesture:
-                        TriggerGestureEvent(HPUIGestureState.Stopped);
-                        break;
+                    switch (interactorGestureState)
+                    {
+                        case HPUIGesture.Tap:
+                            TriggerTapEvent();
+                            break;
+                        case HPUIGesture.Gesture:
+                            TriggerGestureEvent(HPUIGestureState.Stopped);
+                            break;
+                    }
                 }
-                Reset();
+                finally
+                {
+                    Reset();
+                }
                 return;
             }
             selectionHappenedLastFrame = selectionHappening;
@@ -164,24 +170,31 @@ namespace ubco.ovilab.HPUI.Interaction
             cumilativeDistance += delta.magnitude;
             cumilativeDirection += delta;
 
-            switch(interactorGestureState)
+            // NOTE: In all codepaths, the event calls are the last thing.
+            // Hence, propergating the exception should not break internal states.
+            try
             {
-                case HPUIGesture.Tap:
-                    if (timeDelta > tapTimeThreshold || cumilativeDistance > tapDistanceThreshold)
-                    {
-                        interactorGestureState = HPUIGesture.Gesture;
-                        ComputeActivePriorityInteractable();
-                        TriggerGestureEvent(HPUIGestureState.Started);
-                    }
-                    break;
-                case HPUIGesture.Gesture:
-                    TriggerGestureEvent(HPUIGestureState.Updated);
-                    break;
-                default:
-                    throw new InvalidOperationException("Unknown gesture.");
+                switch (interactorGestureState)
+                {
+                    case HPUIGesture.Tap:
+                        if (timeDelta > tapTimeThreshold || cumilativeDistance > tapDistanceThreshold)
+                        {
+                            interactorGestureState = HPUIGesture.Gesture;
+                            ComputeActivePriorityInteractable();
+                            TriggerGestureEvent(HPUIGestureState.Started);
+                        }
+                        break;
+                    case HPUIGesture.Gesture:
+                        TriggerGestureEvent(HPUIGestureState.Updated);
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unknown gesture.");
+                }
             }
-
-            previousPosition = currentPosition;
+            finally
+            {
+                previousPosition = currentPosition;
+            }
         }
 
         // NOTE: This gets called only within the tapdistancethreshold window.
@@ -231,14 +244,20 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 tapEventArgs.SetParams(interactor, activePriorityInteractable, state.startPosition + cumilativeDirection);
 
-                if (activePriorityInteractable != null)
+                try
                 {
-                    activePriorityInteractable.OnTap(tapEventArgs);
+                    if (activePriorityInteractable != null)
+                    {
+                        activePriorityInteractable.OnTap(tapEventArgs);
+                    }
                 }
-                // NOTE: There can be interactables that don't take any events. Even
-                // when that happens, the interactor's events should get triggered.
-                // KLUDGE: This doesn't account for the interactionSelectionRadius
-                interactor.OnTap(tapEventArgs);
+                finally
+                {
+                    // NOTE: There can be interactables that don't take any events. Even
+                    // when that happens, the interactor's events should get triggered.
+                    // KLUDGE: This doesn't account for the interactionSelectionRadius
+                    interactor.OnTap(tapEventArgs);
+                }
             }
         }
 
@@ -260,12 +279,18 @@ namespace ubco.ovilab.HPUI.Interaction
                                            cumilativeDirection, cumilativeDistance, delta,
                                            currentTrackingInteractable, currentPosition);
 
-                if (activePriorityInteractable != null)
+                try
                 {
-                    activePriorityInteractable?.OnGesture(gestureEventArgs);
+                    if (activePriorityInteractable != null)
+                    {
+                        activePriorityInteractable?.OnGesture(gestureEventArgs);
+                    }
                 }
-                // NOTE: See note when tap gets triggered.
-                interactor.OnGesture(gestureEventArgs);
+                finally
+                {
+                    // NOTE: See note when tap gets triggered.
+                    interactor.OnGesture(gestureEventArgs);
+                }
             }
         }
 

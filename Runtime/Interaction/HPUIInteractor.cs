@@ -415,6 +415,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 Transform attachTransform = GetAttachTransform(null);
                 Vector3 interactionPoint = attachTransform.position;
+                Vector3 hoverEndPoint = attachTransform.position;
 
                 if (UseRayCast)
                 {
@@ -508,6 +509,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                     // Debug.DrawLine(interactionPoint, interactionPoint + direction_.normalized * InteractionHoverRadius * 2, Color.blue);
 
+                    tempValidTargets.Clear();
 
                     foreach(Vector3 direction in directions)
                     {
@@ -567,15 +569,10 @@ namespace ubco.ovilab.HPUI.Interaction
                         ListPool<InteractionInfo>.Release(kvp.Value);
                     }
 
-                    if (validTargets.Count > 0)
+                    if (count > 0)
                     {
-                        HoverUpdateEvent?.Invoke(new HPUIHoverUpdateEventArgs(
-                                                     this,
-                                                     new Vector3(xEndPoint, yEndPoint, zEndPoint) / count,
-                                                     attachTransform.position));
+                        hoverEndPoint = new Vector3(xEndPoint, yEndPoint, zEndPoint) / count;
                     }
-
-                    tempValidTargets.Clear();
                 }
                 else
                 {
@@ -588,7 +585,6 @@ namespace ubco.ovilab.HPUI.Interaction
                         // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
                         QueryTriggerInteraction.Ignore);
 
-                    Vector3 hoverPoint = attachTransform.position;
                     float shortestInteractableDist = float.MaxValue;
 
                     for (var i = 0; i < numberOfOverlaps; ++i)
@@ -604,26 +600,31 @@ namespace ubco.ovilab.HPUI.Interaction
                             validTargets.Add(hpuiInteractable, new InteractionInfo(dist, info.point));
                             if (dist < shortestInteractableDist)
                             {
-                                hoverPoint = info.point;
+                                hoverEndPoint = info.point;
                             }
                         }
                     }
+                }
 
+                try
+                {
                     if (validTargets.Count > 0)
                     {
                         HoverUpdateEvent?.Invoke(new HPUIHoverUpdateEventArgs(
                                                      this,
-                                                     hoverPoint,
+                                                     hoverEndPoint,
                                                      attachTransform.position));
                     }
-
                 }
-            }
-            gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.huristic)));
+                finally
+                {
+                    gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.huristic)));
 
-            if (data != null)
-            {
-                data.Invoke(DataWriter);
+                    if (data != null)
+                    {
+                        data.Invoke(DataWriter);
+                    }
+                }
             }
         }
 
