@@ -16,7 +16,7 @@ namespace ubco.ovilab.HPUI.Tests
         public System.Action<HPUIGestureEventArgs> onGestureCallback;
 
         public int tapCalled = 0;
-        public int swipCalled = 0;
+        public int gestureCalled = 0;
 
         public TestHPUIInteractable(int zOrder, bool handlesTap, bool handlesGesture, Action<HPUITapEventArgs> onTapCallback = null, Action<HPUIGestureEventArgs> onGestureCallback = null)
         {
@@ -33,7 +33,7 @@ namespace ubco.ovilab.HPUI.Tests
         public void Reset()
         {
             this.tapCalled = 0;
-            this.swipCalled = 0;
+            this.gestureCalled = 0;
         }
 
         #region IHPUIInteracttable only
@@ -64,7 +64,7 @@ namespace ubco.ovilab.HPUI.Tests
 
         void IHPUIInteractable.OnGesture(HPUIGestureEventArgs args)
         {
-            swipCalled += 1;
+            gestureCalled += 1;
             onGestureCallback?.Invoke(args);
         }
 

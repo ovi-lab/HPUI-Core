@@ -8,7 +8,7 @@ namespace ubco.ovilab.HPUI.Interaction
 {
     /// <summary>
     /// Encapsulates the logic for HPUI gesture interactions.
-    /// The interactor dectates which interactable gets the gesture.
+    /// The interactor dictates which interactable gets the gesture.
     /// </summary>
     public class HPUIGestureLogic: IHPUIGestureLogic
     {
@@ -18,10 +18,10 @@ namespace ubco.ovilab.HPUI.Interaction
         private float tapTimeThreshold, tapDistanceThreshold, interactionSelectionRadius;
         private IHPUIInteractor interactor;
 
-        private float startTime, cumilativeDistance, timeDelta;
-        private Vector2 delta, currentPosition, previousPosition, cumilativeDirection;
+        private float startTime, cumulativeDistance, timeDelta;
+        private Vector2 delta, currentPosition, previousPosition, cumulativeDirection;
         private bool selectionHappenedLastFrame = false,
-            useHuristic = false;
+            useHeuristic = false;
         private int activeInteractables = 0;
 
         private IHPUIInteractable activePriorityInteractable, currentTrackingInteractable;
@@ -30,12 +30,12 @@ namespace ubco.ovilab.HPUI.Interaction
         private HPUIGesture interactorGestureState = HPUIGesture.None;
 
         /// <summary>
-        /// Initializes a new instance of the with the thrshold values.
+        /// Initializes a new instance of the with the threshold values.
         /// </summary>
-        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float interactionSelectionRadius, bool useHuristic)
+        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float interactionSelectionRadius, bool useHeuristic)
         {
             this.interactor = interactor;
-            this.useHuristic = useHuristic;
+            this.useHeuristic = useHeuristic;
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
             this.interactionSelectionRadius = interactionSelectionRadius;
@@ -76,9 +76,9 @@ namespace ubco.ovilab.HPUI.Interaction
                         state.minDistanceToInteractor = interactionData.distance;
                     }
 
-                    if (interactionData.huristic < state.huristic)
+                    if (interactionData.heuristic < state.heuristic)
                     {
-                        state.huristic = interactionData.huristic;
+                        state.heuristic = interactionData.heuristic;
                     }
 
                     if (interactionData.distance < interactionSelectionRadius)
@@ -118,7 +118,7 @@ namespace ubco.ovilab.HPUI.Interaction
             if (selectionHappenedLastFrame && !selectionHappening)
             {
                 selectionHappenedLastFrame = false;
-                Debug.Log($"-- params: cumm. dist: {cumilativeDistance}, time delta: {timeDelta}");
+                Debug.Log($"-- params: cumm. dist: {cumulativeDistance}, time delta: {timeDelta}");
                 try
                 {
                     switch (interactorGestureState)
@@ -148,7 +148,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 // TODO: revisit this assumption
                 // Any target that is active should be ok for this
-                // Giving priority to the ones that was the oldest enetered
+                // Giving priority to the ones that was the oldest entered
                 // This minimizes the tracking interactable changing
                 IHPUIInteractable interactableToTrack = trackingInteractables
                     .Where(kvp => kvp.Value.active)
@@ -167,17 +167,17 @@ namespace ubco.ovilab.HPUI.Interaction
             currentPosition = currentTrackingInteractable.ComputeInteractorPosition(interactor);
             delta = previousPosition - currentPosition;
             timeDelta = Time.time - startTime;
-            cumilativeDistance += delta.magnitude;
-            cumilativeDirection += delta;
+            cumulativeDistance += delta.magnitude;
+            cumulativeDirection += delta;
 
-            // NOTE: In all codepaths, the event calls are the last thing.
-            // Hence, propergating the exception should not break internal states.
+            // NOTE: In all code-paths, the event calls are the last thing.
+            // Hence, propagating the exception should not break internal states.
             try
             {
                 switch (interactorGestureState)
                 {
                     case HPUIGesture.Tap:
-                        if (timeDelta > tapTimeThreshold || cumilativeDistance > tapDistanceThreshold)
+                        if (timeDelta > tapTimeThreshold || cumulativeDistance > tapDistanceThreshold)
                         {
                             interactorGestureState = HPUIGesture.Gesture;
                             ComputeActivePriorityInteractable();
@@ -197,18 +197,18 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        // NOTE: This gets called only within the tapdistancethreshold window.
+        // NOTE: This gets called only within the tapDistanceThreshold window.
         // Thus using distance as opposed to start time to pick the target that is the most ideal.
         protected void ComputeActivePriorityInteractable()
         {
             // Targets not selected within the priority window
-            // (defaults to tapdistancethreshold), will not get any
+            // (defaults to tapDistanceThreshold), will not get any
             // events.  For targets selected withing the window, first
             // prioritize the zOrder, then the distance.
             IHPUIInteractable interactableToBeActive = trackingInteractables
                 .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && kvp.Value.selectableTarget)
                 .OrderBy(kvp => kvp.Key.zOrder)
-                .ThenBy(kvp => useHuristic? kvp.Value.huristic : kvp.Value.minDistanceToInteractor)
+                .ThenBy(kvp => useHeuristic? kvp.Value.heuristic : kvp.Value.minDistanceToInteractor)
                 .FirstOrDefault().Key;
 
             if (interactableToBeActive != activePriorityInteractable)
@@ -223,8 +223,8 @@ namespace ubco.ovilab.HPUI.Interaction
             trackingInteractables.Clear();
             activePriorityInteractable = null;
             currentTrackingInteractable = null;
-            cumilativeDistance = 0;
-            cumilativeDirection = Vector2.zero;
+            cumulativeDistance = 0;
+            cumulativeDirection = Vector2.zero;
         }
 
         protected void TriggerTapEvent()
@@ -242,7 +242,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     state = HPUIInteractionState.empty;
                 }
 
-                tapEventArgs.SetParams(interactor, activePriorityInteractable, state.startPosition + cumilativeDirection);
+                tapEventArgs.SetParams(interactor, activePriorityInteractable, state.startPosition + cumulativeDirection);
 
                 try
                 {
@@ -276,7 +276,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
                 gestureEventArgs.SetParams(interactor, activePriorityInteractable,
                                            gestureState, timeDelta, state.startTime, state.startPosition,
-                                           cumilativeDirection, cumilativeDistance, delta,
+                                           cumulativeDirection, cumulativeDistance, delta,
                                            currentTrackingInteractable, currentPosition);
 
                 try
@@ -318,7 +318,7 @@ namespace ubco.ovilab.HPUI.Interaction
             public bool active,
                 selectableTarget;
             public float minDistanceToInteractor;
-            public float huristic;
+            public float heuristic;
 
             public HPUIInteractionState()
             {
@@ -327,7 +327,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.active = true;
                 this.selectableTarget = false;
                 this.minDistanceToInteractor = float.MaxValue;
-                this.huristic = float.MaxValue;
+                this.heuristic = float.MaxValue;
             }
         }
     }

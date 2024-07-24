@@ -59,7 +59,7 @@ namespace ubco.ovilab.HPUI.Interaction
 	}
 
         /// <summary>
-        /// Setup and return colliders. A collider will be placed on each vertice of the <see cref="SkinnedMeshRenderer"/>.
+        /// Setup and return colliders. A collider will be placed on each vertex of the <see cref="SkinnedMeshRenderer"/>.
         /// </summary>
         public List<Collider> SetupColliders(Transform collidersRootTransform)
         {
@@ -102,7 +102,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <summary>
-        /// Return the (appoximate) point on the surface of where the collider is.
+        /// Return the (approximate) point on the surface of where the collider is.
         /// The returned Vector2 - (x, z) on the xz-plane. This is relative to the
         /// center of the surface.
         /// </summary>
@@ -212,7 +212,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         struct DeformedCollidersJob: IJobParallelForTransform
         {
-            private Vector3 right, forward, temppos, _scaleFactor;
+            private Vector3 right, forward, tempPos, _scaleFactor;
             public Vector3 scaleFactor;
             public float gridSize; 
             public int maxX, maxY;
@@ -224,9 +224,9 @@ namespace ubco.ovilab.HPUI.Interaction
 	
             public void Execute(int i, TransformAccess btn)
             {
-                temppos = vertices[i];
-                temppos.z += -0.0002f;
-                btn.localPosition = temppos;
+                tempPos = vertices[i];
+                tempPos.z += -0.0002f;
+                btn.localPosition = tempPos;
 
                 if (i > maxX)
                     forward = vertices[i] - vertices[i - maxX];
