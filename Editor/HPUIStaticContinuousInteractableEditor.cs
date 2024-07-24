@@ -12,11 +12,13 @@ namespace ubco.ovilab.HPUI.Editor
         private HPUIStaticContinuousInteractable t;
         private SerializedProperty staticMesh;
         private SerializedProperty meshXResolution;
+        private SerializedProperty flippedAndNormalisedCoords;
         
         protected override List<string> EventPropertyNames => base.EventPropertyNames.Union(new List<string>()
         {
             "staticMesh",
-            "meshXResolution"
+            "meshXResolution",
+            "flippedAndNormalisedCoords"
         }).ToList();
         
         protected override void OnEnable()
@@ -25,6 +27,7 @@ namespace ubco.ovilab.HPUI.Editor
             t = (HPUIStaticContinuousInteractable)target;
             staticMesh = serializedObject.FindProperty("staticHPUIMesh");
             meshXResolution = serializedObject.FindProperty("meshXResolution");
+            flippedAndNormalisedCoords = serializedObject.FindProperty("flippedAndNormalisedCoords");
         }
 
         protected override void DrawProperties()
@@ -34,6 +37,7 @@ namespace ubco.ovilab.HPUI.Editor
             EditorGUILayout.LabelField("Static Mesh Configurations", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(staticMesh);
             EditorGUILayout.PropertyField(meshXResolution);
+            EditorGUILayout.PropertyField(flippedAndNormalisedCoords);
         }
     }
 }
