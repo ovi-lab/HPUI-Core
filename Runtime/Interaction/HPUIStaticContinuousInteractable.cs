@@ -7,7 +7,7 @@ namespace ubco.ovilab.HPUI.Interaction
     public class HPUIStaticContinuousInteractable : HPUIBaseInteractable
     {
         [SerializeField] private SkinnedMeshRenderer staticHPUIMesh;
-        
+        [SerializeField] bool flippedAndNormalisedCoords;
         [SerializeField] private int meshXResolution;
         
         private StaticMeshCollidersManager collidersManager;
@@ -31,7 +31,8 @@ namespace ubco.ovilab.HPUI.Interaction
         public override Vector2 ComputeInteractorPosition(IHPUIInteractor interactor)
         {
             DistanceInfo distanceInfo = GetDistanceOverride(this, interactor.GetCollisionPoint(this));
-            return collidersManager.GetSurfacePointForCollider(distanceInfo.collider, true);
+            flippedAndNormalisedCoords = true;
+            return collidersManager.GetSurfacePointForCollider(distanceInfo.collider, flippedAndNormalisedCoords);
         }
     }
 }
