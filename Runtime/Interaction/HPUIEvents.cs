@@ -54,7 +54,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public Vector3 hoverPoint { get; set; }
 
         /// <summary>
-        /// The location of the attach transform.
+        /// The location of the attachTransform.
         /// <seealso cref="XRBaseInteractor.GetAttachTransform"/>
         /// </summary>
         public Vector3 attachPoint { get; set; }
@@ -98,7 +98,7 @@ namespace ubco.ovilab.HPUI.Interaction
     }
 
     /// <summary>
-    /// Event data associated with an gesture interaction on HPUI
+    /// Event data associated with a gesture interaction on HPUI
     /// </summary>
     public class HPUIInteractionEventArgs: BaseInteractionEventArgs
     {
@@ -139,7 +139,7 @@ namespace ubco.ovilab.HPUI.Interaction
     {}
 
     /// <summary>
-    /// Event data associated with an tap gesture interaction on HPUI
+    /// Event data associated with a tap gesture interaction on HPUI
     /// </summary>
     public class HPUITapEventArgs: HPUIInteractionEventArgs
     {}
@@ -158,8 +158,8 @@ namespace ubco.ovilab.HPUI.Interaction
         public float TimeDelta { get; private set; }
         public float StartTime { get; private set; }
         public Vector2 StartPosition { get; private set; }
-        public Vector2 CumilativeDirection { get; private set; }
-        public float CumilativeDistance { get; private set; }
+        public Vector2 CumulativeDirection { get; private set; }
+        public float CumulativeDistance { get; private set; }
         public Vector2 DeltaDirection { get; private set; }
         public IHPUIInteractable CurrentTrackingInteractable{ get; private set; }
         public Vector2 CurrentTrackingInteractablePoint { get; private set; }
@@ -170,16 +170,16 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUIGestureState state, float timeDelta, float startTime,
-                              Vector2 startPosition, Vector2 cumilativeDirection, float cumilativeDistance, Vector2 deltaDirection,
+                              Vector2 startPosition, Vector2 cumulativeDirection, float cumulativeDistance, Vector2 deltaDirection,
                               IHPUIInteractable currentTrackingInteractable, Vector2 currentTrackingInteractablePoint)
         {
-            base.SetParams(interactor, interactable, startPosition + cumilativeDirection);
+            base.SetParams(interactor, interactable, startPosition + cumulativeDirection);
             State = state;
             TimeDelta = timeDelta;
             StartTime = startTime;
             StartPosition = startPosition;
-            CumilativeDirection = cumilativeDirection;
-            CumilativeDistance = cumilativeDistance;
+            CumulativeDirection = cumulativeDirection;
+            CumulativeDistance = cumulativeDistance;
             DeltaDirection = deltaDirection;
             CurrentTrackingInteractable = currentTrackingInteractable;
             CurrentTrackingInteractablePoint = currentTrackingInteractablePoint;

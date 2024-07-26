@@ -81,7 +81,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// The time threshold at which an interaction would be treated as a gesture.
         /// That is, if the interactor is in contact with an
         /// interactable for more than this threshold, it would be
-        /// treated as as gesture.
+        /// treated as a gesture.
         /// </summary>
         public float TapTimeThreshold
         {
@@ -99,8 +99,8 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// The distance threshold at which an interaction would be treated as a gesture.
         /// That is, if the interactor has moved more than this value
-        /// after coming into contact with a interactable, it would be
-        /// treated as as gesture.
+        /// after coming into contact with an interactable, it would be
+        /// treated as a gesture.
         /// </summary>
         public float TapDistanceThreshold
         {
@@ -156,20 +156,20 @@ namespace ubco.ovilab.HPUI.Interaction
         public HPUIHoverUpdateEvent HoverUpdateEvent { get => hoverUpdateEvent; set => hoverUpdateEvent = value; }
 
         [SerializeField]
-        [Tooltip("Interation hover radius.")]
+        [Tooltip("Interaction hover radius.")]
         private float interactionHoverRadius = 0.015f;
 
         /// <summary>
-        /// Interation hover radius.
+        /// Interaction hover radius.
         /// </summary>
         public float InteractionHoverRadius { get => interactionHoverRadius; set => interactionHoverRadius = value; }
 
         [SerializeField]
-        [Tooltip("Interation select radius.")]
+        [Tooltip("Interaction select radius.")]
         private float interactionSelectionRadius = 0.015f;
 
         /// <summary>
-        /// Interation selection radius.
+        /// Interaction selection radius.
         /// </summary>
         public float InteractionSelectionRadius
         {
@@ -186,7 +186,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private bool selectOnlyPriorityTarget = true;
 
         /// <summary>
-        /// If true, select only happens for the target with highest priority.
+        /// If true, select only happens for the target with the highest priority.
         /// </summary>
         public bool SelectOnlyPriorityTarget { get => selectOnlyPriorityTarget; set => selectOnlyPriorityTarget = value; }
 
@@ -280,7 +280,7 @@ namespace ubco.ovilab.HPUI.Interaction
             XRHandJointID.ThumbTip
         };
 
-        private Dictionary<XRHandJointID, List<XRHandJointID>> tarckedJointsToRelatedFingerJoints = new ()
+        private Dictionary<XRHandJointID, List<XRHandJointID>> trackedJointsToRelatedFingerJoints = new ()
         {
             {XRHandJointID.IndexProximal, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
             {XRHandJointID.IndexIntermediate, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
@@ -300,7 +300,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {XRHandJointID.LittleTip, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
         };
 
-        private bool recievedNewJointData = false,
+        private bool receivedNewJointData = false,
             flipZAngles = false;
 
         // FIXME: debug code
@@ -337,7 +337,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
             }
 
-            // Avoid null ref exception before hand tracking gets going
+            // Avoid null ref exception before the hand tracking module gets going
             activeFingerAngles = allAngles;
 
             foreach(XRHandJointID id in trackedJoints)
@@ -364,7 +364,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 if ( args.hand.GetJoint(id).TryGetPose(out Pose pose) )
                 {
                     jointLocations[id] = xrOriginTransform.TransformPoint(pose.position);
-                    recievedNewJointData = true;
+                    receivedNewJointData = true;
                 }
             }
         }
@@ -426,9 +426,9 @@ namespace ubco.ovilab.HPUI.Interaction
                     switch(RayCastTechnique)
                     {
                         case RayCastTechniqueEnum.Cone:
-                            if (recievedNewJointData)
+                            if (receivedNewJointData)
                             {
-                                recievedNewJointData = false;
+                                receivedNewJointData = false;
                                 Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip];
                                 XRHandJointID activeFinger = (trackedJoints
                                          .Where(j => j != XRHandJointID.ThumbTip)
@@ -454,9 +454,9 @@ namespace ubco.ovilab.HPUI.Interaction
                             cachedDirections = directions;
                             break;
                         case RayCastTechniqueEnum.SegmentVector:
-                            if (recievedNewJointData)
+                            if (receivedNewJointData)
                             {
-                                recievedNewJointData = false;
+                                receivedNewJointData = false;
                                 Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip];
                                 var activePhalanges = (trackedJoints
                                                        .Where(j => j != XRHandJointID.ThumbTip)
@@ -467,8 +467,8 @@ namespace ubco.ovilab.HPUI.Interaction
                                                            })
                                                        .OrderBy(el => el.dist));
                                 var firstItem = activePhalanges.First();
-                                List<XRHandJointID> relatedFignerJoints = tarckedJointsToRelatedFingerJoints[firstItem.item];
-                                var secondItem = activePhalanges.Where(el => el.item != firstItem.item && relatedFignerJoints.Contains(el.item)).First();
+                                List<XRHandJointID> relatedFingerJoints = trackedJointsToRelatedFingerJoints[firstItem.item];
+                                var secondItem = activePhalanges.Where(el => el.item != firstItem.item && relatedFingerJoints.Contains(el.item)).First();
                                 Vector3 segmentVectorNormalized = (firstItem.pos - secondItem.pos).normalized;
                                 Vector3 point = Vector3.Dot((thumbTipPos - secondItem.pos), segmentVectorNormalized) * segmentVectorNormalized + secondItem.pos;
                                 o1.position = firstItem.pos;
@@ -518,9 +518,9 @@ namespace ubco.ovilab.HPUI.Interaction
                                             direction,
                                             out RaycastHit hitInfo,
                                             InteractionHoverRadius,
-                                            // FIXME: physics layers should be allowed to be set in inpsector
+                                            // FIXME: physics layers should be allowed to be set in inspector
                                             Physics.AllLayers,
-                                            // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                                            // FIXME: QueryTriggerInteraction should be allowed to be set in inspector
                                             QueryTriggerInteraction.Ignore))
                         {
                             if (interactionManager.TryGetInteractableForCollider(hitInfo.collider, out var interactable) &&
@@ -556,7 +556,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     foreach (KeyValuePair<IHPUIInteractable, List<InteractionInfo>> kvp in tempValidTargets)
                     {
                         InteractionInfo smallest = kvp.Value.OrderBy(el => el.distance).First();
-                        smallest.huristic = 1 / kvp.Value.Count;
+                        smallest.heuristic = 1 / kvp.Value.Count;
                         foreach(InteractionInfo i in kvp.Value)
                         {
                             xEndPoint += i.point.x;
@@ -580,9 +580,9 @@ namespace ubco.ovilab.HPUI.Interaction
                         interactionPoint,
                         InteractionHoverRadius,
                         overlapSphereHits,
-                        // FIXME: physics layers should be allowed to be set in inpsector
+                        // FIXME: physics layers should be allowed to be set in inspector
                         Physics.AllLayers,
-                        // FIXME: QueryTriggerInteraction should be allowed to be set in inpsector
+                        // FIXME: QueryTriggerInteraction should be allowed to be set in inspector
                         QueryTriggerInteraction.Ignore);
 
                     float shortestInteractableDist = float.MaxValue;
@@ -618,7 +618,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
                 finally
                 {
-                    gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.huristic)));
+                    gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic)));
 
                     if (data != null)
                     {
@@ -690,8 +690,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 gestureLogic.Dispose();
             }
 
-            // If using raycast, use huristic
-            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHuristic: useRayCast);
+            // If using raycast, use heuristic
+            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHeuristic: useRayCast);
         }
 
         #region IHPUIInteractor interface
@@ -722,13 +722,13 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             public float distance;
             public Vector3 point;
-            public float huristic;
+            public float heuristic;
 
-            public InteractionInfo(float distance, Vector3 point, float huristic=0) : this()
+            public InteractionInfo(float distance, Vector3 point, float heuristic=0) : this()
             {
                 this.distance = distance;
                 this.point = point;
-                this.huristic = huristic;
+                this.heuristic = heuristic;
             }
         }
     }

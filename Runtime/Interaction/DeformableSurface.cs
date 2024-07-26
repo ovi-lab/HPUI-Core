@@ -12,7 +12,7 @@ namespace ubco.ovilab.HPUI.Interaction
     {
         /// <summary>
         /// The main method to generate mesh. This will generate a
-        /// mesh to match the parameters passed and setup the <see
+        /// mesh to match the parameters passed and set up the <see
         /// cref="SkinnedMeshRenderer"/>.
         /// </summary>
         /// <param name="x_size">
@@ -74,7 +74,7 @@ namespace ubco.ovilab.HPUI.Interaction
             // Create an array that describes the number of bone weights per vertex
             byte[] bonesPerVertex = Enumerable.Repeat<byte>(numberOfBonesPerVertex, vertices.Count).ToArray();
 
-            // Create a array with one BoneWeight1 struct for each of the <numberofbonespervertex> bone weights
+            // Create an array with one BoneWeight1 struct for each of the <numberOfBonesPerVertex> bone weights
             List<BoneWeight1> weights = new List<BoneWeight1>();
 
             for (int i = 0; i < vertices.Count; i++)

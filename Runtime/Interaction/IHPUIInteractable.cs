@@ -33,7 +33,7 @@ namespace ubco.ovilab.HPUI.Interaction
         Vector2 boundsMin { get; }
 
         /// <summary>
-        /// Get the projection of the interactors position on the xz plane of this interactable.
+        /// Get the projection of the interactor position on the xz plane of this interactable.
         /// the returned Vector2 - (x, z) on the xz-plane, relative to the center of the
         /// interactable in Unity units.
         /// </summary>

@@ -1,5 +1,5 @@
 # HPUI-Core
-This provides pacakge for using Hand Proximate User Interfaces (HPUI).
+This provides package for using Hand Proximate User Interfaces (HPUI).
 
 For the documentation visit https://ovi-lab.github.io/HPUI-Core
 

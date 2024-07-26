@@ -111,7 +111,7 @@ namespace ubco.ovilab.HPUI.Tracking
         }
 
         /// <summary>
-        /// Apply data recieved to the transform.
+        /// Apply data received to the transform.
         /// </summary>
         protected abstract void ProcessJointData(XRHandSubsystem subsystem);
     }

@@ -59,7 +59,7 @@ namespace ubco.ovilab.HPUI.Tracking
         /// </summary>
         protected void OnValidate()
         {
-            // Reset cachedradius when anything changes on the editor
+            // Reset cachedRadius when anything changes on the editor
             cachedRadius = 0;
         }
 
@@ -70,7 +70,7 @@ namespace ubco.ovilab.HPUI.Tracking
         {
             if (jointFollowerData.Value == null)
             {
-                Debug.LogError($"jointFollowerData is not set. Not subscribgin to events");
+                Debug.LogError($"jointFollowerData is not set. Not subscribing to events");
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace ubco.ovilab.HPUI.Tracking
         }
 
         /// <summary>
-        /// Apply data recieved to the transform.
+        /// Apply data received to the transform.
         /// </summary>
         protected override void ProcessJointData(XRHandSubsystem subsystem)
         {
@@ -106,7 +106,7 @@ namespace ubco.ovilab.HPUI.Tracking
             }
             else
             {
-                Debug.LogError($"Handedness value in JointFollerData not valid (got {jointFollowerData.Value.handedness}), disabling JointFollower.");
+                Debug.LogError($"Handedness value in JointFollowerData not valid (got {jointFollowerData.Value.handedness}), disabling JointFollower.");
                 this.enabled = false;
                 return;
             }
@@ -172,10 +172,10 @@ namespace ubco.ovilab.HPUI.Tracking
                 jointPlaneOffset = Quaternion.AngleAxis(jointFollowerDataValue.offsetAngle, poseForward) * -mainJointPose.up;
             }
 
-            Vector3 jointLongitudianlOffset = secondPoseSuccess ? (secondJointPose.position - mainJointPose.position) * jointFollowerDataValue.longitudinalOffset : poseForward * jointFollowerDataValue.longitudinalOffset;
+            Vector3 jointLongitudinalOffset = secondPoseSuccess ? (secondJointPose.position - mainJointPose.position) * jointFollowerDataValue.longitudinalOffset : poseForward * jointFollowerDataValue.longitudinalOffset;
 
             TargetTransform.rotation = Quaternion.LookRotation(poseForward, jointPlaneOffset);
-            TargetTransform.position = mainJointPose.position + jointPlaneOffset * (cachedRadius * jointFollowerDataValue.offsetAsRatioToRadius) + jointLongitudianlOffset;
+            TargetTransform.position = mainJointPose.position + jointPlaneOffset * (cachedRadius * jointFollowerDataValue.offsetAsRatioToRadius) + jointLongitudinalOffset;
         }
     }
 }
