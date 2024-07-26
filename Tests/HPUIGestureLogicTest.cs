@@ -121,7 +121,7 @@ namespace ubco.ovilab.HPUI.Tests
             HPUIGestureLogic logic = new HPUIGestureLogic(new HPUIInteractor(), TapTimeThreshold, TapDistanceThreshold, SelectionRadius, false);
             Dictionary<IHPUIInteractable, HPUIInteractionData> updates = new Dictionary<IHPUIInteractable, HPUIInteractionData>();
 
-            // The intertaction doesn't reach radius.
+            // The interaction doesn't reach radius.
             Reset();
             i1.Reset();
 
@@ -332,11 +332,11 @@ namespace ubco.ovilab.HPUI.Tests
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
             Assert.AreEqual(lastGestureInteractable, i1);
-            Assert.Greater(i1.swipCalled, 0);
-            Assert.AreEqual(i2.swipCalled, 0);
+            Assert.Greater(i1.gestureCalled, 0);
+            Assert.AreEqual(i2.gestureCalled, 0);
         }
 
-        // Anything ouside the priority window should not get selected
+        // Anything outside the priority window should not get selected
         [UnityTest]
         public IEnumerator HPUIGestureLogicTest_TwoItem_gesture_priority_window()
         {
@@ -364,8 +364,8 @@ namespace ubco.ovilab.HPUI.Tests
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
             Assert.AreEqual(lastGestureInteractable, i1);
-            Assert.Greater(i1.swipCalled, 0);
-            Assert.AreEqual(i2.swipCalled, 0);
+            Assert.Greater(i1.gestureCalled, 0);
+            Assert.AreEqual(i2.gestureCalled, 0);
         }
 
         // When an event is not handled, hand over to next item in the priority list
@@ -408,11 +408,11 @@ namespace ubco.ovilab.HPUI.Tests
             Assert.AreEqual(tapsCount, 0);
             Assert.Greater(gesturesCount, 0);
             Assert.AreEqual(lastGestureInteractable, i1);
-            Assert.AreEqual(i2.swipCalled, 0);
-            Assert.Greater(i1.swipCalled, 0);
+            Assert.AreEqual(i2.gestureCalled, 0);
+            Assert.Greater(i1.gestureCalled, 0);
         }
 
-        //There can be instances where the event is not hanled by any interactable
+        //There can be instances where the event is not handled by any interactable
         [UnityTest]
         public IEnumerator HPUIGestureLogicTest_TwoItem_gesture_no_handle_events()
         {

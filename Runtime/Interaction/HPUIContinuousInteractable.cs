@@ -138,7 +138,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <summary>
-        /// Setup the list of keypoints to be used for the <see cref="SkinnedMeshRenderer"/>.
+        /// Set up the list of keypoints to be used for the <see cref="SkinnedMeshRenderer"/>.
         /// </summary>
         internal void SetupKeypoints()
         {
@@ -271,7 +271,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
             colliders.AddRange(generatedColliders);
 
-            // Forcing regsitration of interactable to run
+            // Forcing registration of interactable to run
             OnDisable();
             OnEnable();
 

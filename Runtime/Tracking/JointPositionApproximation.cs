@@ -35,11 +35,11 @@ namespace ubco.ovilab.HPUI.Tracking
         };
 
         private Handedness handedness;
-        private Dictionary<XRHandJointID, (float mean, float mae, bool stable)> jointsLengthEsitmation = new Dictionary<XRHandJointID, (float, float, bool)>();
+        private Dictionary<XRHandJointID, (float mean, float mae, bool stable)> jointsLengthEstimation = new Dictionary<XRHandJointID, (float, float, bool)>();
         private Dictionary<XRHandJointID, Queue<float>> jointsLastLengths = new Dictionary<XRHandJointID, Queue<float>>();
         private Dictionary<XRHandJointID, (Queue<Vector3> positions, Pose pose, bool stable)> computeKeypointJointsData = new Dictionary<XRHandJointID, (Queue<Vector3> poses, Pose pose, bool stable)>();
         private Pose lastWristPose;
-        private bool recievedLastWristPose = false;
+        private bool receivedLastWristPose = false;
 
         private ApproximationComputeState approximationComputeState = ApproximationComputeState.Starting;
         private JointFollower jointFollower;
@@ -69,10 +69,10 @@ namespace ubco.ovilab.HPUI.Tracking
                 {
                     XRHandJointID jointID = XRHandJointIDUtility.FromIndex(i);
 
-                    if (!jointsLengthEsitmation.TryGetValue(jointID, out (float mean, float mae, bool stable) estimations))
+                    if (!jointsLengthEstimation.TryGetValue(jointID, out (float mean, float mae, bool stable) estimations))
                     {
                         estimations = (float.MaxValue, float.MaxValue, false);
-                        jointsLengthEsitmation.Add(jointID, estimations);
+                        jointsLengthEstimation.Add(jointID, estimations);
                     }
 
                     if (estimations.stable)
@@ -107,7 +107,7 @@ namespace ubco.ovilab.HPUI.Tracking
                         float mean = jointLastLengths.Average();
                         float mae = jointLastLengths.Sum(v => Mathf.Abs(v - mean)) / jointLastLengths.Count;
 
-                        jointsLengthEsitmation[jointID] = (mean, mae, jointLastLengths.Count == windowSize ? mae < maeThreshold : false);
+                        jointsLengthEstimation[jointID] = (mean, mae, jointLastLengths.Count == windowSize ? mae < maeThreshold : false);
                     }
                 }
             }
@@ -115,7 +115,7 @@ namespace ubco.ovilab.HPUI.Tracking
             // Compute the poses of the keypoints
             if (hand.GetJoint(XRHandJointID.Wrist).TryGetPose(out lastWristPose))
             {
-                recievedLastWristPose = true;
+                receivedLastWristPose = true;
 
                 foreach (XRHandJointID jointID in computeKeypointsJoints)
                 {
@@ -164,18 +164,18 @@ namespace ubco.ovilab.HPUI.Tracking
             percentageDone = 0;
 
             // Was just initiated
-            if (jointsLengthEsitmation.Count == 0)
+            if (jointsLengthEstimation.Count == 0)
             {
                 return false;
             }
 
             // Checking of all joints
             // FIXME: Optimization - Avoid computing for all joints if not necessary
-            float jointLengthsStableRatio = (float)jointsLengthEsitmation.Where(kvp => kvp.Value.stable).Count() / (float)windowSize;
+            float jointLengthsStableRatio = (float)jointsLengthEstimation.Where(kvp => kvp.Value.stable).Count() / (float)windowSize;
             float computeKeypointsStableRatio = (float)computeKeypointJointsData.Where(kvp => kvp.Value.stable).Count() / (float)windowSize;
 
             percentageDone = (jointLengthsStableRatio + computeKeypointsStableRatio) * 0.5f;
-            if (jointLengthsStableRatio == 1 || computeKeypointsStableRatio == 1 || !recievedLastWristPose)
+            if (jointLengthsStableRatio == 1 || computeKeypointsStableRatio == 1 || !receivedLastWristPose)
             {
                 return false;
             }
@@ -207,7 +207,7 @@ namespace ubco.ovilab.HPUI.Tracking
             Vector3 handNormal = dummyXROriginTransform.TransformDirection(lastWristPose.up);
             Pose anchorPose;
             // If only one finger, the orientation can match the corresponding finger's proximal orientation.
-            // If not use the middle proximal's orientation.
+            // If not use the  orientation of middle proximal.
             if (usedFingers.Count == 1)
             {
                 anchorPose = computeKeypointJointsData[XRHandJointIDUtility.FromIndex(usedFingers[0].GetFrontJointID().ToIndex() + 1)].pose;
@@ -242,7 +242,7 @@ namespace ubco.ovilab.HPUI.Tracking
                     }
                     else
                     {
-                        currentPos += forward.normalized * jointsLengthEsitmation[jointID].mean;
+                        currentPos += forward.normalized * jointsLengthEstimation[jointID].mean;
                     }
 
                     if (keypoints.Contains(jointID))
@@ -258,13 +258,13 @@ namespace ubco.ovilab.HPUI.Tracking
         }
 
         /// <summary>
-        /// Restart the automated compuation procedure.
+        /// Restart the automated computation procedure.
         /// </summary>
         public void AutomatedRecompute()
         {
             approximationComputeState = ApproximationComputeState.Starting;
             computeKeypointJointsData.Clear();
-            jointsLengthEsitmation.Clear();
+            jointsLengthEstimation.Clear();
             jointsLastLengths.Clear();
             computeKeypointJointsData.Clear();
         }
@@ -277,7 +277,7 @@ namespace ubco.ovilab.HPUI.Tracking
             jointFollower = GetComponent<JointFollower>();
             continuousInteractable = GetComponent<HPUIContinuousInteractable>();
 
-            // FIXME: figure out a better way for this socery!
+            // FIXME: figure out a better way for this sorcery!
             if (jointFollower != null && continuousInteractable != null)
             {
                 handedness = jointFollower.Handedness;

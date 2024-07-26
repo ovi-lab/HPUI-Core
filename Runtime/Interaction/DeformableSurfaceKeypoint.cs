@@ -18,9 +18,9 @@ namespace ubco.ovilab.HPUI.Interaction
         public JointFollowerDatumProperty jointFollowerData;
         public Transform jointTransform;
 
-        public DeformableSurfaceKeypoint(KeypointsOptions kepointType, XRHandJointID jointID = XRHandJointID.Invalid, JointFollowerDatumProperty jointFollowerData = null, Transform jointTransform = null)
+        public DeformableSurfaceKeypoint(KeypointsOptions keypointType, XRHandJointID jointID = XRHandJointID.Invalid, JointFollowerDatumProperty jointFollowerData = null, Transform jointTransform = null)
         {
-            this.keypointType = kepointType;
+            this.keypointType = keypointType;
             this.jointID = jointID;
             this.jointFollowerData = jointFollowerData;
             this.jointTransform = jointTransform;
