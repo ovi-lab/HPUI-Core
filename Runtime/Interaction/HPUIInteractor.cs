@@ -397,7 +397,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         protected void OnValidate()
         {
-            if (Application.isPlaying && activeInHierarchy)
+            if (Application.isPlaying && gameObject.activeInHierarchy)
             {
                 UpdateLogic();
                 UpdateVisuals();
