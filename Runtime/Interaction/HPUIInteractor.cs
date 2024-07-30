@@ -9,6 +9,7 @@ using UnityEngine.XR.Interaction.Toolkit.Utilities;
 using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;
 using UnityEngine.Pool;
+using System;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -131,6 +132,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 rayCastTechnique = value;
                 UpdateLogic();
+                UpdateRayCastTechnique();
             }
         }
 
@@ -242,7 +244,15 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Ray configuration for FullRange ray technique
         /// </summary>
-        public RayAngleParams FullRangeRayParameters { get => fullRangeRayParameters; set => fullRangeRayParameters = value; }
+        public RayAngleParams FullRangeRayParameters
+        {
+            get => fullRangeRayParameters;
+            set
+            {
+                fullRangeRayParameters = value;
+                UpdateRayCastTechnique();
+            }
+        }
 
         [SerializeField]
         [Tooltip("Ray configuration for Segment Vector ray technique")]
@@ -251,7 +261,15 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Ray configuration for Segment Vector ray technique.
         /// </summary>
-        public RayAngleParams SegmentVectorRayParameters { get => segmentVectorRayParameters; set => segmentVectorRayParameters = value; }
+        public RayAngleParams SegmentVectorRayParameters
+        {
+            get => segmentVectorRayParameters;
+            set
+            {
+                segmentVectorRayParameters = value;
+                UpdateRayCastTechnique();
+            }
+        }
 
         protected IHPUIGestureLogic gestureLogic;
         private Dictionary<IHPUIInteractable, InteractionInfo> validTargets = new Dictionary<IHPUIInteractable, InteractionInfo>();
@@ -328,18 +346,6 @@ namespace ubco.ovilab.HPUI.Interaction
             physicsScene = gameObject.scene.GetPhysicsScene();
             UpdateLogic();
 
-            allAngles = new List<HPUIInteractorRayAngle>();
-            for (int x = FullRangeRayParameters.minAngle; x <= FullRangeRayParameters.maxAngle; x = x + FullRangeRayParameters.angleStep)
-            {
-                for (int z = FullRangeRayParameters.minAngle; z <= FullRangeRayParameters.maxAngle; z = z + FullRangeRayParameters.angleStep)
-                {
-                    allAngles.Add(new HPUIInteractorRayAngle(x, z));
-                }
-            }
-
-            // Avoid null ref exception before the hand tracking module gets going
-            activeFingerAngles = allAngles;
-
             foreach(XRHandJointID id in trackedJoints)
             {
                 jointLocations.Add(id, Vector3.zero);
@@ -355,6 +361,13 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
             }
             xrHandTrackingEvents.jointsUpdated.AddListener(UpdateJointsData);
+        }
+
+        /// <inheritdoc />
+        protected override void Start()
+        {
+            base.Start();
+            UpdateRayCastTechnique();
         }
 
         protected void UpdateJointsData(XRHandJointsUpdatedEventArgs args)
@@ -384,10 +397,11 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         protected void OnValidate()
         {
-            if (Application.isPlaying)
+            if (Application.isPlaying && activeInHierarchy)
             {
                 UpdateLogic();
                 UpdateVisuals();
+                UpdateRayCastTechnique();
             }
         }
 #endif
@@ -471,9 +485,6 @@ namespace ubco.ovilab.HPUI.Interaction
                                 var secondItem = activePhalanges.Where(el => el.item != firstItem.item && relatedFingerJoints.Contains(el.item)).First();
                                 Vector3 segmentVectorNormalized = (firstItem.pos - secondItem.pos).normalized;
                                 Vector3 point = Vector3.Dot((thumbTipPos - secondItem.pos), segmentVectorNormalized) * segmentVectorNormalized + secondItem.pos;
-                                o1.position = firstItem.pos;
-                                o2.position = secondItem.pos;
-                                o3.position = point;
 
                                 Vector3 up = point - thumbTipPos;
                                 Vector3 right = Vector3.Cross(up, attachTransform.forward);
@@ -692,6 +703,57 @@ namespace ubco.ovilab.HPUI.Interaction
 
             // If using raycast, use heuristic
             gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHeuristic: useRayCast);
+        }
+
+        /// <summary>
+        /// Method called for setup related to ray cast technique
+        /// </summary>
+        protected void UpdateRayCastTechnique()
+        {
+            allAngles = new List<HPUIInteractorRayAngle>();
+
+            switch (rayCastTechnique)
+            {
+                case RayCastTechniqueEnum.FullRange:
+                    if (FullRangeRayParameters.minAngle == 0 && FullRangeRayParameters.maxAngle == 0)
+                    {
+                        throw new InvalidOperationException("Full Range Vector Ray Parameters not configured!");
+                    }
+
+                    if (FullRangeRayParameters.angleStep == 0)
+                    {
+                        throw new InvalidOperationException("Full Range Vector Ray Parameters angle step is 0!");
+                    }
+
+                    for (int x = FullRangeRayParameters.minAngle; x <= FullRangeRayParameters.maxAngle; x = x + FullRangeRayParameters.angleStep)
+                    {
+                        for (int z = FullRangeRayParameters.minAngle; z <= FullRangeRayParameters.maxAngle; z = z + FullRangeRayParameters.angleStep)
+                        {
+                            allAngles.Add(new HPUIInteractorRayAngle(x, z));
+                        }
+                    }
+                    break;
+                case RayCastTechniqueEnum.SegmentVector:
+                    if (SegmentVectorRayParameters.minAngle == 0 && SegmentVectorRayParameters.maxAngle == 0)
+                    {
+                        throw new InvalidOperationException("Segment Vector Range Vector Ray Parameters not configured!");
+                    }
+
+                    if (SegmentVectorRayParameters.angleStep == 0)
+                    {
+                        throw new InvalidOperationException("Segment Vector Vector Ray Parameters angle step is 0!");
+                    }
+                    break;
+                case RayCastTechniqueEnum.Cone:
+                    if (ConeRayAngles == null)
+                    {
+                        throw new InvalidOperationException("Cone Ray Angles cannot be empty when using Cone");
+                    }
+                    break;
+            }
+
+            // Avoid null ref exception before the hand tracking module gets going
+            activeFingerAngles = allAngles;
         }
 
         #region IHPUIInteractor interface
