@@ -37,8 +37,8 @@ namespace ubco.ovilab.HPUI.Interaction
         public float YWidth => yWidth;
         public float OffsetX => offsetX;
         public float OffsetY => offsetY;
-        public float MeshXResolution => meshXResolution;
-        public float MeshYResolution => meshYResolution;
+        public int MeshXResolution => meshXResolution;
+        public int MeshYResolution => meshYResolution;
 
         private void Update()
         {
