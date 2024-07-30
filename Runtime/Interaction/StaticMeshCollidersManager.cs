@@ -28,9 +28,17 @@ namespace ubco.ovilab.HPUI.Interaction
         private SkinnedMeshRenderer targetMesh;
         private bool generatedColliders;
         private float scaleFactor = 0.001f;
-        private int meshXResolution, meshYRes;
+        private int meshXResolution, meshYResolution;
+        private float xWidth, yWidth, offsetX, offsetY;
         private Dictionary<Collider, Vector2> colliderCoords = new Dictionary<Collider, Vector2>();
         private Dictionary<Collider, Vector2> colliderCoordsNormalisedAndFlipped = new Dictionary<Collider, Vector2>();
+        
+        public float XWidth => xWidth;
+        public float YWidth => yWidth;
+        public float OffsetX => offsetX;
+        public float OffsetY => offsetY;
+        public float MeshXResolution => meshXResolution;
+        public float MeshYResolution => meshYResolution;
 
         private void Update()
         {
@@ -74,11 +82,13 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 throw new Exception("Total vertex count doesn't divide properly with X mesh resolution!");
             }
-            meshYRes = vertices.Count / meshXResolution;
-            float xWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[1]]);
-            float yWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[meshXResolution]]);
-            float offsetX = xWidth * meshXResolution * 0.5f;
-            float offsetY = yWidth * meshYRes * 0.5f;
+            meshYResolution = vertices.Count / meshXResolution;
+            
+            xWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[1]]);
+            yWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[meshXResolution]]);
+            
+            offsetX = xWidth * meshXResolution * 0.5f;
+            offsetY = yWidth * meshYResolution * 0.5f;
             Transform[] colliderTransforms = new Transform[vertices.Count];
             Transform meshTransform = targetMesh.gameObject.transform;
             InitCollidersState(meshTransform, xWidth, yWidth, colliderTransforms, offsetX, offsetY);
@@ -108,31 +118,18 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderGameObject.transform.localScale = targetScale;
                 colliderGameObject.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
                 colliderTransforms[i] = colliderGameObject.transform;
-                Vector2 coords = new Vector2((float)((meshXResolution - 1) - x)/meshXResolution, (float)((meshYRes - 1) - y)/meshYRes);
+                Vector2 coords = new Vector2((float)((meshXResolution - 1) - x)/meshXResolution, (float)((meshYResolution - 1) - y)/meshYResolution);
                 colliderCoordsNormalisedAndFlipped.Add(col, coords);
                 coords = new Vector2(xWidth * x - offsetX, yWidth * y - offsetY);
                 colliderCoords.Add(col, coords);
             }
         }
 
-        public Vector2 GetSurfacePointForCollider(Collider col, bool flippedAndNormalisedCoords = false)
+        public Vector2 GetSurfacePointForCollider(Collider col)
         {
-            Vector2 coordsForCol;
-            if (flippedAndNormalisedCoords)
+            if (!colliderCoords.TryGetValue(col, out Vector2 coordsForCol))
             {
-                if (!colliderCoordsNormalisedAndFlipped.TryGetValue(col, out coordsForCol))
-                {
-                    throw new ArgumentException("Unknown {collider.name}");
-                }
-
-            }
-            else
-            {
-                if (!colliderCoords.TryGetValue(col, out coordsForCol))
-                {
-                    throw new ArgumentException("Unknown {collider.name}");
-                }
-
+                throw new ArgumentException("Unknown {collider.name}");
             }
             return coordsForCol;
         }
@@ -152,7 +149,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 Vertices = vertices_native,
                 RemappedIndices = remapped_vertices_data,
                 MaxX = meshXResolution,
-                MaxY = meshYRes,
+                MaxY = meshYResolution,
             };
 
             JobHandle jobHandle = job.Schedule(colliderObjects);
