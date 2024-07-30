@@ -31,14 +31,16 @@ namespace ubco.ovilab.HPUI.Interaction
         private int meshXResolution, meshYResolution;
         private float xWidth, yWidth, offsetX, offsetY;
         private Dictionary<Collider, Vector2> colliderCoords = new Dictionary<Collider, Vector2>();
-        private Dictionary<Collider, Vector2> colliderCoordsNormalisedAndFlipped = new Dictionary<Collider, Vector2>();
-        
+        private Dictionary<Vector2Int, Collider> rawCoordsToCollider = new Dictionary<Vector2Int, Collider>();
+
+
         public float XWidth => xWidth;
         public float YWidth => yWidth;
         public float OffsetX => offsetX;
         public float OffsetY => offsetY;
         public int MeshXResolution => meshXResolution;
         public int MeshYResolution => meshYResolution;
+        public Dictionary<Vector2Int, Collider> RawCoordsToCollider => rawCoordsToCollider;
 
         private void Update()
         {
@@ -118,10 +120,9 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderGameObject.transform.localScale = targetScale;
                 colliderGameObject.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
                 colliderTransforms[i] = colliderGameObject.transform;
-                Vector2 coords = new Vector2((float)((meshXResolution - 1) - x)/meshXResolution, (float)((meshYResolution - 1) - y)/meshYResolution);
-                colliderCoordsNormalisedAndFlipped.Add(col, coords);
-                coords = new Vector2(xWidth * x - offsetX, yWidth * y - offsetY);
+                Vector2 coords = new Vector2(xWidth * x - offsetX, yWidth * y - offsetY);
                 colliderCoords.Add(col, coords);
+                rawCoordsToCollider.Add(new Vector2Int(x, y), col);
             }
         }
 
