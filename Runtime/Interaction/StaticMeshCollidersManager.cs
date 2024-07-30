@@ -14,6 +14,7 @@ namespace ubco.ovilab.HPUI.Interaction
     public class StaticMeshCollidersManager : MonoBehaviour
     {
         [SerializeField] private VertexRemapData vertexRemapData;
+        [Tooltip("Incase the vertices are being ordered in reverse for whatever reason")][SerializeField] private bool flipOrderForRecompute;
         
         //FIXME: Debug Code
         // [SerializeField] private GameObject rectifiedVertexDS;
@@ -27,7 +28,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private SkinnedMeshRenderer targetMesh;
         private bool generatedColliders;
         private float scaleFactor = 0.001f;
-        private int meshXRes, meshYRes;
+        private int meshXResolution, meshYRes;
         private Dictionary<Collider, Vector2> colliderCoords = new Dictionary<Collider, Vector2>();
         private Dictionary<Collider, Vector2> colliderCoordsNormalisedAndFlipped = new Dictionary<Collider, Vector2>();
 
@@ -68,11 +69,15 @@ namespace ubco.ovilab.HPUI.Interaction
             
             remapped_vertices_data = new NativeArray<int>(vertexRemapData.RemappedVertices, Allocator.Persistent);
             
-            meshXRes = hpuiStaticContinuousInteractable.MeshXResolution;
-            meshYRes = vertices.Count / meshXRes;
+            meshXResolution = hpuiStaticContinuousInteractable.MeshXResolution;
+            if (vertices.Count % meshXResolution != 0)
+            {
+                throw new Exception("Total vertex count doesn't divide properly with X mesh resolution!");
+            }
+            meshYRes = vertices.Count / meshXResolution;
             float xWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[1]]);
-            float yWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[meshXRes]]);
-            float offsetX = xWidth * meshXRes * 0.5f;
+            float yWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[meshXResolution]]);
+            float offsetX = xWidth * meshXResolution * 0.5f;
             float offsetY = yWidth * meshYRes * 0.5f;
             Transform[] colliderTransforms = new Transform[vertices.Count];
             Transform meshTransform = targetMesh.gameObject.transform;
@@ -90,8 +95,8 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             for (int i = 0; i < remapped_vertices_data.Length; i++)
             {
-                int x = i % meshXRes;
-                int y = i / meshXRes;
+                int x = i % meshXResolution;
+                int y = i / meshXResolution;
                 GameObject colliderGameObject = new GameObject();
                 Collider col = colliderGameObject.AddComponent<BoxCollider>();
                 colliderGameObject.name = "X: " + x + "; Y: " + y + ";";
@@ -103,7 +108,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderGameObject.transform.localScale = targetScale;
                 colliderGameObject.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
                 colliderTransforms[i] = colliderGameObject.transform;
-                Vector2 coords = new Vector2((float)((meshXRes - 1) - x)/meshXRes, (float)((meshYRes - 1) - y)/meshYRes);
+                Vector2 coords = new Vector2((float)((meshXResolution - 1) - x)/meshXResolution, (float)((meshYRes - 1) - y)/meshYRes);
                 colliderCoordsNormalisedAndFlipped.Add(col, coords);
                 coords = new Vector2(xWidth * x - offsetX, yWidth * y - offsetY);
                 colliderCoords.Add(col, coords);
@@ -146,7 +151,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 Normals = normals_native,
                 Vertices = vertices_native,
                 RemappedIndices = remapped_vertices_data,
-                MaxX = meshXRes,
+                MaxX = meshXResolution,
                 MaxY = meshYRes,
             };
 
@@ -190,10 +195,10 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
             targetMesh.BakeMesh(tempMesh, true);
-            GetRectifiedIndices(vertexRemapData, tempMesh);
+            GetRectifiedIndices(vertexRemapData, tempMesh, flipOrderForRecompute);
         }
         
-        private static void GetRectifiedIndices(VertexRemapData remapData, Mesh mesh)
+        private static void GetRectifiedIndices(VertexRemapData remapData, Mesh mesh, bool flipOrder)
         {
             int vertexCount = mesh.vertexCount;
             Vector3[] vertices = mesh.vertices;
@@ -214,7 +219,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 correctedIndices[i] = indexedVertices[i].index;
             }
-            remapData.RemappedVertices = correctedIndices;
+            remapData.RemappedVertices = flipOrder ? correctedIndices.Reverse().ToArray() : correctedIndices;
         }
     }
 }
