@@ -57,7 +57,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 {
                     if (isTracked)
                     {
-                        state.active = true;
+                        state.SetActive();
                     }
                     else
                     {
@@ -105,7 +105,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 // Target exited hover state
                 else
                 {
-                    state.active = false;
+                    state.SetNotActive();
                     activeInteractables--;
                     updateTrackingInteractable = true;
                 }
@@ -146,13 +146,20 @@ namespace ubco.ovilab.HPUI.Interaction
 
             if (updateTrackingInteractable)
             {
+                if (currentTrackingInteractable != null &&
+                    trackingInteractables.TryGetValue(currentTrackingInteractable, out HPUIInteractionState state) &&
+                    state.active)
+                {
+                    return;
+                }
+
                 // TODO: revisit this assumption
                 // Any target that is active should be ok for this
                 // Giving priority to the ones that was the oldest entered
                 // This minimizes the tracking interactable changing
                 IHPUIInteractable interactableToTrack = trackingInteractables
                     .Where(kvp => kvp.Value.active)
-                    .OrderBy(kvp => kvp.Value.startTime)
+                    .OrderBy(kvp => kvp.Value.heuristic)
                     .First().Key;
 
                 if (interactableToTrack != currentTrackingInteractable)
@@ -326,6 +333,18 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.startPosition = Vector2.zero;
                 this.active = true;
                 this.selectableTarget = false;
+                this.minDistanceToInteractor = float.MaxValue;
+                this.heuristic = float.MaxValue;
+            }
+
+            public void SetActive()
+            {
+                active = true;
+            }
+
+            public void SetNotActive()
+            {
+                active = false;
                 this.minDistanceToInteractor = float.MaxValue;
                 this.heuristic = float.MaxValue;
             }
