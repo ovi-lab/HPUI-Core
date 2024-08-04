@@ -54,7 +54,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public Vector3 hoverPoint { get; set; }
 
         /// <summary>
-        /// The location of the transform to attach to.
+        /// The location of the attachTransform.
         /// <seealso cref="XRBaseInteractor.GetAttachTransform"/>
         /// </summary>
         public Vector3 attachPoint { get; set; }
