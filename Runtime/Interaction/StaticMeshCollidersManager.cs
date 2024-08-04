@@ -13,7 +13,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     public class StaticMeshCollidersManager : MonoBehaviour
     {
-        [SerializeField] private int[] vertexRemapData;
+        [SerializeField, HideInInspector] private int[] vertexRemapData;
         [Tooltip("Incase the vertices are being ordered in reverse for whatever reason")][SerializeField] private bool flipOrderForRecompute;
         
         //FIXME: Debug Code
@@ -93,17 +93,7 @@ namespace ubco.ovilab.HPUI.Interaction
             offsetY = yWidth * meshYResolution * 0.5f;
             Transform[] colliderTransforms = new Transform[vertices.Count];
             Transform meshTransform = targetMesh.gameObject.transform;
-            InitCollidersState(meshTransform, colliderTransforms);
-            colliderObjects = new TransformAccessArray(colliderTransforms);
-            vertices_native = new NativeArray<Vector3>(vertices.ToArray(), Allocator.Persistent);
-            normals_native = new NativeArray<Vector3>(normals.ToArray(), Allocator.Persistent);
-            generatedColliders = true;
-
-            return colliderCoords.Keys.ToList();
-        }
-
-        private void InitCollidersState(Transform meshTransform, Transform[] colliderTransforms)
-        {
+            
             for (int i = 0; i < remapped_vertices_data.Length; i++)
             {
                 int x = i % meshXResolution;
@@ -123,6 +113,13 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderCoords.Add(col, coords);
                 rawCoordsToCollider.Add(new Vector2Int(x, y), col);
             }
+            
+            colliderObjects = new TransformAccessArray(colliderTransforms);
+            vertices_native = new NativeArray<Vector3>(vertices.ToArray(), Allocator.Persistent);
+            normals_native = new NativeArray<Vector3>(normals.ToArray(), Allocator.Persistent);
+            generatedColliders = true;
+
+            return colliderCoords.Keys.ToList();
         }
 
         public Vector2 GetSurfacePointForCollider(Collider col)
@@ -192,10 +189,10 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
             targetMesh.BakeMesh(tempMesh, true);
-            vertexRemapData = GetRectifiedIndices(vertexRemapData, tempMesh, flipOrderForRecompute);
+            vertexRemapData = GetRectifiedIndices(tempMesh, flipOrderForRecompute);
         }
         
-        private static int[] GetRectifiedIndices(int[] remapData, Mesh mesh, bool flipOrder)
+        private int[] GetRectifiedIndices(Mesh mesh, bool flipOrder)
         {
             int vertexCount = mesh.vertexCount;
             Vector3[] vertices = mesh.vertices;
@@ -216,8 +213,8 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 correctedIndices[i] = indexedVertices[i].index;
             }
-            remapData = flipOrder ? correctedIndices.Reverse().ToArray() : correctedIndices;
-            return remapData;
+            vertexRemapData = flipOrder ? correctedIndices.Reverse().ToArray() : correctedIndices;
+            return vertexRemapData;
         }
     }
 }
