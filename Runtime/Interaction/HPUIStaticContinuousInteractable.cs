@@ -11,7 +11,20 @@ namespace ubco.ovilab.HPUI.Interaction
         
         private StaticMeshCollidersManager collidersManager;
         public int MeshXResolution => meshXResolution;
-        public SkinnedMeshRenderer StaticHPUIMesh => staticHPUIMesh;
+        public SkinnedMeshRenderer StaticHPUIMesh
+        {
+            get
+            {
+                if (staticHPUIMesh == null)
+                {
+                    staticHPUIMesh = GetComponent<SkinnedMeshRenderer>();
+                }
+                return staticHPUIMesh;
+            }
+            set => staticHPUIMesh = value;
+        }
+
+
         public StaticMeshCollidersManager CollidersManager => collidersManager;
         
         protected override void Awake()
