@@ -275,7 +275,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private Dictionary<IHPUIInteractable, InteractionInfo> validTargets = new Dictionary<IHPUIInteractable, InteractionInfo>();
         private Vector3 lastInteractionPoint;
         private PhysicsScene physicsScene;
-        private RaycastHit[] sphereCastHits = new RaycastHit[200];
+        private RaycastHit[] rayCastHits = new RaycastHit[200];
         private Collider[] overlapSphereHits = new Collider[200];
         private GameObject visualsObject;
 
@@ -525,15 +525,18 @@ namespace ubco.ovilab.HPUI.Interaction
                     foreach(Vector3 direction in directions)
                     {
                         bool validInteractable = false;
-                        if (Physics.Raycast(interactionPoint,
-                                            direction,
-                                            out RaycastHit hitInfo,
-                                            InteractionHoverRadius,
-                                            // FIXME: physics layers should be allowed to be set in inspector
-                                            Physics.AllLayers,
-                                            // FIXME: QueryTriggerInteraction should be allowed to be set in inspector
-                                            QueryTriggerInteraction.Ignore))
+                        int hits = Physics.RaycastNonAlloc(interactionPoint,
+                                                           direction,
+                                                           rayCastHits,
+                                                           InteractionHoverRadius,
+                                                           // FIXME: physics layers should be allowed to be set in inspector
+                                                           Physics.AllLayers,
+                                                           // FIXME: QueryTriggerInteraction should be allowed to be set in inspector
+                                                           QueryTriggerInteraction.Ignore);
+
+                        for (int hitI = 0; hitI < hits; hitI++)
                         {
+                            RaycastHit hitInfo = rayCastHits[hitI];
                             if (interactionManager.TryGetInteractableForCollider(hitInfo.collider, out var interactable) &&
                                 interactable is IHPUIInteractable hpuiInteractable &&
                                 hpuiInteractable.IsHoverableBy(this))
