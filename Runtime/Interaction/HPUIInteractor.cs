@@ -567,11 +567,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     foreach (KeyValuePair<IHPUIInteractable, List<InteractionInfo>> kvp in tempValidTargets)
                     {
                         int localCount = kvp.Value.Count;
-                        // FIXME: Revisit how this is computed
-                        if (localCount < directions.Count() * 0.02f)
-                        {
-                            continue;
-                        }
 
                         InteractionInfo smallest = kvp.Value.OrderBy(el => el.distance).First();
                         smallest.heuristic = (1 / (float)localCount) * smallest.distance;
