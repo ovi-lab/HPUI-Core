@@ -13,7 +13,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     public class StaticMeshCollidersManager : MonoBehaviour
     {
-        [SerializeField, HideInInspector] private int[] vertexRemapData;
+        [SerializeField, HideInInspector] public int[] vertexRemapData;
         [Tooltip("Incase the vertices are being ordered in reverse for whatever reason")][SerializeField] private bool flipOrderForRecompute;
         
         //FIXME: Debug Code
@@ -179,17 +179,16 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
 
-        public void RemapVertices()
+        public int[] RemapVertices()
         {
             targetMesh = GetComponent<HPUIStaticContinuousInteractable>().StaticHPUIMesh;
             tempMesh = new Mesh(); 
             if(targetMesh==null)
             {
                 Debug.LogError("Please assign static mesh to the HPUI Static Continuous Interactable Component first!");
-                return;
             }
             targetMesh.BakeMesh(tempMesh, true);
-            vertexRemapData = GetRectifiedIndices(tempMesh, flipOrderForRecompute);
+            return GetRectifiedIndices(tempMesh, flipOrderForRecompute);
         }
         
         private int[] GetRectifiedIndices(Mesh mesh, bool flipOrder)
@@ -213,8 +212,8 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 correctedIndices[i] = indexedVertices[i].index;
             }
-            vertexRemapData = flipOrder ? correctedIndices.Reverse().ToArray() : correctedIndices;
-            return vertexRemapData;
+            int[] remapData = flipOrder ? correctedIndices.Reverse().ToArray() : correctedIndices;
+            return remapData;
         }
     }
 }
