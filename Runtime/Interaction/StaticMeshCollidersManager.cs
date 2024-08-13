@@ -82,7 +82,7 @@ namespace ubco.ovilab.HPUI.Interaction
             meshXResolution = hpuiStaticContinuousInteractable.MeshXResolution;
             if (vertices.Count % meshXResolution != 0)
             {
-                throw new Exception("Total vertex count doesn't divide properly with X mesh resolution!");
+                throw new Exception($"Total vertex count doesn't divide properly with X mesh resolution! Vertices Count:{vertices.Count} Mesh X Resolution:{meshXResolution}");
             }
             meshYResolution = vertices.Count / meshXResolution;
             Transform meshTransform = targetMesh.gameObject.transform;
