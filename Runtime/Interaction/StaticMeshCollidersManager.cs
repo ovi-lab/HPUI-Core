@@ -27,12 +27,10 @@ namespace ubco.ovilab.HPUI.Interaction
         private Mesh tempMesh;
         private SkinnedMeshRenderer targetMesh;
         private bool generatedColliders;
-        private float scaleFactor = 0.001f;
         private int meshXResolution, meshYResolution;
         private float xWidth, yWidth, offsetX, offsetY;
         private Dictionary<Collider, Vector2> colliderCoords = new Dictionary<Collider, Vector2>();
         private Dictionary<Vector2Int, Collider> rawCoordsToCollider = new Dictionary<Vector2Int, Collider>();
-
 
         public float XWidth => xWidth;
         public float YWidth => yWidth;
@@ -63,9 +61,9 @@ namespace ubco.ovilab.HPUI.Interaction
             colliderObjects.Dispose();
         }
 
-        public List<Collider> SetupColliders(SkinnedMeshRenderer keyboardMesh, HPUIStaticContinuousInteractable hpuiStaticContinuousInteractable)
+        public List<Collider> SetupColliders(SkinnedMeshRenderer targetMesh, HPUIStaticContinuousInteractable hpuiStaticContinuousInteractable)
         {
-            targetMesh = keyboardMesh;
+            this.targetMesh = targetMesh;
             tempMesh = new Mesh(); 
             targetMesh.BakeMesh(tempMesh, true);
             
@@ -85,15 +83,20 @@ namespace ubco.ovilab.HPUI.Interaction
                 throw new Exception("Total vertex count doesn't divide properly with X mesh resolution!");
             }
             meshYResolution = vertices.Count / meshXResolution;
-            
-            xWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[1]]);
-            yWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[meshXResolution]]);
-            
+            Transform meshTransform = targetMesh.gameObject.transform;
+
+            xWidth = Vector3.Distance(meshTransform.TransformPoint(vertices[remapped_vertices_data[0]]),
+                                      meshTransform.TransformPoint(vertices[remapped_vertices_data[1]]));
+            yWidth = Vector3.Distance(meshTransform.TransformPoint(vertices[remapped_vertices_data[0]]),
+                                      meshTransform.TransformPoint(vertices[remapped_vertices_data[meshXResolution]]));
+
+            float localXWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[1]]);
+            float localYWidth = Vector3.Distance(vertices[remapped_vertices_data[0]], vertices[remapped_vertices_data[meshXResolution]]);
+
             offsetX = xWidth * meshXResolution * 0.5f;
             offsetY = yWidth * meshYResolution * 0.5f;
             Transform[] colliderTransforms = new Transform[vertices.Count];
-            Transform meshTransform = targetMesh.gameObject.transform;
-            
+
             for (int i = 0; i < remapped_vertices_data.Length; i++)
             {
                 int x = i % meshXResolution;
@@ -103,9 +106,9 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderGameObject.name = "X: " + x + "; Y: " + y + ";";
                 colliderGameObject.transform.parent = meshTransform;
                 colliderGameObject.transform.localPosition = vertices[remapped_vertices_data[i]];
-                Vector3 targetScale = Vector3.one * scaleFactor;
-                targetScale.x = xWidth;
-                targetScale.y = yWidth;
+                Vector3 targetScale = Vector3.one * 0.001f;
+                targetScale.x = localXWidth;
+                targetScale.y = localYWidth;
                 colliderGameObject.transform.localScale = targetScale;
                 colliderGameObject.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
                 colliderTransforms[i] = colliderGameObject.transform;
