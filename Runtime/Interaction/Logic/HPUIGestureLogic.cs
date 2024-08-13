@@ -96,10 +96,10 @@ namespace ubco.ovilab.HPUI.Interaction
                         if (interactorGestureState == HPUIGesture.Tap)
                         {
                             state.selectableTarget = true;
-                        }
 
-                        state.startTime = Time.time;
-                        state.startPosition = interactable.ComputeInteractorPosition(interactor);
+                            state.startTime = Time.time;
+                            state.startPosition = interactable.ComputeInteractorPosition(interactor);
+                        }
                     }
                 }
                 // Target exited hover state
