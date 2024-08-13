@@ -128,13 +128,18 @@ namespace ubco.ovilab.HPUI.Interaction
         {}
 
         /// <inheritdoc />
-        public override Vector2 ComputeInteractorPosition(IHPUIInteractor interactor)
+        public override bool ComputeInteractorPosition(IHPUIInteractor interactor, out Vector2 position)
         {
-            // TODO: add value from pointOnPlane (the point on the collider)
-            DistanceInfo distanceInfo = GetDistanceOverride(this, interactor.GetCollisionPoint(this));
-            // Vector3 closestPointOnCollider = distanceInfo.point;
-            // Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
-            return surfaceCollidersManager.GetSurfacePointForCollider(distanceInfo.collider);
+            if (interactor.GetDistanceInfo(this, out DistanceInfo info))
+            {
+                // TODO: add value from pointOnPlane (the point on the collider)
+                // Vector3 closestPointOnCollider = distanceInfo.point;
+                // Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
+                position = surfaceCollidersManager.GetSurfacePointForCollider(info.collider);
+                return true;
+            }
+            position = Vector2.zero;
+            return false;
         }
 
         /// <summary>

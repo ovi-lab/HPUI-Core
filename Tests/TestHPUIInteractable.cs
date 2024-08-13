@@ -43,10 +43,10 @@ namespace ubco.ovilab.HPUI.Tests
 
         public Vector2 boundsMin { get; set; }
 
-
-        Vector2 IHPUIInteractable.ComputeInteractorPosition(IHPUIInteractor interactor)
+        bool IHPUIInteractable.ComputeInteractorPosition(IHPUIInteractor interactor, out Vector2 position)
         {
-            return interactorPosition;
+            position = interactorPosition;
+            return true;
         }
 
         bool IHPUIInteractable.HandlesGesture(HPUIGesture state)

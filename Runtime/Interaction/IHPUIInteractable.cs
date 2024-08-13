@@ -34,10 +34,11 @@ namespace ubco.ovilab.HPUI.Interaction
 
         /// <summary>
         /// Get the projection of the interactor position on the xz plane of this interactable.
+        /// If the interactor is not hovering, will return false.
         /// the returned Vector2 - (x, z) on the xz-plane, relative to the center of the
         /// interactable in Unity units.
         /// </summary>
-        Vector2 ComputeInteractorPosition(IHPUIInteractor interactor);
+        bool ComputeInteractorPosition(IHPUIInteractor interactor, out Vector2 position);
 
         /// <summary>
         /// This is called when a tap event occurs on the interactable.

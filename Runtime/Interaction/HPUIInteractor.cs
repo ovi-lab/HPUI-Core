@@ -558,7 +558,7 @@ namespace ubco.ovilab.HPUI.Interaction
                                     tempValidTargets.Add(hpuiInteractable, infoList);
                                 }
 
-                                infoList.Add(new InteractionInfo(hitInfo.distance, hitInfo.point));
+                                infoList.Add(new InteractionInfo(hitInfo.distance, hitInfo.point, hitInfo.collider));
                             }
                         }
 
@@ -619,7 +619,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             XRInteractableUtility.TryGetClosestPointOnCollider(interactable, interactionPoint, out DistanceInfo info);
                             float dist = Mathf.Sqrt(info.distanceSqr);
-                            validTargets.Add(hpuiInteractable, new InteractionInfo(dist, info.point));
+                            validTargets.Add(hpuiInteractable, new InteractionInfo(dist, info.point, info.collider));
                             if (dist < shortestInteractableDist)
                             {
                                 hoverEndPoint = info.point;
@@ -784,13 +784,20 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public Vector3 GetCollisionPoint(IHPUIInteractable interactable)
+        public bool GetDistanceInfo(IHPUIInteractable interactable, out DistanceInfo distanceInfo)
         {
             if (validTargets.TryGetValue(interactable, out InteractionInfo info))
             {
-                return info.point;
+                distanceInfo = new DistanceInfo
+                {
+                    point = info.point,
+                    distanceSqr = (info.collider.transform.position - info.point).sqrMagnitude,
+                    collider = info.collider
+                };
+                return true;
             }
-            return GetAttachTransform(interactable).position;
+            distanceInfo = new DistanceInfo();
+            return false;
         }
         #endregion
 
@@ -798,12 +805,14 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             public float distance;
             public Vector3 point;
+            public Collider collider;
             public float heuristic;
 
-            public InteractionInfo(float distance, Vector3 point, float heuristic=0) : this()
+            public InteractionInfo(float distance, Vector3 point, Collider collider, float heuristic=0) : this()
             {
                 this.distance = distance;
                 this.point = point;
+                this.collider = collider;
                 this.heuristic = heuristic;
             }
         }

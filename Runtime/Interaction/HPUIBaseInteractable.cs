@@ -59,7 +59,6 @@ namespace ubco.ovilab.HPUI.Interaction
         protected override void Awake()
         {
             base.Awake();
-            getDistanceOverride = GetDistanceOverride;
             selectMode = InteractableSelectMode.Single;
         }
 
@@ -91,12 +90,6 @@ namespace ubco.ovilab.HPUI.Interaction
             boundsMin = ComputeTargetPointOnInteractablePlane(colliderBounds.min, interactableTransform);
         }
 
-        protected DistanceInfo GetDistanceOverride(IXRInteractable interactable, Vector3 position)
-        {
-            XRInteractableUtility.TryGetClosestPointOnCollider(interactable, position, out DistanceInfo info);
-            return info;
-        }
-
         /// <summary>
         /// Compute the projection of the target point on the XZ plane of the a given transform.
         /// the returned Vector2 - (x, z) on the xz-plane.
@@ -117,11 +110,15 @@ namespace ubco.ovilab.HPUI.Interaction
 
         #region IHPUIInteractable interface
         /// <inheritdoc />
-        public virtual Vector2 ComputeInteractorPosition(IHPUIInteractor interactor)
+        public virtual bool ComputeInteractorPosition(IHPUIInteractor interactor, out Vector2 position)
         {
-            Vector3 closestPointOnCollider = GetDistanceOverride(this, interactor.GetCollisionPoint(this)).point;
-            Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
-            return pointOnPlane;
+            if (interactor.GetDistanceInfo(this, out DistanceInfo info))
+            {
+                position = ComputeTargetPointOnInteractablePlane(info.point, GetAttachTransform(interactor));
+                return true;
+            }
+            position = Vector2.zero;
+            return false;
         }
 
         /// <inheritdoc />
