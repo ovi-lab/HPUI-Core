@@ -173,7 +173,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
             success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out currentPosition);
             Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
-            delta = previousPosition - currentPosition;
+            delta = currentPosition - previousPosition;
             timeDelta = Time.time - startTime;
             cumulativeDistance += delta.magnitude;
             cumulativeDirection += delta;
