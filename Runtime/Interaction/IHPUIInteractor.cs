@@ -1,7 +1,7 @@
-using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-namespace ubco.ovilab.HPUI.Interaction 
+namespace ubco.ovilab.HPUI.Interaction
 {
     public interface IHPUIInteractor: IXRSelectInteractor, IXRHoverInteractor
     {
@@ -31,8 +31,8 @@ namespace ubco.ovilab.HPUI.Interaction
         void OnGesture(HPUIGestureEventArgs args);
 
         /// <summary>
-        /// Get the point of interaction.
+        /// Get the <see cref="DistanceInfo"/> for a given interactable.
         /// </summary>
-        Vector3 GetCollisionPoint(IHPUIInteractable interactable);
+        bool GetDistanceInfo(IHPUIInteractable interactable, out DistanceInfo distanceInfo);
     }
 }

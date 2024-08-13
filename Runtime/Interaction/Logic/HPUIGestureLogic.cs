@@ -23,6 +23,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private bool selectionHappenedLastFrame = false,
             useHeuristic = false;
         private int activeInteractables = 0;
+        private bool success;
 
         private IHPUIInteractable activePriorityInteractable, currentTrackingInteractable;
         private Dictionary<IHPUIInteractable, HPUIInteractionState> trackingInteractables = new Dictionary<IHPUIInteractable, HPUIInteractionState>();
@@ -98,7 +99,8 @@ namespace ubco.ovilab.HPUI.Interaction
                             state.selectableTarget = true;
 
                             state.startTime = Time.time;
-                            state.startPosition = interactable.ComputeInteractorPosition(interactor);
+                            success = interactable.ComputeInteractorPosition(interactor, out state.startPosition);
+                            Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
                         }
                     }
                 }
@@ -163,12 +165,14 @@ namespace ubco.ovilab.HPUI.Interaction
                 {
                     currentTrackingInteractable = interactableToTrack;
                     // If interactable change, we need to restart tracking, hence skipping a frame
-                    previousPosition = currentTrackingInteractable.ComputeInteractorPosition(interactor);
+                    success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
+                    Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
                     return;
                 }
             }
 
-            currentPosition = currentTrackingInteractable.ComputeInteractorPosition(interactor);
+            success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out currentPosition);
+            Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
             delta = previousPosition - currentPosition;
             timeDelta = Time.time - startTime;
             cumulativeDistance += delta.magnitude;
