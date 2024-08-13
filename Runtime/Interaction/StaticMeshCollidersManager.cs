@@ -47,8 +47,10 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
             
+            UnityEngine.Profiling.Profiler.BeginSample("StaticMeshCollidersManager.Update");
             UpdateColliderPositions();
-            
+            UnityEngine.Profiling.Profiler.EndSample();
+
             //FIXME: Debug Code
             // rectifiedVertexDS.transform.localPosition = vertices[remappedVertices[id]];
         }

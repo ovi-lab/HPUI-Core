@@ -52,11 +52,13 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
+            UnityEngine.Profiling.Profiler.BeginSample("DeformableSurfaceCollidersManager.Update");
 	    if (generatedColliders)
 	    {
                 UpdateColliderPoses();
             }
-	}
+            UnityEngine.Profiling.Profiler.EndSample();
+        }
 
         /// <summary>
         /// Setup and return colliders. A collider will be placed on each vertex of the <see cref="SkinnedMeshRenderer"/>.
