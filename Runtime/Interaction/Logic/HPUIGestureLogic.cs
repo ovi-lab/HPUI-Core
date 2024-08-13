@@ -144,15 +144,12 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
-            if (updateTrackingInteractable)
+            if (updateTrackingInteractable &&
+                (currentTrackingInteractable == null ||
+                 !(trackingInteractables.TryGetValue(currentTrackingInteractable,
+                                                     out HPUIInteractionState currentTrackingInteractableState) &&
+                   currentTrackingInteractableState.active)))
             {
-                if (currentTrackingInteractable != null &&
-                    trackingInteractables.TryGetValue(currentTrackingInteractable, out HPUIInteractionState state) &&
-                    state.active)
-                {
-                    return;
-                }
-
                 // TODO: revisit this assumption
                 // Any target that is active should be ok for this
                 // Giving priority to the ones that was the oldest entered
