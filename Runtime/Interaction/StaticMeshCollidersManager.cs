@@ -13,7 +13,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     public class StaticMeshCollidersManager : MonoBehaviour
     {
-        [SerializeField, HideInInspector] public int[] vertexRemapData;
+        [SerializeField, HideInInspector] private int[] vertexRemapData;
         [Tooltip("Incase the vertices are being ordered in reverse for whatever reason")][SerializeField] private bool flipOrderForRecompute;
         
         //FIXME: Debug Code
@@ -176,44 +176,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 col.localPosition = temppos;
                 col.localRotation = Quaternion.LookRotation(Normals[RemappedIndices[i]], upwards);
             }
-        }
-
-
-        public int[] RemapVertices()
-        {
-            targetMesh = GetComponent<HPUIStaticContinuousInteractable>().StaticHPUIMesh;
-            tempMesh = new Mesh(); 
-            if(targetMesh==null)
-            {
-                Debug.LogError("Please assign static mesh to the HPUI Static Continuous Interactable Component first!");
-            }
-            targetMesh.BakeMesh(tempMesh, true);
-            return GetRectifiedIndices(tempMesh, flipOrderForRecompute);
-        }
-        
-        private int[] GetRectifiedIndices(Mesh mesh, bool flipOrder)
-        {
-            int vertexCount = mesh.vertexCount;
-            Vector3[] vertices = mesh.vertices;
-            int[] correctedIndices = new int[vertexCount];
-            List<(Vector3 vertex, int index)> indexedVertices = new List<(Vector3 vertex, int index)>(vertexCount);
-            for (int i = 0; i < vertexCount; i++)
-            {
-                indexedVertices.Add((vertices[i], i));
-            }
-            indexedVertices.Sort((a, b) =>
-            {
-                if (Math.Abs(a.vertex.y - b.vertex.y) > 0.00001)
-                    return a.vertex.y.CompareTo(b.vertex.y);
-                return b.vertex.x.CompareTo(a.vertex.x);
-            });
-
-            for (int i = 0; i < vertexCount; i++)
-            {
-                correctedIndices[i] = indexedVertices[i].index;
-            }
-            int[] remapData = flipOrder ? correctedIndices.Reverse().ToArray() : correctedIndices;
-            return remapData;
         }
     }
 }
