@@ -422,6 +422,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             base.PreprocessInteractor(updatePhase);
 
+            UnityEngine.Profiling.Profiler.BeginSample("HPUIInteractor.ProcessInteractor");
             // Following the logic in XRPokeInteractor
             if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
             {
@@ -436,6 +437,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     IEnumerable<Vector3> directions;
                     DataWriter = "//";
 
+                    UnityEngine.Profiling.Profiler.BeginSample("rayDirections");
                     // TODO: Move this logic to its own component
                     switch(RayCastTechnique)
                     {
@@ -513,6 +515,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             directions = cachedDirections;
                             break;
                     }
+                    UnityEngine.Profiling.Profiler.EndSample();
                     // float x_ = (float)angles.Select(a => a.x).Average();
                     // float z_ = (float)angles.Select(a => a.z).Average();
 
@@ -522,6 +525,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                     tempValidTargets.Clear();
 
+                    UnityEngine.Profiling.Profiler.BeginSample("raycasts");
                     foreach(Vector3 direction in directions)
                     {
                         bool validInteractable = false;
@@ -589,6 +593,8 @@ namespace ubco.ovilab.HPUI.Interaction
                     {
                         hoverEndPoint = new Vector3(xEndPoint, yEndPoint, zEndPoint) / count;
                     }
+
+                    UnityEngine.Profiling.Profiler.EndSample();
                 }
                 else
                 {
@@ -634,7 +640,9 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
                 finally
                 {
+                    UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
                     gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic)));
+                    UnityEngine.Profiling.Profiler.EndSample();
 
                     if (data != null)
                     {
@@ -642,6 +650,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     }
                 }
             }
+            UnityEngine.Profiling.Profiler.EndSample();
         }
 
         /// <inheritdoc />
