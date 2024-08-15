@@ -286,10 +286,10 @@ namespace ubco.ovilab.HPUI.Interaction
         private Dictionary<IHPUIInteractable, List<InteractionInfo>> tempValidTargets = new();
 
         private XRHandTrackingEvents xrHandTrackingEvents;
-        private Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
+        protected Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
 
         // Used with the RayCastTechnique.SegmentVector, and RayCastTechnique.FullRange
-        private List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
+        protected List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
             XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip,
             XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip,
@@ -318,7 +318,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {XRHandJointID.LittleTip, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
         };
 
-        private bool receivedNewJointData = false,
+        protected bool receivedNewJointData = false,
             flipZAngles = false;
 
         // FIXME: debug code
