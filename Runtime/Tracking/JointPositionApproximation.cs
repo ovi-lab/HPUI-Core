@@ -46,7 +46,7 @@ namespace ubco.ovilab.HPUI.Tracking
         private HPUIContinuousInteractable continuousInteractable;
 
         /// <inheritdoc />
-        protected override void ProcessJointData(XRHandSubsystem subsystem)
+        protected override void ProcessJointData(XRHandSubsystem subsystem, XRHandSubsystem.UpdateSuccessFlags _)
         {
             if (jointFollower == null || !enabled)
             {

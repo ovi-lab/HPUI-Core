@@ -105,7 +105,7 @@ namespace ubco.ovilab.HPUI.Tracking
                     // Update game logic that uses hand data
                     break;
                 case XRHandSubsystem.UpdateType.BeforeRender:
-                    ProcessJointData(subsystem);
+                    ProcessJointData(subsystem, updateSuccessFlags);
                     break;
             }
         }
@@ -113,6 +113,6 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <summary>
         /// Apply data received to the transform.
         /// </summary>
-        protected abstract void ProcessJointData(XRHandSubsystem subsystem);
+        protected abstract void ProcessJointData(XRHandSubsystem subsystem, XRHandSubsystem.UpdateSuccessFlags updateSuccessFlags);
     }
 }
