@@ -88,7 +88,7 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <summary>
         /// Apply data received to the transform.
         /// </summary>
-        protected override void ProcessJointData(XRHandSubsystem subsystem)
+        protected override void ProcessJointData(XRHandSubsystem subsystem, XRHandSubsystem.UpdateSuccessFlags _)
         {
             if (!enabled)
             {
