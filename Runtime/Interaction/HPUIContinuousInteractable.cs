@@ -132,10 +132,8 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (interactor.GetDistanceInfo(this, out DistanceInfo info))
             {
-                // TODO: add value from pointOnPlane (the point on the collider)
-                // Vector3 closestPointOnCollider = distanceInfo.point;
-                // Vector2 pointOnPlane = ComputeTargetPointOnInteractablePlane(closestPointOnCollider, GetAttachTransform(interactor));
-                position = surfaceCollidersManager.GetSurfacePointForCollider(info.collider);
+                Vector2 offsetOnCollider = ComputeTargetPointOnTransformXZPlane(info.point, info.collider.transform);
+                position = surfaceCollidersManager.GetSurfacePointForCollider(info.collider) + offsetOnCollider;
                 return true;
             }
             position = Vector2.zero;
