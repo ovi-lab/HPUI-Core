@@ -91,6 +91,8 @@ namespace ubco.ovilab.HPUI.Interaction
                             startTime = Time.time;
                             interactorGestureState = HPUIGesture.Tap;
                             updateTrackingInteractable = true;
+                            // Forcing the current interactable to be reset.
+                            currentTrackingInteractable = null;
                         }
 
                         // Selectable only if within the tapTimeThreshold.
@@ -221,7 +223,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
             if (interactableToBeActive != activePriorityInteractable)
             {
-                activePriorityInteractable = interactableToBeActive;
+                currentTrackingInteractable = activePriorityInteractable = interactableToBeActive;
+                success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out currentPosition);
+                Debug.Assert(success, $"Current active interactable was not hoverd by interactor when it was made priority target {interactor.transform.name}");
             }
         }
 
@@ -346,6 +350,7 @@ namespace ubco.ovilab.HPUI.Interaction
             public void SetNotActive()
             {
                 active = false;
+                selectableTarget = false;
                 this.minDistanceToInteractor = float.MaxValue;
                 this.heuristic = float.MaxValue;
             }
