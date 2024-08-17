@@ -86,15 +86,15 @@ namespace ubco.ovilab.HPUI.Interaction
 
             Bounds colliderBounds = BoundsCollider.bounds;
             Transform interactableTransform = GetAttachTransform(null);
-            boundsMax = ComputeTargetPointOnInteractablePlane(colliderBounds.max, interactableTransform);
-            boundsMin = ComputeTargetPointOnInteractablePlane(colliderBounds.min, interactableTransform);
+            boundsMax = ComputeTargetPointOnTransformXZPlane(colliderBounds.max, interactableTransform);
+            boundsMin = ComputeTargetPointOnTransformXZPlane(colliderBounds.min, interactableTransform);
         }
 
         /// <summary>
         /// Compute the projection of the target point on the XZ plane of the a given transform.
         /// the returned Vector2 - (x, z) on the xz-plane.
         /// </summary>
-        protected Vector2 ComputeTargetPointOnInteractablePlane(Vector3 targetPoint, Transform interactableTransform)
+        protected Vector2 ComputeTargetPointOnTransformXZPlane(Vector3 targetPoint, Transform interactableTransform)
         {
 
             Plane xzPlane = new Plane(interactableTransform.up, interactableTransform.position);
@@ -114,7 +114,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (interactor.GetDistanceInfo(this, out DistanceInfo info))
             {
-                position = ComputeTargetPointOnInteractablePlane(info.point, GetAttachTransform(interactor));
+                position = ComputeTargetPointOnTransformXZPlane(info.point, GetAttachTransform(interactor));
                 return true;
             }
             position = Vector2.zero;
