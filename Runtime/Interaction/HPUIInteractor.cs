@@ -568,32 +568,42 @@ namespace ubco.ovilab.HPUI.Interaction
                             Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionSelectionRadius, rayColor);
                         }
                     }
+                    UnityEngine.Profiling.Profiler.EndSample();
 
-                    float xEndPoint = 0, yEndPoint = 0, zEndPoint = 0, count = 0;
+                    Vector3 centroid;
+                    float xEndPoint = 0, yEndPoint = 0, zEndPoint = 0;
+                    float count = 0;
 
+                    UnityEngine.Profiling.Profiler.BeginSample("raycast centroid");
                     foreach (KeyValuePair<IHPUIInteractable, List<InteractionInfo>> kvp in tempValidTargets)
                     {
                         int localCount = kvp.Value.Count;
+                        float localXEndPoint = 0, localYEndPoint = 0, localZEndPoint = 0;
 
-                        InteractionInfo smallest = kvp.Value.OrderBy(el => el.distance).First();
-                        smallest.heuristic = (1 / (float)localCount) * smallest.distance;
                         foreach(InteractionInfo i in kvp.Value)
                         {
                             xEndPoint += i.point.x;
                             yEndPoint += i.point.y;
                             zEndPoint += i.point.z;
+                            localXEndPoint += i.point.x;
+                            localYEndPoint += i.point.y;
+                            localZEndPoint += i.point.z;
                             count++;
                         }
 
-                        validTargets.Add(kvp.Key, smallest);
+                        centroid = new Vector3(localXEndPoint, localYEndPoint, localZEndPoint) / count;
+
+                        InteractionInfo closest = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
+                        closest.heuristic = (1 / (float)localCount) * closest.distance;
+
+                        validTargets.Add(kvp.Key, closest);
                         ListPool<InteractionInfo>.Release(kvp.Value);
                     }
 
                     if (count > 0)
                     {
-                        hoverEndPoint = new Vector3(xEndPoint, yEndPoint, zEndPoint) / count;
+                        hoverEndPoint = new Vector3(xEndPoint, yEndPoint, zEndPoint) / count;;
                     }
-
                     UnityEngine.Profiling.Profiler.EndSample();
                 }
                 else
