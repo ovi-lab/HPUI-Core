@@ -288,6 +288,11 @@ namespace ubco.ovilab.HPUI.Interaction
         private XRHandTrackingEvents xrHandTrackingEvents;
         protected Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
 
+
+#if UNITY_EDITOR
+        private bool onValidateUpdate;
+#endif
+
         // Used with the RayCastTechnique.SegmentVector, and RayCastTechnique.FullRange
         protected List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
@@ -399,12 +404,26 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (Application.isPlaying && gameObject.activeInHierarchy)
             {
-                UpdateLogic();
-                UpdateVisuals();
-                UpdateRayCastTechnique();
+                // NOTE: some of the setup running in the respective methods are not compatible with
+                // OnValidate as they trigger many SendMessage calls
+                onValidateUpdate = true;
             }
         }
 #endif
+
+        /// <inheritdoc />
+        protected void Update()
+        {
+#if UNITY_EDITOR
+            if (onValidateUpdate)
+            {
+                UpdateLogic();
+                UpdateVisuals();
+                UpdateRayCastTechnique();
+                onValidateUpdate = false;
+            }
+#endif
+        }
 
         /// <inheritdoc />
         protected override void OnEnable()
