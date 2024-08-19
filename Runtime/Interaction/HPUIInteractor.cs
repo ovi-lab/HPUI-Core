@@ -405,8 +405,17 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
 #if UNITY_EDITOR
+
         /// <inheritdoc />
-        protected void OnValidate()
+        void OnValidate()
+        {
+            UnityEditor.EditorApplication.delayCall += _OnValidate;
+        }
+        
+        /// <summary>
+        /// This is to stop the console spam for send message on validate warnings
+        /// </summary>
+        protected void _OnValidate()
         {
             if (Application.isPlaying && gameObject.activeInHierarchy)
             {
