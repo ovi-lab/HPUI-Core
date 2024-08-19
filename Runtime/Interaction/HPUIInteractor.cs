@@ -10,6 +10,7 @@ using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;
 using UnityEngine.Pool;
 using System;
+using UnityEngine.Serialization;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -218,6 +219,16 @@ namespace ubco.ovilab.HPUI.Interaction
         /// Show sphere rays used for interaction selections.
         /// </summary>
         public bool ShowDebugRayVisual { get => showDebugRayVisual; set => showDebugRayVisual = value; }
+        
+        [FormerlySerializedAs("logDebugTouchDataToConsole")]
+        [SerializeField]
+        [Tooltip("Print to console current gesture's cumulative distance and time since last interaction")]
+        private bool logTouchDataToConsole = true;
+
+        /// <summary>
+        /// Show sphere rays used for interaction selections.
+        /// </summary>
+        public bool LogDebugTouchDataToConsole { get => logTouchDataToConsole; set => logTouchDataToConsole = value; }
 
         [SerializeField]
         [Tooltip("The HPUIInteractorRayAngles asset to use when using cone")]
@@ -726,7 +737,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
             // If using raycast, use heuristic
-            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHeuristic: useRayCast);
+            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHeuristic: useRayCast, logTouchDataToConsole);
         }
 
         /// <summary>

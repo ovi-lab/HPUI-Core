@@ -24,6 +24,7 @@ namespace ubco.ovilab.HPUI.Interaction
             useHeuristic = false;
         private int activeInteractables = 0;
         private bool success;
+        private bool logDataToConsole = true;
 
         private IHPUIInteractable activePriorityInteractable, currentTrackingInteractable;
         private Dictionary<IHPUIInteractable, HPUIInteractionState> trackingInteractables = new Dictionary<IHPUIInteractable, HPUIInteractionState>();
@@ -33,13 +34,14 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Initializes a new instance of the with the threshold values.
         /// </summary>
-        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float interactionSelectionRadius, bool useHeuristic)
+        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float interactionSelectionRadius, bool useHeuristic, bool logDataToConsole = true)
         {
             this.interactor = interactor;
             this.useHeuristic = useHeuristic;
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
             this.interactionSelectionRadius = interactionSelectionRadius;
+            this.logDataToConsole = logDataToConsole;
             Reset();
         }
 
@@ -122,7 +124,10 @@ namespace ubco.ovilab.HPUI.Interaction
             if (selectionHappenedLastFrame && !selectionHappening)
             {
                 selectionHappenedLastFrame = false;
-                Debug.Log($"-- params: cumm. dist: {cumulativeDistance}, time delta: {timeDelta}");
+                if(logDataToConsole)
+                {
+                    Debug.Log($"-- params: cumm. dist: {cumulativeDistance}, time delta: {timeDelta}");
+                }
                 try
                 {
                     switch (interactorGestureState)
