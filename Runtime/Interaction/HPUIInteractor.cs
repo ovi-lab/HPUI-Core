@@ -612,10 +612,12 @@ namespace ubco.ovilab.HPUI.Interaction
 
                         centroid = new Vector3(localXEndPoint, localYEndPoint, localZEndPoint) / count;
 
-                        InteractionInfo closest = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
-                        closest.heuristic = (1 / (float)localCount) * closest.distance;
+                        InteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
+                        // This distance is needed to compute the selection
+                        float shortestDistance = kvp.Value.Min(el => el.distance);
+                        closestToCentroid.heuristic = (1 / (float)localCount) * shortestDistance;
 
-                        validTargets.Add(kvp.Key, closest);
+                        validTargets.Add(kvp.Key, closestToCentroid);
                         ListPool<InteractionInfo>.Release(kvp.Value);
                     }
 
