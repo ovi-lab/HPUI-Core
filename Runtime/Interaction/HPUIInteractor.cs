@@ -485,6 +485,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             cachedDirections = directions;
                             break;
                         case RayCastTechniqueEnum.FullRange:
+                            activeFingerAngles = allAngles;
                             directions = allAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
                             cachedDirections = directions;
                             break;
@@ -545,9 +546,11 @@ namespace ubco.ovilab.HPUI.Interaction
                     tempValidTargets.Clear();
 
                     UnityEngine.Profiling.Profiler.BeginSample("raycasts");
+                    int idx = -1;
                     foreach(Vector3 direction in directions)
                     {
                         bool validInteractable = false;
+                        idx++;
                         int hits = Physics.RaycastNonAlloc(interactionPoint,
                                                            direction,
                                                            rayCastHits,
@@ -565,9 +568,9 @@ namespace ubco.ovilab.HPUI.Interaction
                                 hpuiInteractable.IsHoverableBy(this))
                             {
                                 validInteractable = true;
-                                if (RayCastTechnique == RayCastTechniqueEnum.Cone || RayCastTechnique == RayCastTechniqueEnum.FullRange)
+                                if (data != null && (RayCastTechnique == RayCastTechniqueEnum.Cone || RayCastTechnique == RayCastTechniqueEnum.FullRange))
                                 {
-                                    HPUIInteractorRayAngle angle = activeFingerAngles[directions.TakeWhile(el => el == direction).Count()];
+                                    HPUIInteractorRayAngle angle = activeFingerAngles[idx];
                                     DataWriter = $"{interactable.transform.name},{angle.x},{angle.z},{hitInfo.distance}";
                                 }
                                 List<InteractionInfo> infoList;
