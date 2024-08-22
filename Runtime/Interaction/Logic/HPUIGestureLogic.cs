@@ -18,7 +18,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private float tapTimeThreshold, tapDistanceThreshold, interactionSelectionRadius;
         private IHPUIInteractor interactor;
 
-        private float startTime, cumulativeDistance, timeDelta;
+        private float startTime, cumulativeDistance, timeDelta, currentTrackingInteractableHeuristic;
         private Vector2 delta, currentPosition, previousPosition, cumulativeDirection;
         private bool selectionHappenedLastFrame = false,
             useHeuristic = false;
@@ -80,6 +80,11 @@ namespace ubco.ovilab.HPUI.Interaction
                     if (interactionData.heuristic < state.heuristic)
                     {
                         state.heuristic = interactionData.heuristic;
+                    }
+
+                    if (!updateTrackingInteractable && currentTrackingInteractable != interactable && interactionData.heuristic < currentTrackingInteractableHeuristic)
+                    {
+                        updateTrackingInteractable = true;
                     }
 
                     if (interactionData.distance < interactionSelectionRadius)
@@ -148,24 +153,25 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
-            if (updateTrackingInteractable &&
-                (currentTrackingInteractable == null ||
-                 !(trackingInteractables.TryGetValue(currentTrackingInteractable,
-                                                     out HPUIInteractionState currentTrackingInteractableState) &&
-                   currentTrackingInteractableState.active)))
+            if (updateTrackingInteractable)
+                // (currentTrackingInteractable == null ||
+                //  !(trackingInteractables.TryGetValue(currentTrackingInteractable,
+                //                                      out HPUIInteractionState currentTrackingInteractableState) &&
+                //    currentTrackingInteractableState.active)))
             {
                 // TODO: revisit this assumption
                 // Any target that is active should be ok for this
                 // Giving priority to the ones that was the oldest entered
                 // This minimizes the tracking interactable changing
-                IHPUIInteractable interactableToTrack = trackingInteractables
+                KeyValuePair<IHPUIInteractable, HPUIInteractionState> interactableDataToTrack = trackingInteractables
                     .Where(kvp => kvp.Value.active)
                     .OrderBy(kvp => kvp.Value.heuristic)
-                    .First().Key;
+                    .First();
 
-                if (interactableToTrack != currentTrackingInteractable)
+                if (interactableDataToTrack.Key != currentTrackingInteractable)
                 {
-                    currentTrackingInteractable = interactableToTrack;
+                    currentTrackingInteractableHeuristic = interactableDataToTrack.Value.heuristic;
+                    currentTrackingInteractable = interactableDataToTrack.Key;
                     // If interactable change, we need to restart tracking, hence skipping a frame
                     success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
                     Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
