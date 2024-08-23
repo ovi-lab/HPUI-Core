@@ -192,6 +192,25 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public bool SelectOnlyPriorityTarget { get => selectOnlyPriorityTarget; set => selectOnlyPriorityTarget = value; }
 
+        // QueryTriggerInteraction.Ignore
+        [SerializeField]
+        [Tooltip("Physics layer mask used for limiting poke sphere overlap.")]
+        private LayerMask physicsLayer = Physics.AllLayers;
+
+        /// <summary>
+        /// Physics layer mask used for limiting poke sphere overlap.
+        /// </summary>
+        public LayerMask PhysicsLayer { get => physicsLayer; set => physicsLayer = value; }
+
+        [SerializeField]
+        [Tooltip("Determines whether triggers should be collided with.")]
+        private QueryTriggerInteraction physicsTriggerInteraction = QueryTriggerInteraction.Ignore;
+
+        /// <summary>
+        /// Determines whether triggers should be collided with.
+        /// </summary>
+        public QueryTriggerInteraction PhysicsTriggerInteraction { get => physicsTriggerInteraction; set => physicsTriggerInteraction = value; }
+
         [Space()]
         [SerializeField]
         [Tooltip("Show sphere visual.")]
@@ -555,10 +574,8 @@ namespace ubco.ovilab.HPUI.Interaction
                                                            direction,
                                                            rayCastHits,
                                                            InteractionHoverRadius,
-                                                           // FIXME: physics layers should be allowed to be set in inspector
-                                                           Physics.AllLayers,
-                                                           // FIXME: QueryTriggerInteraction should be allowed to be set in inspector
-                                                           QueryTriggerInteraction.Ignore);
+                                                           physicsLayer,
+                                                           physicsTriggerInteraction);
 
                         for (int hitI = 0; hitI < hits; hitI++)
                         {
@@ -637,10 +654,8 @@ namespace ubco.ovilab.HPUI.Interaction
                         interactionPoint,
                         InteractionHoverRadius,
                         overlapSphereHits,
-                        // FIXME: physics layers should be allowed to be set in inspector
-                        Physics.AllLayers,
-                        // FIXME: QueryTriggerInteraction should be allowed to be set in inspector
-                        QueryTriggerInteraction.Ignore);
+                        physicsLayer,
+                        physicsTriggerInteraction);
 
                     float shortestInteractableDist = float.MaxValue;
 
