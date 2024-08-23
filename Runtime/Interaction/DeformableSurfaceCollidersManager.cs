@@ -136,6 +136,7 @@ namespace ubco.ovilab.HPUI.Interaction
             for(var i = 0; i < positions.Count; i ++)
 	    {
                 colliderObj = new GameObject();
+                colliderObj.layer = rootTransform.gameObject.layer;
                 Collider collider = colliderObj.AddComponent<BoxCollider>();
                 colliders.Add(collider);
                 int x = (int)i % x_divisions;

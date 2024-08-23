@@ -104,6 +104,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 int x = i % meshXResolution;
                 int y = i / meshXResolution;
                 GameObject colliderGameObject = new GameObject();
+                colliderGameObject.layer = meshTransform.gameObject.layer;
                 Collider col = colliderGameObject.AddComponent<BoxCollider>();
                 colliderGameObject.name = "X: " + x + "; Y: " + y + ";";
                 colliderGameObject.transform.parent = meshTransform;
