@@ -132,7 +132,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (!colliderCoords.TryGetValue(col, out Vector2 coordsForCol))
             {
-                throw new ArgumentException("Unknown {collider.name}");
+                throw new ArgumentException($"Unknown {col.name}");
             }
             return coordsForCol;
         }
