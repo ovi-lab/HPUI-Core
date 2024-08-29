@@ -290,7 +290,11 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        protected IHPUIGestureLogic gestureLogic;
+        /// <summary>
+        /// The gesture logic used by the interactor
+        /// </summary>
+        public IHPUIGestureLogic GestureLogic { get; set; }
+
         private Dictionary<IHPUIInteractable, InteractionInfo> validTargets = new Dictionary<IHPUIInteractable, InteractionInfo>();
         private Vector3 lastInteractionPoint;
         private PhysicsScene physicsScene;
@@ -691,7 +695,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    gestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic)));
+                    GestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic)));
                     UnityEngine.Profiling.Profiler.EndSample();
 
                     if (data != null)
@@ -726,7 +730,7 @@ namespace ubco.ovilab.HPUI.Interaction
             bool canSelect = validTargets.TryGetValue(interactable as IHPUIInteractable, out InteractionInfo info) &&
                 info.distance < interactionSelectionRadius &&
                 ProcessSelectFilters(interactable);
-            return canSelect && (!SelectOnlyPriorityTarget || gestureLogic.IsPriorityTarget(interactable as IHPUIInteractable));
+            return canSelect && (!SelectOnlyPriorityTarget || GestureLogic.IsPriorityTarget(interactable as IHPUIInteractable));
         }
 
         /// <summary>
@@ -760,13 +764,18 @@ namespace ubco.ovilab.HPUI.Interaction
         private void UpdateLogic()
         {
             // When values are changed in inspector, update the values
-            if (gestureLogic != null)
+            if (GestureLogic != null)
             {
-                gestureLogic.Dispose();
+                if (!(GestureLogic is HPUIGestureLogic))
+                {
+                    Debug.Log($"Non HPUIGestureLogic being used");
+                    return;
+                }
+                GestureLogic.Dispose();
             }
 
             // If using raycast, use heuristic
-            gestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHeuristic: useRayCast);
+            GestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHeuristic: useRayCast);
         }
 
         /// <summary>
