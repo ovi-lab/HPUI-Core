@@ -37,7 +37,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (tapTimeThreshold < debounceTimeWindow)
             {
-                throw new ArgumentException("tapTimeThreshold cannot be smaller than the debounceTimeWindow");
+                throw new ArgumentException($"tapTimeThreshold cannot be smaller than the debounceTimeWindow. Got {tapTimeThreshold} for tapTimeThreshold and {debounceTimeWindow} for debounceTimeWindow");
             }
             this.interactor = interactor;
             this.useHeuristic = useHeuristic;
@@ -50,6 +50,9 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public void Update(IDictionary<IHPUIInteractable, HPUIInteractionData> distances)
         {
+            if (distances.Count > 0)
+                Debug.Log($"=====  {string.Join(", \n", distances.Select(kvp => $"{kvp.Key.transform.name}/{kvp.Value.distance}/{kvp.Value.heuristic}/{kvp.Value.extra}/{kvp.Value.isSelection}"))}  using H:{useHeuristic} ");
+
             bool updateTrackingInteractable = false;
             bool selectionHappening = false;
             float frameTime = Time.time;
@@ -134,7 +137,6 @@ namespace ubco.ovilab.HPUI.Interaction
             if (selectionHappenedLastFrame && !selectionHappening)
             {
                 selectionHappenedLastFrame = false;
-                Debug.Log($"-- params: cumm. dist: {cumulativeDistance}, time delta: {timeDelta}");
                 try
                 {
                     if (debounceStartTime + debounceTimeWindow < frameTime)
@@ -152,7 +154,9 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
                 finally
                 {
+                    Debug.Log($"-- params({activePriorityInteractable?.transform.name}): cumm. dist: {cumulativeDistance}, time delta: {timeDelta}   {interactorGestureState}   {tapTimeThreshold}   {debounceTimeWindow}");
                     debounceStartTime = frameTime;
+
                     Reset();
                 }
                 return;
@@ -209,6 +213,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             interactorGestureState = HPUIGesture.Gesture;
                             ComputeActivePriorityInteractable(false);
                             TriggerGestureEvent(HPUIGestureState.Started);
+                            Debug.Log($"---- Trigger started on {activePriorityInteractable.transform.name}");
                         }
                         break;
                     case HPUIGesture.Gesture:
@@ -232,6 +237,10 @@ namespace ubco.ovilab.HPUI.Interaction
             // (defaults to tapDistanceThreshold), will not get any
             // events.  For targets selected withing the window, first
             // prioritize the zOrder, then the distance.
+
+            Debug.Log($"---- {string.Join(",\n", trackingInteractables.Select(el => $"{el.Key.transform?.name}/{ el.Key.HandlesGesture(interactorGestureState)} /{el.Value.SelectableInPrevFrames}/{el.Value.Heuristic}"))}");
+            Debug.Log($"---- {string.Join(",\n", trackingInteractables.Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && (usePreviousSelectableState ? kvp.Value.SelectableInPrevFrames : kvp.Value.SelectableTarget)).OrderBy(kvp => kvp.Key.zOrder).ThenBy(kvp => useHeuristic? kvp.Value.Heuristic : kvp.Value.MinDistanceToInteractor).Select(el => $"{el.Key.transform?.name}/{ el.Key.HandlesGesture(interactorGestureState)} /{el.Value.SelectableInPrevFrames}/{el.Value.Heuristic}"))}");
+
             IHPUIInteractable interactableToBeActive = trackingInteractables
                 .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) &&
                        (usePreviousSelectableState ? kvp.Value.SelectableInPrevFrames: kvp.Value.SelectableTarget))

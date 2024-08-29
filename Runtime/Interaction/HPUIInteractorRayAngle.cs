@@ -10,6 +10,15 @@ namespace ubco.ovilab.HPUI.Interaction
         [SerializeField] private float x;
         [SerializeField] private float z;
         [SerializeField] private float raySelectionThreshold;
+#if UNITY_EDITOR
+        public static int tot;
+        public bool canShow;
+        private GameObject debugObj;
+        private MeshRenderer mr;
+        private float t;
+        private static readonly int ShaderProp = Shader.PropertyToID("_BaseColor");
+        private MaterialPropertyBlock mpb;
+#endif
 
         public float X { get => x; }
         public float Z { get => z; }
@@ -20,6 +29,17 @@ namespace ubco.ovilab.HPUI.Interaction
             this.x = x;
             this.z = z;
             this.raySelectionThreshold = angleThreshold;
+#if UNITY_EDITOR
+            canShow = false;
+            debugObj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            mr = debugObj.GetComponent<MeshRenderer>();
+            mpb = new MaterialPropertyBlock();
+            debugObj.transform.localScale = Vector3.one * 0.08f;
+            debugObj.transform.position = new Vector3(x, 0, z) / 100 + new Vector3(20, 20, 20);
+            debugObj.name = $"x:{x}-z:{z}";
+            t = Time.time;
+            ShowDebug(false, t + 6);
+#endif
         }
 
         public HPUIInteractorRayAngle(float x, float z)
@@ -27,7 +47,46 @@ namespace ubco.ovilab.HPUI.Interaction
             this.x = x;
             this.z = z;
             this.raySelectionThreshold = 1f;
+#if UNITY_EDITOR
+            canShow = false;
+            debugObj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            mr = debugObj.GetComponent<MeshRenderer>();
+            mpb = new MaterialPropertyBlock();
+            debugObj.transform.localScale = Vector3.one * 0.08f;
+            debugObj.transform.position = new Vector3(x, 0, z) / 100 + new Vector3(20, 20, 20);
+            debugObj.name = $"x:{x}-z:{z}";
+            t = Time.time;
+            ShowDebug(false, t + 6);
+#endif
         }
+
+#if UNITY_EDITOR
+        public void ShowDebug(bool show, float time)
+        {
+            if (!canShow)
+            {
+                return;
+            }
+
+            if (show)
+            {
+                tot++;
+                mpb.SetColor(ShaderProp, Color.red);
+                mr.SetPropertyBlock(mpb);
+                t = time;
+            }
+            else 
+            {
+                if (time - t > 1)
+                {
+                    mpb.SetColor(ShaderProp, Color.black);
+                    mr.SetPropertyBlock(mpb);
+                    t = 0;
+                }
+            }
+        }
+#endif
+
 
         public bool WithinThreshold(float dist)
         {

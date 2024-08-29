@@ -492,6 +492,13 @@ namespace ubco.ovilab.HPUI.Interaction
                     UnityEngine.Profiling.Profiler.EndSample();
 
                     tempValidTargets.Clear();
+#if UNITY_EDITOR
+                    float _time = Time.time;
+                    foreach(var val in activeFingerAngles)
+                    {
+                        val.ShowDebug(false, _time);
+                    }
+#endif
 
                     UnityEngine.Profiling.Profiler.BeginSample("raycasts");
                     int idx = -1;
@@ -522,6 +529,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
                                 if (data != null)
                                 {
+#if UNITY_EDITOR
+                                    angle.ShowDebug(true, _time);
+#endif
                                     DataWriter = $"{interactable.transform.name},{angle.X},{angle.Z},{distance}";
                                 }
 
