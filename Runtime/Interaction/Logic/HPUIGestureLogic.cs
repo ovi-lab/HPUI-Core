@@ -46,6 +46,9 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public void Update(IDictionary<IHPUIInteractable, HPUIInteractionData> distances)
         {
+            if (distances.Count > 0)
+                Debug.Log($"=====  {string.Join(", ", distances.Select(kvp => $"{kvp.Key.transform.name}/{kvp.Value.distance}"))} ");
+
             bool updateTrackingInteractable = false;
             bool selectionHappening = false;
             foreach(IHPUIInteractable interactable in distances.Keys.Union(trackingInteractables.Keys))
@@ -127,7 +130,7 @@ namespace ubco.ovilab.HPUI.Interaction
             if (selectionHappenedLastFrame && !selectionHappening)
             {
                 selectionHappenedLastFrame = false;
-                Debug.Log($"-- params: cumm. dist: {cumulativeDistance}, time delta: {timeDelta}");
+                Debug.Log($"-- params({activePriorityInteractable.transform.name}): cumm. dist: {cumulativeDistance}, time delta: {timeDelta}");
                 try
                 {
                     switch (interactorGestureState)
@@ -198,6 +201,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             interactorGestureState = HPUIGesture.Gesture;
                             ComputeActivePriorityInteractable();
                             TriggerGestureEvent(HPUIGestureState.Started);
+                            Debug.Log($"---- Trigger started on {activePriorityInteractable.transform.name}");
                         }
                         break;
                     case HPUIGesture.Gesture:
