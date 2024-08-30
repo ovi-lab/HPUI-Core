@@ -1,14 +1,5 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using UnityEngine.XR.Interaction.Toolkit.Utilities;
-using UnityEngine.XR.Hands;
-using Unity.XR.CoreUtils;
-using UnityEngine.Pool;
 using ubco.ovilab.HPUI.Interaction;
 
 namespace ubco.ovilab.HPUI.Components
@@ -35,6 +26,7 @@ namespace ubco.ovilab.HPUI.Components
                 hpuiInteractor.hoverEntered.AddListener(OnHoverEntered);
                 hpuiInteractor.hoverExited.AddListener(OnHoverExited);
             }
+            visualTransform?.gameObject.SetActive(true);
         }
 
         /// <inheritdoc />
@@ -46,6 +38,7 @@ namespace ubco.ovilab.HPUI.Components
                 hpuiInteractor.hoverEntered.RemoveListener(OnHoverEntered);
                 hpuiInteractor.hoverExited.RemoveListener(OnHoverExited);
             }
+            visualTransform?.gameObject.SetActive(false);
         }
 
         /// <summary>
