@@ -615,7 +615,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                     Vector3 centroid;
                     float xEndPoint = 0, yEndPoint = 0, zEndPoint = 0;
-                    float count = 0;
+                    float count = tempValidTargets.Sum(kvp => kvp.Value.Count);
 
                     UnityEngine.Profiling.Profiler.BeginSample("raycast centroid");
                     foreach (KeyValuePair<IHPUIInteractable, List<InteractionInfo>> kvp in tempValidTargets)
@@ -631,7 +631,6 @@ namespace ubco.ovilab.HPUI.Interaction
                             localXEndPoint += i.point.x;
                             localYEndPoint += i.point.y;
                             localZEndPoint += i.point.z;
-                            count++;
                         }
 
                         centroid = new Vector3(localXEndPoint, localYEndPoint, localZEndPoint) / count;
@@ -639,8 +638,9 @@ namespace ubco.ovilab.HPUI.Interaction
                         InteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
                         // This distance is needed to compute the selection
                         float shortestDistance = kvp.Value.Min(el => el.distance);
-                        closestToCentroid.heuristic = (1 / (float)localCount) * shortestDistance;
+                        closestToCentroid.heuristic = (((float)count / (float)localCount) + 1) * shortestDistance;
                         closestToCentroid.distance = shortestDistance;
+                        closestToCentroid.extra = (float)localCount;
 
                         validTargets.Add(kvp.Key, closestToCentroid);
                         ListPool<InteractionInfo>.Release(kvp.Value);
@@ -695,7 +695,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    GestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic)));
+                    GestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic, kvp.Value.extra)));
                     UnityEngine.Profiling.Profiler.EndSample();
 
                     if (data != null)
@@ -798,13 +798,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         throw new InvalidOperationException("Full Range Vector Ray Parameters angle step is 0!");
                     }
 
-                    for (int x = FullRangeRayParameters.minAngle; x <= FullRangeRayParameters.maxAngle; x = x + FullRangeRayParameters.angleStep)
-                    {
-                        for (int z = FullRangeRayParameters.minAngle; z <= FullRangeRayParameters.maxAngle; z = z + FullRangeRayParameters.angleStep)
-                        {
-                            allAngles.Add(new HPUIInteractorRayAngle(x, z));
-                        }
-                    }
+                    ComputeAllAngles();
                     break;
                 case RayCastTechniqueEnum.SegmentVector:
                     if (SegmentVectorRayParameters.minAngle == 0 && SegmentVectorRayParameters.maxAngle == 0)
@@ -827,6 +821,62 @@ namespace ubco.ovilab.HPUI.Interaction
 
             // Avoid null ref exception before the hand tracking module gets going
             activeFingerAngles = allAngles;
+        }
+
+        private void ComputeAllAngles()
+        {
+            // Old latitude-longitude latice approach.
+            // for (int x = FullRangeRayParameters.minAngle; x <= FullRangeRayParameters.maxAngle; x = x + FullRangeRayParameters.angleStep)
+            // {
+            //     for (int z = FullRangeRayParameters.minAngle; z <= FullRangeRayParameters.maxAngle; z = z + FullRangeRayParameters.angleStep)
+            //     {
+            //         allAngles.Add(new HPUIInteractorRayAngle(x, z));
+            //     }
+            // }
+
+            float numberOfSampoles = Mathf.Pow(360 / FullRangeRayParameters.angleStep, 2);
+            List<Vector3> spericalPoints = new();
+            float phi = Mathf.PI * (Mathf.Sqrt(5) - 1);
+
+            var temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            temp.transform.localScale = Vector3.one * 0.1f;
+            temp.transform.position = Vector3.zero;
+
+            for(int i=0; i<numberOfSampoles ; i++)
+            {
+                float y = 1 - (i / (numberOfSampoles - 1)) * 2;
+
+                float radius = Mathf.Sqrt(1 - y * y);
+
+                float theta = phi * i;
+
+                float x = Mathf.Cos(theta) * radius;
+                float z = Mathf.Sin(theta) * radius;
+
+                Vector3 point = new Vector3(x, y, z);
+
+                // float xAngle = Vector3.Angle(Vector3.up, new Vector3(0, y, z)) * (z < 0 ? -1: 1);
+                // float zAngle = Vector3.Angle(Vector3.up, new Vector3(x, y, 0)) * (x < 0 ? 1: -1);
+                float xAngle = Mathf.Atan(z/y); // angle around x axis
+                float zAngle = Mathf.Atan(x/y); // angle around z axis
+
+                float othery = Mathf.Sqrt(1 / (1 + Mathf.Pow(Mathf.Tan(xAngle), 2) + Mathf.Pow(Mathf.Tan(zAngle), 2)));
+
+                Debug.Log($"{x},   {z},  {y}  {othery}    {Mathf.Pow(x, 2) + Mathf.Pow(y, 2) + Mathf.Pow(z, 2)}");
+
+                if (xAngle > FullRangeRayParameters.minAngle && xAngle < FullRangeRayParameters.maxAngle &&
+                    zAngle > FullRangeRayParameters.minAngle && zAngle < FullRangeRayParameters.maxAngle)
+                {
+                    var angle = new HPUIInteractorRayAngle(xAngle, zAngle);
+                    allAngles.Add(angle);
+                    var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    go.transform.localScale = Vector3.one * 0.05f;
+                    go.transform.position = point;
+                    Vector3 point2 = angle.GetDirection(temp.transform, false);
+                    Debug.DrawRay(Vector3.zero, point2, Color.black, 10000f);
+                    Debug.DrawLine(point, point2, Color.red, 1000f);
+                }
+            }
         }
 
         #region IHPUIInteractor interface
@@ -866,13 +916,15 @@ namespace ubco.ovilab.HPUI.Interaction
             public Vector3 point;
             public Collider collider;
             public float heuristic;
+            public float extra;
 
-            public InteractionInfo(float distance, Vector3 point, Collider collider, float heuristic=0) : this()
+            public InteractionInfo(float distance, Vector3 point, Collider collider, float heuristic=0, float extra=0) : this()
             {
                 this.distance = distance;
                 this.point = point;
                 this.collider = collider;
                 this.heuristic = heuristic;
+                this.extra = extra;
             }
         }
     }
