@@ -824,15 +824,15 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private void ComputeAllAngles()
         {
-            float numberOfSampoles = Mathf.Pow(360 / FullRangeRayParameters.angleStep, 2);
+            float numberOfSamples = Mathf.Pow(360 / FullRangeRayParameters.angleStep, 2);
             List<Vector3> spericalPoints = new();
             float phi = Mathf.PI * (Mathf.Sqrt(5) - 1);
 
-            float yMin = Mathf.Cos(Mathf.Min(FullRangeRayParameters.minAngle, FullRangeRayParameters.maxAngle));
+            float yMin = Mathf.Cos(Mathf.Min(Mathf.Abs(FullRangeRayParameters.minAngle * Mathf.Deg2Rad), Mathf.Min(FullRangeRayParameters.maxAngle * Mathf.Deg2Rad)));
 
-            for(int i=0; i<numberOfSampoles ; i++)
+            for(int i=0; i < numberOfSamples ; i++)
             {
-                float y = 1 - (i / (numberOfSampoles - 1)) * 2;
+                float y = 1 - (i / (numberOfSamples - 1)) * 2;
                 if (y < yMin)
                 {
                     break;
