@@ -455,7 +455,6 @@ namespace ubco.ovilab.HPUI.Interaction
             UpdateVisuals();
         }
 
-
         //FIXME: debug code
         public Transform o1, o2, o3;
 
@@ -825,26 +824,19 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private void ComputeAllAngles()
         {
-            // Old latitude-longitude latice approach.
-            // for (int x = FullRangeRayParameters.minAngle; x <= FullRangeRayParameters.maxAngle; x = x + FullRangeRayParameters.angleStep)
-            // {
-            //     for (int z = FullRangeRayParameters.minAngle; z <= FullRangeRayParameters.maxAngle; z = z + FullRangeRayParameters.angleStep)
-            //     {
-            //         allAngles.Add(new HPUIInteractorRayAngle(x, z));
-            //     }
-            // }
-
             float numberOfSampoles = Mathf.Pow(360 / FullRangeRayParameters.angleStep, 2);
             List<Vector3> spericalPoints = new();
             float phi = Mathf.PI * (Mathf.Sqrt(5) - 1);
 
-            var temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            temp.transform.localScale = Vector3.one * 0.1f;
-            temp.transform.position = Vector3.zero;
+            float yMin = Mathf.Cos(Mathf.Min(FullRangeRayParameters.minAngle, FullRangeRayParameters.maxAngle));
 
             for(int i=0; i<numberOfSampoles ; i++)
             {
                 float y = 1 - (i / (numberOfSampoles - 1)) * 2;
+                if (y < yMin)
+                {
+                    break;
+                }
 
                 float radius = Mathf.Sqrt(1 - y * y);
 
@@ -855,27 +847,10 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 Vector3 point = new Vector3(x, y, z);
 
-                // float xAngle = Vector3.Angle(Vector3.up, new Vector3(0, y, z)) * (z < 0 ? -1: 1);
-                // float zAngle = Vector3.Angle(Vector3.up, new Vector3(x, y, 0)) * (x < 0 ? 1: -1);
-                float xAngle = Mathf.Atan(z/y); // angle around x axis
-                float zAngle = Mathf.Atan(x/y); // angle around z axis
+                float zAngle = Vector3.Angle(Vector3.up, new Vector3(0, y, z)) * (z < 0 ? -1: 1);
+                float xAngle = Vector3.Angle(Vector3.up, new Vector3(x, y, 0)) * (x < 0 ? -1: 1);
 
-                float othery = Mathf.Sqrt(1 / (1 + Mathf.Pow(Mathf.Tan(xAngle), 2) + Mathf.Pow(Mathf.Tan(zAngle), 2)));
-
-                Debug.Log($"{x},   {z},  {y}  {othery}    {Mathf.Pow(x, 2) + Mathf.Pow(y, 2) + Mathf.Pow(z, 2)}");
-
-                if (xAngle > FullRangeRayParameters.minAngle && xAngle < FullRangeRayParameters.maxAngle &&
-                    zAngle > FullRangeRayParameters.minAngle && zAngle < FullRangeRayParameters.maxAngle)
-                {
-                    var angle = new HPUIInteractorRayAngle(xAngle, zAngle);
-                    allAngles.Add(angle);
-                    var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                    go.transform.localScale = Vector3.one * 0.05f;
-                    go.transform.position = point;
-                    Vector3 point2 = angle.GetDirection(temp.transform, false);
-                    Debug.DrawRay(Vector3.zero, point2, Color.black, 10000f);
-                    Debug.DrawLine(point, point2, Color.red, 1000f);
-                }
+                allAngles.Add(new HPUIInteractorRayAngle(xAngle, zAngle));
             }
         }
 
