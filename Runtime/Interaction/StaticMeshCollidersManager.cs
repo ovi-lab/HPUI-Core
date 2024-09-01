@@ -63,9 +63,13 @@ namespace ubco.ovilab.HPUI.Interaction
             colliderObjects.Dispose();
         }
 
-        public List<Collider> SetupColliders(SkinnedMeshRenderer targetMesh, HPUIStaticContinuousInteractable hpuiStaticContinuousInteractable)
+        /// <summary>
+        /// Configures the colliders on the respective mesh.
+        /// </summary>
+        public List<Collider> SetupColliders(SkinnedMeshRenderer targetMesh, int meshXResolution)
         {
             this.targetMesh = targetMesh;
+            this.meshXResolution = meshXResolution;
             tempMesh = new Mesh(); 
             targetMesh.BakeMesh(tempMesh, true);
             
@@ -78,8 +82,7 @@ namespace ubco.ovilab.HPUI.Interaction
             tempMesh.GetNormals(normals);
             
             remapped_vertices_data = new NativeArray<int>(vertexRemapData, Allocator.Persistent);
-            
-            meshXResolution = hpuiStaticContinuousInteractable.MeshXResolution;
+
             if (vertices.Count % meshXResolution != 0)
             {
                 throw new Exception($"Total vertex count doesn't divide properly with X mesh resolution! Vertices Count:{vertices.Count} Mesh X Resolution:{meshXResolution}");
@@ -128,6 +131,11 @@ namespace ubco.ovilab.HPUI.Interaction
             return colliderCoords.Keys.ToList();
         }
 
+        /// <summary>
+        /// Return the (approximate) point on the surface of where the collider is.
+        /// The returned Vector2 - (x, z) on the xz-plane. This is relative to the
+        /// center of the surface.
+        /// </summary>
         public Vector2 GetSurfacePointForCollider(Collider col)
         {
             if (!colliderCoords.TryGetValue(col, out Vector2 coordsForCol))

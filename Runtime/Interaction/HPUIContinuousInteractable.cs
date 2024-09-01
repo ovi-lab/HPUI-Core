@@ -14,7 +14,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
-    public class HPUIContinuousInteractable: HPUIBaseInteractable
+    public class HPUIContinuousInteractable: HPUIBaseInteractable, IHPUIContinuousInteractable
     {
         //TODO: make following configs an asset
         [Space()]
@@ -53,14 +53,10 @@ namespace ubco.ovilab.HPUI.Interaction
             set => continuousSurfaceCreatedEvent = value;
         }
 
-        /// <summary>
-        /// The size along the abduction-adduction axis of the fingers (x-axis of joints) in unity units.
-        /// </summary>
+        /// <inheritdoc />
         public float X_size { get => x_size; set => x_size = value; }
 
-        /// <summary>
-        /// The size along the flexion-extension axis of the fingers (z-axis of joints) in unity units.
-        /// </summary>
+        /// <inheritdoc />
         public float Y_size { get => y_size; set => y_size = value; }
 
         /// <summary>

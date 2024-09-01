@@ -4,13 +4,20 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 namespace ubco.ovilab.HPUI.Interaction
 {
     [RequireComponent(typeof(StaticMeshCollidersManager))]
-    public class HPUIStaticContinuousInteractable : HPUIBaseInteractable
+    public class HPUIStaticContinuousInteractable : HPUIBaseInteractable, IHPUIContinuousInteractable
     {
+        /// <inheritdoc />
+        public float X_size { get => collidersManager.XWidth * collidersManager.MeshXResolution; }
+
+        /// <inheritdoc />
+        public float Y_size { get => collidersManager.YWidth * collidersManager.MeshYResolution; }
+
+        [Tooltip("The associated SkinnedMeshRenderer used by this interactable")]
         [SerializeField] private SkinnedMeshRenderer staticHPUIMesh;
-        [SerializeField] private int meshXResolution;
-        
-        private StaticMeshCollidersManager collidersManager;
-        public int MeshXResolution => meshXResolution;
+
+        /// <summary>
+        /// The associated SkinnedMeshRenderer used by this interactable
+        /// </summary>
         public SkinnedMeshRenderer StaticHPUIMesh
         {
             get
@@ -24,15 +31,22 @@ namespace ubco.ovilab.HPUI.Interaction
             set => staticHPUIMesh = value;
         }
 
+        [Tooltip("The X resolution of the associated SkinnedMeshRenderer.")]
+        [SerializeField] private int meshXResolution;
 
-        public StaticMeshCollidersManager CollidersManager => collidersManager;
+        /// <summary>
+        /// The X resolution of the associated SkinnedMeshRenderer.
+        /// </summary>
+        public int MeshXResolution => meshXResolution;
         
+        private StaticMeshCollidersManager collidersManager;
+
         protected override void Awake()
         {
             base.Awake();
             collidersManager = GetComponent<StaticMeshCollidersManager>();
             Debug.Assert(collidersManager!=null);
-            colliders.AddRange(collidersManager.SetupColliders(StaticHPUIMesh, this));
+            colliders.AddRange(collidersManager.SetupColliders(StaticHPUIMesh, MeshXResolution));
         }
 
         /// <inheritdoc />
