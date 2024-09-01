@@ -37,6 +37,7 @@ namespace ubco.ovilab.HPUI.Editor
             serializedObject.ApplyModifiedProperties();
             DrawDefaultInspector();
         }
+
         private int[] RemapVertices()
         {
             SkinnedMeshRenderer targetMesh = t.GetComponent<HPUIStaticContinuousInteractable>().StaticHPUIMesh;
