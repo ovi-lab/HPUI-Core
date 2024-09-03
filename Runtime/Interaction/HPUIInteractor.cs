@@ -588,10 +588,15 @@ namespace ubco.ovilab.HPUI.Interaction
                                 hpuiInteractable.IsHoverableBy(this))
                             {
                                 validInteractable = true;
+                                // Opposite directions mean the interactor is above the interactable.
+                                // negaative distance indicates the interactor ie under the interactable.
+                                float sign = Vector3.Dot(hitInfo.collider.transform.up, direction) < 0 ? 1 : -1;
+                                float distance = hitInfo.distance * sign;
+
                                 if (data != null && (RayCastTechnique == RayCastTechniqueEnum.Cone || RayCastTechnique == RayCastTechniqueEnum.FullRange))
                                 {
                                     HPUIInteractorRayAngle angle = activeFingerAngles[idx];
-                                    DataWriter = $"{interactable.transform.name},{angle.x},{angle.z},{hitInfo.distance}";
+                                    DataWriter = $"{interactable.transform.name},{angle.x},{angle.z},{distance}";
                                 }
                                 List<InteractionInfo> infoList;
                                 if (!tempValidTargets.TryGetValue(hpuiInteractable, out infoList))
@@ -600,7 +605,7 @@ namespace ubco.ovilab.HPUI.Interaction
                                     tempValidTargets.Add(hpuiInteractable, infoList);
                                 }
 
-                                infoList.Add(new InteractionInfo(hitInfo.distance, hitInfo.point, hitInfo.collider));
+                                infoList.Add(new InteractionInfo(distance, hitInfo.point, hitInfo.collider));
                             }
                         }
 
