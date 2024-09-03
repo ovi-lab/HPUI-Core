@@ -642,7 +642,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         InteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
                         // This distance is needed to compute the selection
                         float shortestDistance = kvp.Value.Min(el => el.distance);
-                        closestToCentroid.heuristic = (((float)count / (float)localCount) + 1) * shortestDistance;
+                        closestToCentroid.heuristic = (((float)count / (float)localCount)) * (shortestDistance + 1);
                         closestToCentroid.distance = shortestDistance;
                         closestToCentroid.extra = (float)localCount;
 
