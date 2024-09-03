@@ -114,9 +114,9 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderGameObject.transform.localPosition = vertices[remapped_vertices_data[i]];
                 Vector3 targetScale = Vector3.one * 0.001f;
                 targetScale.x = localXWidth;
-                targetScale.y = localYWidth;
+                targetScale.z = localYWidth;
                 colliderGameObject.transform.localScale = targetScale;
-                colliderGameObject.transform.localRotation = Quaternion.LookRotation(normals[remapped_vertices_data[i]]);
+                colliderGameObject.transform.localRotation = Quaternion.identity;
                 colliderTransforms[i] = colliderGameObject.transform;
                 Vector2 coords = new Vector2(xWidth * x - offsetX, yWidth * y - offsetY);
                 colliderCoords.Add(col, coords);
@@ -169,7 +169,7 @@ namespace ubco.ovilab.HPUI.Interaction
         
         struct DeformedCollidersJob: IJobParallelForTransform
         {
-            private Vector3 right, upwards, temppos;
+            private Vector3 right, forward, temppos;
             public float ScaleFactor, GridSize; 
             public int MaxX, MaxY;
 
@@ -183,12 +183,12 @@ namespace ubco.ovilab.HPUI.Interaction
                 temppos.z += -0.0002f;
 
                 if (i >= (MaxY-1) * MaxX )
-                    upwards = Vertices[RemappedIndices[i - MaxX]] - Vertices[RemappedIndices[i]];
+                    forward = Vertices[RemappedIndices[i - MaxX]] - Vertices[RemappedIndices[i]];
                 else
-                    upwards = Vertices[RemappedIndices[i+ MaxX]] - Vertices[RemappedIndices[i]];
+                    forward = Vertices[RemappedIndices[i+ MaxX]] - Vertices[RemappedIndices[i]];
                 
                 col.localPosition = temppos;
-                col.localRotation = Quaternion.LookRotation(Normals[RemappedIndices[i]], upwards);
+                col.localRotation = Quaternion.LookRotation(forward, Normals[RemappedIndices[i]]);
             }
         }
     }
