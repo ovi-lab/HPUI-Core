@@ -847,8 +847,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 Vector3 point = new Vector3(x, y, z);
 
-                float zAngle = Vector3.Angle(Vector3.up, new Vector3(0, y, z)) * (z < 0 ? -1: 1);
-                float xAngle = Vector3.Angle(Vector3.up, new Vector3(x, y, 0)) * (x < 0 ? -1: 1);
+                float xAngle = Vector3.Angle(Vector3.up, new Vector3(0, y, z)) * (z < 0 ? -1: 1);
+                float zAngle = Vector3.Angle(Vector3.up, new Vector3(x, y, 0)) * (x < 0 ? -1: 1);
 
                 allAngles.Add(new HPUIInteractorRayAngle(xAngle, zAngle));
             }
