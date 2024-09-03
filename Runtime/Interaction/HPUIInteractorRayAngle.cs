@@ -55,8 +55,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 yDist = -yDist;
             }
 
-            float xDist = Mathf.Tan(x * Mathf.Deg2Rad) * yDist;
-            float zDist = Mathf.Tan(z * Mathf.Deg2Rad) * yDist;
+            float xDist = Mathf.Tan(z * Mathf.Deg2Rad) * yDist;
+            float zDist = Mathf.Tan(x * Mathf.Deg2Rad) * yDist;
 
             return yDist * up + zDist * forward + xDist * right;
         }
