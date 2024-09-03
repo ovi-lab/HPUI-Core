@@ -686,6 +686,11 @@ namespace ubco.ovilab.HPUI.Interaction
                     }
                 }
 
+                if (data != null)
+                {
+                    data.Invoke(DataWriter);
+                }
+
                 try
                 {
                     if (validTargets.Count > 0)
@@ -701,11 +706,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
                     GestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic, kvp.Value.extra)));
                     UnityEngine.Profiling.Profiler.EndSample();
-
-                    if (data != null)
-                    {
-                        data.Invoke(DataWriter);
-                    }
                 }
             }
             UnityEngine.Profiling.Profiler.EndSample();
