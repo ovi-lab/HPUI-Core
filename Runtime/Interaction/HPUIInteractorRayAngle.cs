@@ -69,14 +69,14 @@ namespace ubco.ovilab.HPUI.Interaction
             float x_ = x,
                   z_ = flipZAngles ? -z : z;
 
-            float yDist = Mathf.Sqrt(1 / (1 + Mathf.Pow(Mathf.Tan(x * Mathf.Deg2Rad), 2) + Mathf.Pow(Mathf.Tan(z * Mathf.Deg2Rad), 2)));
+            float yDist = Mathf.Sqrt(1 / (1 + Mathf.Pow(Mathf.Tan(x_ * Mathf.Deg2Rad), 2) + Mathf.Pow(Mathf.Tan(z_ * Mathf.Deg2Rad), 2)));
             if (Mathf.Abs(x) > 90 || Mathf.Abs(z) > 90)
             {
                 yDist = -yDist;
             }
 
-            float xDist = Mathf.Tan(z * Mathf.Deg2Rad) * yDist;
-            float zDist = Mathf.Tan(x * Mathf.Deg2Rad) * yDist;
+            float xDist = Mathf.Tan(z_ * Mathf.Deg2Rad) * yDist;
+            float zDist = Mathf.Tan(x_ * Mathf.Deg2Rad) * yDist;
 
             return yDist * up + zDist * forward + xDist * right;
         }
