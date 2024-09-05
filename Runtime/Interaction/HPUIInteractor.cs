@@ -9,7 +9,6 @@ using UnityEngine.XR.Interaction.Toolkit.Utilities;
 using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;
 using UnityEngine.Pool;
-using System;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -108,7 +107,6 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 rayCastTechnique = value;
                 UpdateLogic();
-                UpdateRayCastTechnique();
             }
         }
 
@@ -156,7 +154,6 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 interactionSelectionRadius = value;
                 UpdateLogic();
-                UpdateRayCastTechnique();
             }
         }
 
@@ -240,15 +237,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique
         /// </summary>
-        public HPUIInteractorFullRangeAngles FullRangeRayAngles
-        {
-            get => fullRangeRayAngles;
-            set
-            {
-                fullRangeRayAngles = value;
-                UpdateRayCastTechnique();
-            }
-        }
+        public HPUIInteractorFullRangeAngles FullRangeRayAngles { get => fullRangeRayAngles; set => fullRangeRayAngles = value; }
 
         /// <summary>
         /// The gesture logic used by the interactor
@@ -330,6 +319,7 @@ namespace ubco.ovilab.HPUI.Interaction
             base.Awake();
             keepSelectedTargetValid = true;
             physicsScene = gameObject.scene.GetPhysicsScene();
+            activeFingerAngles = FullRangeRayAngles.angles;
             UpdateLogic();
 
             foreach(XRHandJointID id in trackedJoints)
@@ -353,7 +343,6 @@ namespace ubco.ovilab.HPUI.Interaction
         protected override void Start()
         {
             base.Start();
-            UpdateRayCastTechnique();
         }
 
         protected void UpdateJointsData(XRHandJointsUpdatedEventArgs args)
@@ -400,7 +389,6 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 UpdateLogic();
                 UpdateVisuals();
-                UpdateRayCastTechnique();
                 onValidateUpdate = false;
             }
 #endif
@@ -468,12 +456,6 @@ namespace ubco.ovilab.HPUI.Interaction
                             break;
                     }
                     UnityEngine.Profiling.Profiler.EndSample();
-                    // float x_ = (float)angles.Select(a => a.x).Average();
-                    // float z_ = (float)angles.Select(a => a.z).Average();
-
-                    // var direction_ = Quaternion.AngleAxis(x_, attachTransform.right) * Quaternion.AngleAxis(z_, attachTransform.forward) * attachTransform.up;
-
-                    // Debug.DrawLine(interactionPoint, interactionPoint + direction_.normalized * InteractionHoverRadius * 2, Color.blue);
 
                     tempValidTargets.Clear();
 
@@ -697,28 +679,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
             // If using raycast, use heuristic
             GestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, useHeuristic: useRayCast);
-        }
-
-        /// <summary>
-        /// Method called for setup related to ray cast technique
-        /// </summary>
-        protected void UpdateRayCastTechnique()
-        {
-            switch (rayCastTechnique)
-            {
-                case RayCastTechniqueEnum.FullRange:
-                    if (FullRangeRayAngles == null || FullRangeRayAngles.angles == null)
-                    {
-                        throw new InvalidOperationException("Full Range Ray Angles cannot be empty when using Cone");
-                    }
-                    break;
-                case RayCastTechniqueEnum.Cone:
-                    if (ConeRayAngles == null)
-                    {
-                        throw new InvalidOperationException("Cone Ray Angles cannot be empty when using Cone");
-                    }
-                    break;
-            }
         }
 
         #region IHPUIInteractor interface
