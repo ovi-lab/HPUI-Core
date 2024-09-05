@@ -30,18 +30,14 @@ namespace ubco.ovilab.HPUI.Interaction
             /// </summary>
             Cone,
             /// <summary>
-            /// <see cref="GetAttachtransform">attach transform</see> to projection of thumb tip on the closest segment would be the center ray.
-            /// </summary>
-            SegmentVector,
-            /// <summary>
             /// <see cref="GetAttachtransform">attach transform</see> up would be the center ray.
             /// </summary>
             FullRange
         }
 
         /// <summary>
-        /// The parameters used to compute the ray angles when <see cref="RayCastTechnique.SegmentVector"/>
-        /// or <see cref="RayCastTechnique.FullRange"/> are used.
+        /// The parameters used to compute the ray angles 
+        /// <see cref="RayCastTechnique.FullRange"/> are used.
         /// </summary>
         [System.Serializable]
         public struct RayAngleParams
@@ -273,23 +269,6 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        [SerializeField]
-        [Tooltip("Ray configuration for Segment Vector ray technique")]
-        private RayAngleParams segmentVectorRayParameters;
-
-        /// <summary>
-        /// Ray configuration for Segment Vector ray technique.
-        /// </summary>
-        public RayAngleParams SegmentVectorRayParameters
-        {
-            get => segmentVectorRayParameters;
-            set
-            {
-                segmentVectorRayParameters = value;
-                UpdateRayCastTechnique();
-            }
-        }
-
         /// <summary>
         /// The gesture logic used by the interactor
         /// </summary>
@@ -510,48 +489,6 @@ namespace ubco.ovilab.HPUI.Interaction
                             activeFingerAngles = allAngles;
                             directions = allAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
                             cachedDirections = directions;
-                            break;
-                        case RayCastTechniqueEnum.SegmentVector:
-                            if (receivedNewJointData)
-                            {
-                                receivedNewJointData = false;
-                                Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip];
-                                var activePhalanges = (trackedJoints
-                                                       .Where(j => j != XRHandJointID.ThumbTip)
-                                                       .Select(j => new {
-                                                               item = j,
-                                                               pos = jointLocations[j],
-                                                               dist = (jointLocations[j] - thumbTipPos).magnitude
-                                                           })
-                                                       .OrderBy(el => el.dist));
-                                var firstItem = activePhalanges.First();
-                                List<XRHandJointID> relatedFingerJoints = trackedJointsToRelatedFingerJoints[firstItem.item];
-                                var secondItem = activePhalanges.Where(el => el.item != firstItem.item && relatedFingerJoints.Contains(el.item)).First();
-                                Vector3 segmentVectorNormalized = (firstItem.pos - secondItem.pos).normalized;
-                                Vector3 point = Vector3.Dot((thumbTipPos - secondItem.pos), segmentVectorNormalized) * segmentVectorNormalized + secondItem.pos;
-
-                                Vector3 up = point - thumbTipPos;
-                                Vector3 right = Vector3.Cross(up, attachTransform.forward);
-                                Vector3 forward = Vector3.Cross(up, right);
-
-                                List<Vector3> tempDirections = new List<Vector3>();
-
-                                for (int x = SegmentVectorRayParameters.minAngle; x <= SegmentVectorRayParameters.maxAngle; x = x + SegmentVectorRayParameters.angleStep)
-                                {
-                                    for (int z = SegmentVectorRayParameters.minAngle; z <= SegmentVectorRayParameters.maxAngle; z = z + SegmentVectorRayParameters.angleStep)
-                                    {
-                                        tempDirections.Add(HPUIInteractorRayAngle.GetDirection(x, z, right, forward, up, flipZAngles));
-                                    }
-                                }
-
-                                directions = tempDirections;
-
-                                cachedDirections = directions;
-                            }
-                            else
-                            {
-                                directions = cachedDirections;
-                            }
                             break;
                         default:
                             directions = cachedDirections;
@@ -803,17 +740,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     }
 
                     ComputeAllAngles();
-                    break;
-                case RayCastTechniqueEnum.SegmentVector:
-                    if (SegmentVectorRayParameters.minAngle == 0 && SegmentVectorRayParameters.maxAngle == 0)
-                    {
-                        throw new InvalidOperationException("Segment Vector Range Vector Ray Parameters not configured!");
-                    }
-
-                    if (SegmentVectorRayParameters.angleStep == 0)
-                    {
-                        throw new InvalidOperationException("Segment Vector Vector Ray Parameters angle step is 0!");
-                    }
                     break;
                 case RayCastTechniqueEnum.Cone:
                     if (ConeRayAngles == null)
