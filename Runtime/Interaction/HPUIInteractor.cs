@@ -176,6 +176,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 interactionSelectionRadius = value;
                 UpdateLogic();
+                UpdateRayCastTechnique();
             }
         }
 
@@ -283,7 +284,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private List<HPUIInteractorRayAngle> allAngles,
             activeFingerAngles;
-        private IEnumerable<Vector3> cachedDirections = new List<Vector3>();
         // Used when computing the centroid
         private Dictionary<IHPUIInteractable, List<InteractionInfo>> tempValidTargets = new();
 
@@ -454,7 +454,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (UseRayCast)
                 {
-                    IEnumerable<Vector3> directions;
                     DataWriter = "//";
 
                     UnityEngine.Profiling.Profiler.BeginSample("rayDirections");
@@ -482,16 +481,11 @@ namespace ubco.ovilab.HPUI.Interaction
                                     _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
                                 };
                             }
-                            directions = activeFingerAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
-                            cachedDirections = directions;
                             break;
                         case RayCastTechniqueEnum.FullRange:
                             activeFingerAngles = allAngles;
-                            directions = allAngles.Select(a => a.GetDirection(attachTransform, flipZAngles));
-                            cachedDirections = directions;
                             break;
                         default:
-                            directions = cachedDirections;
                             break;
                     }
                     UnityEngine.Profiling.Profiler.EndSample();
@@ -506,10 +500,11 @@ namespace ubco.ovilab.HPUI.Interaction
 
                     UnityEngine.Profiling.Profiler.BeginSample("raycasts");
                     int idx = -1;
-                    foreach(Vector3 direction in directions)
+                    foreach(HPUIInteractorRayAngle angle in activeFingerAngles)
                     {
                         bool validInteractable = false;
                         idx++;
+                        Vector3 direction = angle.GetDirection(attachTransform, flipZAngles);
                         int hits = Physics.RaycastNonAlloc(interactionPoint,
                                                            direction,
                                                            rayCastHits,
@@ -530,11 +525,11 @@ namespace ubco.ovilab.HPUI.Interaction
                                 float sign = Vector3.Dot(hitInfo.collider.transform.up, direction) < 0 ? 1 : -1;
                                 float distance = hitInfo.distance * sign;
 
-                                if (data != null && (RayCastTechnique == RayCastTechniqueEnum.Cone || RayCastTechnique == RayCastTechniqueEnum.FullRange))
+                                if (data != null)
                                 {
-                                    HPUIInteractorRayAngle angle = activeFingerAngles[idx];
-                                    DataWriter = $"{interactable.transform.name},{angle.x},{angle.z},{distance}";
+                                    DataWriter = $"{interactable.transform.name},{angle.X},{angle.Z},{distance}";
                                 }
+
                                 List<InteractionInfo> infoList;
                                 if (!tempValidTargets.TryGetValue(hpuiInteractable, out infoList))
                                 {
@@ -542,14 +537,14 @@ namespace ubco.ovilab.HPUI.Interaction
                                     tempValidTargets.Add(hpuiInteractable, infoList);
                                 }
 
-                                infoList.Add(new InteractionInfo(distance, hitInfo.point, hitInfo.collider));
+                                infoList.Add(new InteractionInfo(distance, hitInfo.point, hitInfo.collider, selectionCheck:angle.WithinThreshold(hitInfo.distance)));
                             }
                         }
 
                         if (ShowDebugRayVisual)
                         {
                             Color rayColor = validInteractable ? Color.green : Color.red;
-                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * InteractionSelectionRadius, rayColor);
+                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.AngleThreshold, rayColor);
                         }
                     }
                     UnityEngine.Profiling.Profiler.EndSample();
@@ -563,6 +558,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     {
                         int localCount = kvp.Value.Count;
                         float localXEndPoint = 0, localYEndPoint = 0, localZEndPoint = 0;
+                        float localOverThresholdCount = 0;
 
                         foreach(InteractionInfo i in kvp.Value)
                         {
@@ -572,6 +568,10 @@ namespace ubco.ovilab.HPUI.Interaction
                             localXEndPoint += i.point.x;
                             localYEndPoint += i.point.y;
                             localZEndPoint += i.point.z;
+                            if (i.selectionCheck)
+                            {
+                                localOverThresholdCount++;
+                            }
                         }
 
                         centroid = new Vector3(localXEndPoint, localYEndPoint, localZEndPoint) / count;
@@ -582,6 +582,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         closestToCentroid.heuristic = (((float)count / (float)localCount)) * (shortestDistance + 1);
                         closestToCentroid.distance = shortestDistance;
                         closestToCentroid.extra = (float)localCount;
+                        closestToCentroid.selectionCheck = localOverThresholdCount > 0;
 
                         validTargets.Add(kvp.Key, closestToCentroid);
                         ListPool<InteractionInfo>.Release(kvp.Value);
@@ -614,7 +615,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             XRInteractableUtility.TryGetClosestPointOnCollider(interactable, interactionPoint, out DistanceInfo info);
                             float dist = Mathf.Sqrt(info.distanceSqr);
-                            validTargets.Add(hpuiInteractable, new InteractionInfo(dist, info.point, info.collider));
+                            validTargets.Add(hpuiInteractable, new InteractionInfo(dist, info.point, info.collider, dist, selectionCheck: dist < InteractionSelectionRadius));
                             if (dist < shortestInteractableDist)
                             {
                                 hoverEndPoint = info.point;
@@ -641,7 +642,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    GestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic, kvp.Value.extra)));
+                    GestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic, kvp.Value.selectionCheck, kvp.Value.extra)));
                     UnityEngine.Profiling.Profiler.EndSample();
                 }
             }
@@ -716,7 +717,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
             // If using raycast, use heuristic
-            GestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, InteractionSelectionRadius, useHeuristic: useRayCast);
+            GestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, useHeuristic: useRayCast);
         }
 
         /// <summary>
@@ -781,7 +782,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 float xAngle = Vector3.Angle(Vector3.up, new Vector3(0, y, z)) * (z < 0 ? -1: 1);
                 float zAngle = Vector3.Angle(Vector3.up, new Vector3(x, y, 0)) * (x < 0 ? -1: 1);
 
-                allAngles.Add(new HPUIInteractorRayAngle(xAngle, zAngle));
+                allAngles.Add(new HPUIInteractorRayAngle(xAngle, zAngle, InteractionSelectionRadius));
             }
         }
 
@@ -823,14 +824,17 @@ namespace ubco.ovilab.HPUI.Interaction
             public Collider collider;
             public float heuristic;
             public float extra;
+            public bool selectionCheck;
 
-            public InteractionInfo(float distance, Vector3 point, Collider collider, float heuristic=0, float extra=0) : this()
+            public InteractionInfo(float distance, Vector3 point, Collider collider, float heuristic=0, float extra=0, bool selectionCheck=true) : this()
             {
                 this.distance = distance;
                 this.point = point;
                 this.collider = collider;
                 this.heuristic = heuristic;
+                // FIXME: This needs to change! Probably remove the spherecast based approach and completely use the angle/raycast
                 this.extra = extra;
+                this.selectionCheck = true;
             }
         }
     }
