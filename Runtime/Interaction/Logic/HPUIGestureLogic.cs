@@ -15,7 +15,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(() => new HPUITapEventArgs());
         private LinkedPool<HPUIGestureEventArgs> hpuiGestureEventArgsPool = new LinkedPool<HPUIGestureEventArgs>(() => new HPUIGestureEventArgs());
 
-        private float tapTimeThreshold, tapDistanceThreshold, interactionSelectionRadius;
+        private float tapTimeThreshold, tapDistanceThreshold;
         private IHPUIInteractor interactor;
 
         private float startTime, cumulativeDistance, timeDelta, currentTrackingInteractableHeuristic;
@@ -33,13 +33,12 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Initializes a new instance of the with the threshold values.
         /// </summary>
-        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float interactionSelectionRadius, bool useHeuristic)
+        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, bool useHeuristic)
         {
             this.interactor = interactor;
             this.useHeuristic = useHeuristic;
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
-            this.interactionSelectionRadius = interactionSelectionRadius;
             Reset();
         }
 
@@ -87,7 +86,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         updateTrackingInteractable = true;
                     }
 
-                    if (interactionData.distance < interactionSelectionRadius)
+                    if (interactionData.isSelection)
                     {
                         selectionHappening = true;
 

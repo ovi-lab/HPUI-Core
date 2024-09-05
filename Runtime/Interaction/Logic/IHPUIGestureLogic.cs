@@ -36,12 +36,14 @@ namespace ubco.ovilab.HPUI.Interaction
         public float distance;
         public float heuristic;
         public float extra;
+        public bool isSelection;
 
-        public HPUIInteractionData(float distance, float heuristic, float extra=0) : this()
+        public HPUIInteractionData(float distance, float heuristic, bool isSelection, float extra=0) : this()
         {
             this.distance = distance;
             this.heuristic = heuristic;
             this.extra = extra;
+            this.isSelection = isSelection;
         }
 
     }

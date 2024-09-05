@@ -3,15 +3,35 @@ using System;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
+    // TODO docuement all of this
     [Serializable]
     public struct HPUIInteractorRayAngle
     {
-        public float x, z;
+        [SerializeField] private float x;
+        [SerializeField] private float z;
+        [SerializeField] private float angleThreshold;
+
+        public float X { get => x; }
+        public float Z { get => z; }
+        public float AngleThreshold { get => angleThreshold; set => angleThreshold = value; }
+
+        public HPUIInteractorRayAngle(float x, float z, float angleThreshold)
+        {
+            this.x = x;
+            this.z = z;
+            this.angleThreshold = angleThreshold;
+        }
 
         public HPUIInteractorRayAngle(float x, float z)
         {
             this.x = x;
             this.z = z;
+            this.angleThreshold = 1f;
+        }
+
+        public bool WithinThreshold(float dist)
+        {
+            return dist < angleThreshold;
         }
 
         // /// <summary>
