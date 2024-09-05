@@ -35,26 +35,6 @@ namespace ubco.ovilab.HPUI.Interaction
             FullRange
         }
 
-        /// <summary>
-        /// The parameters used to compute the ray angles 
-        /// <see cref="RayCastTechnique.FullRange"/> are used.
-        /// </summary>
-        [System.Serializable]
-        public struct RayAngleParams
-        {
-            public int maxAngle;
-            public int minAngle;
-            public int angleStep;
-
-            public RayAngleParams(int maxAngle, int minAngle, int angleStep) : this()
-            {
-                this.maxAngle = maxAngle;
-                this.minAngle = minAngle;
-                this.angleStep = angleStep;
-            }
-        }
-
-
         /// <inheritdoc />
         public new InteractorHandedness handedness
         {
@@ -236,13 +216,13 @@ namespace ubco.ovilab.HPUI.Interaction
         public bool ShowDebugRayVisual { get => showDebugRayVisual; set => showDebugRayVisual = value; }
 
         [SerializeField]
-        [Tooltip("The HPUIInteractorRayAngles asset to use when using cone")]
-        private HPUIInteractorRayAngles coneRayAngles;
+        [Tooltip("The HPUIInteractorConeRayAngles asset to use when using cone")]
+        private HPUIInteractorConeRayAngles coneRayAngles;
 
         /// <summary>
-        /// The HPUIInteractorRayAngles asset to use when using cone
+        /// The HPUIInteractorConeRayAngles asset to use when using cone
         /// </summary>
-        public HPUIInteractorRayAngles ConeRayAngles { get => coneRayAngles; set => coneRayAngles = value; }
+        public HPUIInteractorConeRayAngles ConeRayAngles { get => coneRayAngles; set => coneRayAngles = value; }
 
         [SerializeField]
         [Tooltip("(optional) XR Origin transform. If not set, will attempt to find XROrigin and use its transform.")]
@@ -254,18 +234,18 @@ namespace ubco.ovilab.HPUI.Interaction
         public Transform XROriginTransform { get => xrOriginTransform; set => xrOriginTransform = value; }
 
         [SerializeField]
-        [Tooltip("Ray configuration for FullRange ray technique")]
-        private RayAngleParams fullRangeRayParameters;
+        [Tooltip("The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique")]
+        private HPUIInteractorFullRangeAngles fullRangeRayAngles;
 
         /// <summary>
-        /// Ray configuration for FullRange ray technique
+        /// The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique
         /// </summary>
-        public RayAngleParams FullRangeRayParameters
+        public HPUIInteractorFullRangeAngles FullRangeRayAngles
         {
-            get => fullRangeRayParameters;
+            get => fullRangeRayAngles;
             set
             {
-                fullRangeRayParameters = value;
+                fullRangeRayAngles = value;
                 UpdateRayCastTechnique();
             }
         }
@@ -282,8 +262,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private Collider[] overlapSphereHits = new Collider[200];
         private GameObject visualsObject;
 
-        private List<HPUIInteractorRayAngle> allAngles,
-            activeFingerAngles;
+        private List<HPUIInteractorRayAngle> activeFingerAngles;
         // Used when computing the centroid
         private Dictionary<IHPUIInteractable, List<InteractionInfo>> tempValidTargets = new();
 
@@ -483,7 +462,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             }
                             break;
                         case RayCastTechniqueEnum.FullRange:
-                            activeFingerAngles = allAngles;
+                            activeFingerAngles = FullRangeRayAngles.angles;
                             break;
                         default:
                             break;
@@ -544,7 +523,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         if (ShowDebugRayVisual)
                         {
                             Color rayColor = validInteractable ? Color.green : Color.red;
-                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.AngleThreshold, rayColor);
+                            Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, rayColor);
                         }
                     }
                     UnityEngine.Profiling.Profiler.EndSample();
@@ -725,22 +704,13 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         protected void UpdateRayCastTechnique()
         {
-            allAngles = new List<HPUIInteractorRayAngle>();
-
             switch (rayCastTechnique)
             {
                 case RayCastTechniqueEnum.FullRange:
-                    if (FullRangeRayParameters.minAngle == 0 && FullRangeRayParameters.maxAngle == 0)
+                    if (FullRangeRayAngles == null || FullRangeRayAngles.angles == null)
                     {
-                        throw new InvalidOperationException("Full Range Vector Ray Parameters not configured!");
+                        throw new InvalidOperationException("Full Range Ray Angles cannot be empty when using Cone");
                     }
-
-                    if (FullRangeRayParameters.angleStep == 0)
-                    {
-                        throw new InvalidOperationException("Full Range Vector Ray Parameters angle step is 0!");
-                    }
-
-                    ComputeAllAngles();
                     break;
                 case RayCastTechniqueEnum.Cone:
                     if (ConeRayAngles == null)
@@ -748,41 +718,6 @@ namespace ubco.ovilab.HPUI.Interaction
                         throw new InvalidOperationException("Cone Ray Angles cannot be empty when using Cone");
                     }
                     break;
-            }
-
-            // Avoid null ref exception before the hand tracking module gets going
-            activeFingerAngles = allAngles;
-        }
-
-        private void ComputeAllAngles()
-        {
-            float numberOfSamples = Mathf.Pow(360 / FullRangeRayParameters.angleStep, 2);
-            List<Vector3> spericalPoints = new();
-            float phi = Mathf.PI * (Mathf.Sqrt(5) - 1);
-
-            float yMin = Mathf.Cos(Mathf.Min(Mathf.Abs(FullRangeRayParameters.minAngle * Mathf.Deg2Rad), Mathf.Min(FullRangeRayParameters.maxAngle * Mathf.Deg2Rad)));
-
-            for(int i=0; i < numberOfSamples ; i++)
-            {
-                float y = 1 - (i / (numberOfSamples - 1)) * 2;
-                if (y < yMin)
-                {
-                    break;
-                }
-
-                float radius = Mathf.Sqrt(1 - y * y);
-
-                float theta = phi * i;
-
-                float x = Mathf.Cos(theta) * radius;
-                float z = Mathf.Sin(theta) * radius;
-
-                Vector3 point = new Vector3(x, y, z);
-
-                float xAngle = Vector3.Angle(Vector3.up, new Vector3(0, y, z)) * (z < 0 ? -1: 1);
-                float zAngle = Vector3.Angle(Vector3.up, new Vector3(x, y, 0)) * (x < 0 ? -1: 1);
-
-                allAngles.Add(new HPUIInteractorRayAngle(xAngle, zAngle, InteractionSelectionRadius));
             }
         }
 
