@@ -9,29 +9,29 @@ namespace ubco.ovilab.HPUI.Interaction
     {
         [SerializeField] private float x;
         [SerializeField] private float z;
-        [SerializeField] private float angleThreshold;
+        [SerializeField] private float raySelectionThreshold;
 
         public float X { get => x; }
         public float Z { get => z; }
-        public float AngleThreshold { get => angleThreshold; set => angleThreshold = value; }
+        public float RaySelectionThreshold { get => raySelectionThreshold; set => raySelectionThreshold = value; }
 
         public HPUIInteractorRayAngle(float x, float z, float angleThreshold)
         {
             this.x = x;
             this.z = z;
-            this.angleThreshold = angleThreshold;
+            this.raySelectionThreshold = angleThreshold;
         }
 
         public HPUIInteractorRayAngle(float x, float z)
         {
             this.x = x;
             this.z = z;
-            this.angleThreshold = 1f;
+            this.raySelectionThreshold = 1f;
         }
 
         public bool WithinThreshold(float dist)
         {
-            return dist < angleThreshold;
+            return dist < raySelectionThreshold;
         }
 
         // /// <summary>
