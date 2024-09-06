@@ -441,10 +441,22 @@ namespace ubco.ovilab.HPUI.Interaction
 
                                 activeFingerAngles = activeFinger switch
                                 {
-                                    XRHandJointID.IndexProximal or XRHandJointID.IndexIntermediate or XRHandJointID.IndexDistal or XRHandJointID.IndexTip => ConeRayAngles.IndexAngles,
-                                    XRHandJointID.MiddleProximal or XRHandJointID.MiddleIntermediate or XRHandJointID.MiddleDistal or XRHandJointID.MiddleTip => ConeRayAngles.MiddleAngles,
-                                    XRHandJointID.RingProximal or XRHandJointID.RingIntermediate or XRHandJointID.RingDistal or XRHandJointID.RingTip => ConeRayAngles.RingAngles,
-                                    XRHandJointID.LittleProximal or XRHandJointID.LittleIntermediate or XRHandJointID.LittleDistal or XRHandJointID.LittleTip => ConeRayAngles.LittleAngles,
+                                    XRHandJointID.IndexProximal      => ConeRayAngles.IndexProximalAngles,
+                                    XRHandJointID.IndexIntermediate  => ConeRayAngles.IndexIntermediateAngles,
+                                    XRHandJointID.IndexDistal        => ConeRayAngles.IndexDistalAngles,
+                                    XRHandJointID.IndexTip           => ConeRayAngles.IndexDistalAngles,
+                                    XRHandJointID.MiddleProximal     => ConeRayAngles.MiddleProximalAngles,
+                                    XRHandJointID.MiddleIntermediate => ConeRayAngles.MiddleIntermediateAngles,
+                                    XRHandJointID.MiddleDistal       => ConeRayAngles.MiddleDistalAngles,
+                                    XRHandJointID.MiddleTip          => ConeRayAngles.MiddleDistalAngles,
+                                    XRHandJointID.RingProximal       => ConeRayAngles.RingProximalAngles,
+                                    XRHandJointID.RingIntermediate   => ConeRayAngles.RingIntermediateAngles,
+                                    XRHandJointID.RingDistal         => ConeRayAngles.RingDistalAngles,
+                                    XRHandJointID.RingTip            => ConeRayAngles.RingDistalAngles,
+                                    XRHandJointID.LittleProximal     => ConeRayAngles.LittleProximalAngles,
+                                    XRHandJointID.LittleIntermediate => ConeRayAngles.LittleIntermediateAngles,
+                                    XRHandJointID.LittleDistal       => ConeRayAngles.LittleDistalAngles,
+                                    XRHandJointID.LittleTip          => ConeRayAngles.LittleDistalAngles,
                                     _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
                                 };
                             }
