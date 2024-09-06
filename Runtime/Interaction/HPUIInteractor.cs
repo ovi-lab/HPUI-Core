@@ -529,7 +529,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     UnityEngine.Profiling.Profiler.BeginSample("raycast centroid");
                     foreach (KeyValuePair<IHPUIInteractable, List<InteractionInfo>> kvp in tempValidTargets)
                     {
-                        int localCount = kvp.Value.Count;
                         float localXEndPoint = 0, localYEndPoint = 0, localZEndPoint = 0;
                         float localOverThresholdCount = 0;
 
@@ -552,9 +551,9 @@ namespace ubco.ovilab.HPUI.Interaction
                         InteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
                         // This distance is needed to compute the selection
                         float shortestDistance = kvp.Value.Min(el => el.distance);
-                        closestToCentroid.heuristic = (((float)count / (float)localCount)) * (shortestDistance + 1);
+                        closestToCentroid.heuristic = (((float)count / (float)localOverThresholdCount)) * (shortestDistance + 1);
                         closestToCentroid.distance = shortestDistance;
-                        closestToCentroid.extra = (float)localCount;
+                        closestToCentroid.extra = (float)localOverThresholdCount;
                         closestToCentroid.selectionCheck = localOverThresholdCount > 0;
 
                         validTargets.Add(kvp.Key, closestToCentroid);
