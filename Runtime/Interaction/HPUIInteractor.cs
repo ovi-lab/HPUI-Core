@@ -9,6 +9,7 @@ using UnityEngine.XR.Interaction.Toolkit.Utilities;
 using UnityEngine.XR.Hands;
 using Unity.XR.CoreUtils;
 using UnityEngine.Pool;
+using ubco.ovilab.HPUI.utils;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -256,10 +257,13 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public HPUIInteractorFullRangeAngles FullRangeRayAngles { get => fullRangeRayAngles; set => fullRangeRayAngles = value; }
 
+        [SerializeReference, SubclassSelector]
+        private IHPUIGestureLogic gestureLogic;
+
         /// <summary>
         /// The gesture logic used by the interactor
         /// </summary>
-        public IHPUIGestureLogic GestureLogic { get; set; }
+        public IHPUIGestureLogic GestureLogic { get => gestureLogic; set => value = gestureLogic; }
 
         private Dictionary<IHPUIInteractable, InteractionInfo> validTargets = new Dictionary<IHPUIInteractable, InteractionInfo>();
         private Vector3 lastInteractionPoint;
