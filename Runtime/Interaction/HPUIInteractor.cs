@@ -510,7 +510,7 @@ namespace ubco.ovilab.HPUI.Interaction
                                     tempValidTargets.Add(hpuiInteractable, infoList);
                                 }
 
-                                infoList.Add(new InteractionInfo(distance, hitInfo.point, hitInfo.collider, selectionCheck:angle.WithinThreshold(hitInfo.distance)));
+                                infoList.Add(new InteractionInfo(distance, hitInfo.point, hitInfo.collider, selectionCheck:angle.WithinThreshold(distance)));
                             }
                         }
 
@@ -732,7 +732,7 @@ namespace ubco.ovilab.HPUI.Interaction
             public float extra;
             public bool selectionCheck;
 
-            public InteractionInfo(float distance, Vector3 point, Collider collider, float heuristic=0, float extra=0, bool selectionCheck=true) : this()
+            public InteractionInfo(float distance, Vector3 point, Collider collider, float heuristic=0, float extra=0, bool selectionCheck=false) : this()
             {
                 this.distance = distance;
                 this.point = point;
@@ -740,7 +740,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.heuristic = heuristic;
                 // FIXME: This needs to change! Probably remove the spherecast based approach and completely use the angle/raycast
                 this.extra = extra;
-                this.selectionCheck = true;
+                this.selectionCheck = selectionCheck;
             }
         }
     }
