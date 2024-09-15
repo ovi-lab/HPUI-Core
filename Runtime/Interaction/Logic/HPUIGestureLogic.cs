@@ -15,7 +15,7 @@ namespace ubco.ovilab.HPUI.Interaction
         private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(() => new HPUITapEventArgs());
         private LinkedPool<HPUIGestureEventArgs> hpuiGestureEventArgsPool = new LinkedPool<HPUIGestureEventArgs>(() => new HPUIGestureEventArgs());
 
-        private float tapTimeThreshold, tapDistanceThreshold;
+        private float tapTimeThreshold, tapDistanceThreshold, debounceTimeWindow, debounceStartTime;
         private IHPUIInteractor interactor;
 
         private float startTime, cumulativeDistance, timeDelta, currentTrackingInteractableHeuristic;
@@ -33,12 +33,17 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Initializes a new instance of the with the threshold values.
         /// </summary>
-        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, bool useHeuristic)
+        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float debounceTimeWindow, bool useHeuristic)
         {
+            if (tapTimeThreshold < debounceTimeWindow)
+            {
+                throw new ArgumentException("tapTimeThreshold cannot be smaller than the debounceTimeWindow");
+            }
             this.interactor = interactor;
             this.useHeuristic = useHeuristic;
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
+            this.debounceTimeWindow = debounceTimeWindow;
             Reset();
         }
 
@@ -47,6 +52,8 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             bool updateTrackingInteractable = false;
             bool selectionHappening = false;
+            float frameTime = Time.time;
+
             foreach(IHPUIInteractable interactable in distances.Keys.Union(trackingInteractables.Keys))
             {
                 bool isTracked = trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state);
@@ -92,7 +99,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                         if (interactorGestureState == HPUIGesture.None)
                         {
-                            startTime = Time.time;
+                            startTime = frameTime;
                             interactorGestureState = HPUIGesture.Tap;
                             updateTrackingInteractable = true;
                             // Forcing the current interactable to be reset.
@@ -104,7 +111,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             state.selectableTarget = true;
 
-                            state.startTime = Time.time;
+                            state.startTime = frameTime;
                             success = interactable.ComputeInteractorPosition(interactor, out state.startPosition);
                             Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
                         }
@@ -129,18 +136,22 @@ namespace ubco.ovilab.HPUI.Interaction
                 Debug.Log($"-- params: cumm. dist: {cumulativeDistance}, time delta: {timeDelta}");
                 try
                 {
-                    switch (interactorGestureState)
+                    if (debounceStartTime + debounceTimeWindow < frameTime)
                     {
-                        case HPUIGesture.Tap:
-                            TriggerTapEvent();
-                            break;
-                        case HPUIGesture.Gesture:
-                            TriggerGestureEvent(HPUIGestureState.Stopped);
-                            break;
+                        switch (interactorGestureState)
+                        {
+                            case HPUIGesture.Tap:
+                                TriggerTapEvent();
+                                break;
+                            case HPUIGesture.Gesture:
+                                TriggerGestureEvent(HPUIGestureState.Stopped);
+                                break;
+                        }
                     }
                 }
                 finally
                 {
+                    debounceStartTime = frameTime;
                     Reset();
                 }
                 return;
@@ -181,7 +192,7 @@ namespace ubco.ovilab.HPUI.Interaction
             success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out currentPosition);
             Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
             delta = currentPosition - previousPosition;
-            timeDelta = Time.time - startTime;
+            timeDelta = frameTime - startTime;
             cumulativeDistance += delta.magnitude;
             cumulativeDirection += delta;
 
