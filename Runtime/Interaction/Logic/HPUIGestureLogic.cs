@@ -366,7 +366,6 @@ namespace ubco.ovilab.HPUI.Interaction
             public void SetNotActive()
             {
                 active = false;
-                selectableTarget = false;
                 this.minDistanceToInteractor = float.MaxValue;
                 this.heuristic = float.MaxValue;
             }
