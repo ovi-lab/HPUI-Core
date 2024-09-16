@@ -290,24 +290,20 @@ namespace ubco.ovilab.HPUI.Interaction
             XRHandJointID.ThumbTip
         };
 
-        private Dictionary<XRHandJointID, List<XRHandJointID>> trackedJointsToRelatedFingerJoints = new ()
+        private Dictionary<XRHandJointID, XRHandJointID> trackedJointsToSegment = new ()
         {
-            {XRHandJointID.IndexProximal, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
-            {XRHandJointID.IndexIntermediate, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
-            {XRHandJointID.IndexDistal, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
-            {XRHandJointID.IndexTip, new List<XRHandJointID>() {XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip}},
-            {XRHandJointID.MiddleProximal, new List<XRHandJointID>() {XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip}},
-            {XRHandJointID.MiddleIntermediate, new List<XRHandJointID>() {XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip}},
-            {XRHandJointID.MiddleDistal, new List<XRHandJointID>() {XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip}},
-            {XRHandJointID.MiddleTip, new List<XRHandJointID>() {XRHandJointID.MiddleProximal, XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal, XRHandJointID.MiddleTip}},
-            {XRHandJointID.RingProximal, new List<XRHandJointID>() {XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip}},
-            {XRHandJointID.RingIntermediate, new List<XRHandJointID>() {XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip}},
-            {XRHandJointID.RingDistal, new List<XRHandJointID>() {XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip}},
-            {XRHandJointID.RingTip, new List<XRHandJointID>() {XRHandJointID.RingProximal, XRHandJointID.RingIntermediate, XRHandJointID.RingDistal, XRHandJointID.RingTip}},
-            {XRHandJointID.LittleProximal, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
-            {XRHandJointID.LittleIntermediate, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
-            {XRHandJointID.LittleDistal, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
-            {XRHandJointID.LittleTip, new List<XRHandJointID>() {XRHandJointID.LittleProximal, XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal, XRHandJointID.LittleTip}},
+            {XRHandJointID.IndexProximal,      XRHandJointID.IndexIntermediate},
+            {XRHandJointID.IndexIntermediate,  XRHandJointID.IndexDistal},
+            {XRHandJointID.IndexDistal,        XRHandJointID.IndexTip},
+            {XRHandJointID.MiddleProximal,     XRHandJointID.MiddleIntermediate},
+            {XRHandJointID.MiddleIntermediate, XRHandJointID.MiddleDistal},
+            {XRHandJointID.MiddleDistal,       XRHandJointID.MiddleTip},
+            {XRHandJointID.RingProximal,       XRHandJointID.RingIntermediate},
+            {XRHandJointID.RingIntermediate,   XRHandJointID.RingDistal},
+            {XRHandJointID.RingDistal,         XRHandJointID.RingTip},
+            {XRHandJointID.LittleProximal,     XRHandJointID.LittleIntermediate},
+            {XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal},
+            {XRHandJointID.LittleDistal,       XRHandJointID.LittleTip},
         };
 
         protected bool receivedNewJointData = false,
@@ -449,33 +445,42 @@ namespace ubco.ovilab.HPUI.Interaction
                             {
                                 receivedNewJointData = false;
                                 Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip];
-                                XRHandJointID activeFinger = (trackedJoints
-                                         .Where(j => j != XRHandJointID.ThumbTip)
-                                         .Select(j => new {item = j, pos = (jointLocations[j] - thumbTipPos).magnitude})
-                                         .OrderBy(el => el.pos)
-                                         .First()
-                                         .item);
 
-                                activeFingerAngles = activeFinger switch
+                                XRHandJointID closestJoint = XRHandJointID.BeginMarker;
+                                float shortestDistance = float.MaxValue;
+                                foreach(KeyValuePair<XRHandJointID, XRHandJointID> kvp in trackedJointsToSegment)
                                 {
-                                    XRHandJointID.IndexProximal      => ConeRayAngles.IndexProximalAngles,
-                                    XRHandJointID.IndexIntermediate  => ConeRayAngles.IndexIntermediateAngles,
-                                    XRHandJointID.IndexDistal        => ConeRayAngles.IndexDistalAngles,
-                                    XRHandJointID.IndexTip           => ConeRayAngles.IndexDistalAngles,
-                                    XRHandJointID.MiddleProximal     => ConeRayAngles.MiddleProximalAngles,
-                                    XRHandJointID.MiddleIntermediate => ConeRayAngles.MiddleIntermediateAngles,
-                                    XRHandJointID.MiddleDistal       => ConeRayAngles.MiddleDistalAngles,
-                                    XRHandJointID.MiddleTip          => ConeRayAngles.MiddleDistalAngles,
-                                    XRHandJointID.RingProximal       => ConeRayAngles.RingProximalAngles,
-                                    XRHandJointID.RingIntermediate   => ConeRayAngles.RingIntermediateAngles,
-                                    XRHandJointID.RingDistal         => ConeRayAngles.RingDistalAngles,
-                                    XRHandJointID.RingTip            => ConeRayAngles.RingDistalAngles,
-                                    XRHandJointID.LittleProximal     => ConeRayAngles.LittleProximalAngles,
-                                    XRHandJointID.LittleIntermediate => ConeRayAngles.LittleIntermediateAngles,
-                                    XRHandJointID.LittleDistal       => ConeRayAngles.LittleDistalAngles,
-                                    XRHandJointID.LittleTip          => ConeRayAngles.LittleDistalAngles,
-                                    _ => throw new System.InvalidOperationException($"Unknown active finger seen. Got {activeFinger}")
-                                };
+                                    Vector3 baseVector = jointLocations[kvp.Key];
+                                    Vector3 segmentVector = jointLocations[kvp.Value] - baseVector;
+                                    Vector3 toTipVector = thumbTipPos - baseVector;
+                                    Vector3 closestPoint = Vector3.Dot(toTipVector, segmentVector.normalized) * segmentVector.normalized + baseVector;
+                                    float distance = (thumbTipPos - closestPoint).sqrMagnitude;
+                                    if (distance < shortestDistance)
+                                    {
+                                        shortestDistance = distance;
+                                        closestJoint = kvp.Key;
+                                    }
+                                }
+
+                                if (closestJoint != XRHandJointID.BeginMarker)
+                                {
+                                    activeFingerAngles = closestJoint switch
+                                        {
+                                            XRHandJointID.IndexProximal      => ConeRayAngles.IndexProximalAngles,
+                                            XRHandJointID.IndexIntermediate  => ConeRayAngles.IndexIntermediateAngles,
+                                            XRHandJointID.IndexDistal        => ConeRayAngles.IndexDistalAngles,
+                                            XRHandJointID.MiddleProximal     => ConeRayAngles.MiddleProximalAngles,
+                                            XRHandJointID.MiddleIntermediate => ConeRayAngles.MiddleIntermediateAngles,
+                                            XRHandJointID.MiddleDistal       => ConeRayAngles.MiddleDistalAngles,
+                                            XRHandJointID.RingProximal       => ConeRayAngles.RingProximalAngles,
+                                            XRHandJointID.RingIntermediate   => ConeRayAngles.RingIntermediateAngles,
+                                            XRHandJointID.RingDistal         => ConeRayAngles.RingDistalAngles,
+                                            XRHandJointID.LittleProximal     => ConeRayAngles.LittleProximalAngles,
+                                            XRHandJointID.LittleIntermediate => ConeRayAngles.LittleIntermediateAngles,
+                                            XRHandJointID.LittleDistal       => ConeRayAngles.LittleDistalAngles,
+                                            _ => throw new System.InvalidOperationException($"Unknown joint seen. Got {closestJoint},")
+                                        };
+                                }
                             }
                             break;
                         case RayCastTechniqueEnum.FullRange:
