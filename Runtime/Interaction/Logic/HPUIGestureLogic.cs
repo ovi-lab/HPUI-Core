@@ -59,6 +59,11 @@ namespace ubco.ovilab.HPUI.Interaction
                 bool isTracked = trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state);
                 bool isInFrame = distances.TryGetValue(interactable, out HPUIInteractionData interactionData);
 
+                if (isTracked)
+                {
+                    state.Update();
+                }
+
                 // Target entered hover state
                 if (!isTracked || !state.active)
                 {
@@ -113,7 +118,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                             state.startTime = frameTime;
                             success = interactable.ComputeInteractorPosition(interactor, out state.startPosition);
-                            Debug.Assert(success, $"Current tracking interactable ({interactable.transform.name}) was not hoverd by interactor  {interactor.transform.name}");
+                            Debug.Assert(success, $"Current tracking interactable ({interactable.transform?.name}) was not hoverd by interactor  {interactor.transform?.name}");
                         }
                     }
                 }
@@ -206,7 +211,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         if (timeDelta > tapTimeThreshold || cumulativeDistance > tapDistanceThreshold)
                         {
                             interactorGestureState = HPUIGesture.Gesture;
-                            ComputeActivePriorityInteractable();
+                            ComputeActivePriorityInteractable(false);
                             TriggerGestureEvent(HPUIGestureState.Started);
                         }
                         break;
@@ -225,14 +230,14 @@ namespace ubco.ovilab.HPUI.Interaction
 
         // NOTE: This gets called only within the tapDistanceThreshold window.
         // Thus using distance as opposed to start time to pick the target that is the most ideal.
-        protected void ComputeActivePriorityInteractable()
+        protected void ComputeActivePriorityInteractable(bool usePreviousSelectableState)
         {
             // Targets not selected within the priority window
             // (defaults to tapDistanceThreshold), will not get any
             // events.  For targets selected withing the window, first
             // prioritize the zOrder, then the distance.
             IHPUIInteractable interactableToBeActive = trackingInteractables
-                .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && kvp.Value.selectableTarget)
+                .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && (usePreviousSelectableState ? kvp.Value.selectableInPrevFrame: kvp.Value.selectableTarget))
                 .OrderBy(kvp => kvp.Key.zOrder)
                 .ThenBy(kvp => useHeuristic? kvp.Value.heuristic : kvp.Value.minDistanceToInteractor)
                 .FirstOrDefault().Key;
@@ -261,7 +266,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             using (hpuiTapEventArgsPool.Get(out HPUITapEventArgs tapEventArgs))
             {
-                ComputeActivePriorityInteractable();
+                ComputeActivePriorityInteractable(true);
                 HPUIInteractionState state;
                 if (activePriorityInteractable != null)
                 {
@@ -349,6 +354,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 selectableTarget;
             public float minDistanceToInteractor;
             public float heuristic;
+            public bool selectableInPrevFrame;
 
             public HPUIInteractionState()
             {
@@ -367,11 +373,20 @@ namespace ubco.ovilab.HPUI.Interaction
 
             public void SetNotActive()
             {
+                selectableTarget = false;
                 active = false;
-                this.minDistanceToInteractor = float.MaxValue;
-                this.heuristic = float.MaxValue;
+            }
+
+            public void Update()
+            {
+                if (!selectableTarget)
+                {
+                    this.minDistanceToInteractor = float.MaxValue;
+                    this.heuristic = float.MaxValue;
+                }
+
+                selectableInPrevFrame = selectableTarget;
             }
         }
     }
-
 }
