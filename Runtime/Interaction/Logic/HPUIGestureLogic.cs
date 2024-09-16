@@ -113,7 +113,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                             state.startTime = frameTime;
                             success = interactable.ComputeInteractorPosition(interactor, out state.startPosition);
-                            Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
+                            Debug.Assert(success, $"Current tracking interactable ({interactable.transform.name}) was not hoverd by interactor  {interactor.transform.name}");
                         }
                     }
                 }
@@ -240,8 +240,10 @@ namespace ubco.ovilab.HPUI.Interaction
             if (interactableToBeActive != activePriorityInteractable)
             {
                 currentTrackingInteractable = activePriorityInteractable = interactableToBeActive;
-                success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out currentPosition);
-                Debug.Assert(success, $"Current active interactable was not hoverd by interactor when it was made priority target {interactor.transform.name}");
+                if (currentTrackingInteractable.ComputeInteractorPosition(interactor, out Vector2 newCurrentPosition))
+                {
+                    currentPosition = newCurrentPosition;
+                }
             }
         }
 
