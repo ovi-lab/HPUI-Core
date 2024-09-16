@@ -30,6 +30,11 @@ namespace ubco.ovilab.HPUI.Editor
             if (generating)
             {
                 string message = "This will generate the angles.";
+                if (t.angles == null)
+                {
+                    t.angles = new();
+                }
+
                 if (t.angles.Count != 0)
                 {
                     EditorGUILayout.HelpBox("There are already values configured. Generating would overwrite it!", MessageType.Warning);
