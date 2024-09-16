@@ -96,7 +96,7 @@ namespace ubco.ovilab.HPUI.Tests
 
         List<Collider> IXRInteractable.colliders => throw new NotImplementedException();
 
-        Transform IXRInteractable.transform => throw new NotImplementedException();
+        Transform IXRInteractable.transform => null;
 
         HoverEnterEvent IXRHoverInteractable.firstHoverEntered => throw new NotImplementedException();
 
