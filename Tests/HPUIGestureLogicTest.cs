@@ -79,7 +79,7 @@ namespace ubco.ovilab.HPUI.Tests
         }
 
         [UnityTest]
-        public IEnumerator HPUIGestureLogicTest_SimpleTap_DebnouceIgnore()
+        public IEnumerator HPUIGestureLogicTest_SimpleTap_DebounceIgnore()
         {
             Reset();
             TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
@@ -331,6 +331,7 @@ namespace ubco.ovilab.HPUI.Tests
 
             updates[i1] = new HPUIInteractionData(OutsideSelectionRadius, 0, OutsideSelectionRadius < SelectionRadius);
             updates[i2] = new HPUIInteractionData(OutsideSelectionRadius, 0, OutsideSelectionRadius < SelectionRadius);
+            yield return new WaitForSeconds(OutsideDebounceWindow);
             logic.Update(updates);
 
             Assert.AreEqual(tapsCount, 1);
@@ -350,6 +351,7 @@ namespace ubco.ovilab.HPUI.Tests
             updates[i2] = new HPUIInteractionData(InsideSelectionRadius, 0, InsideSelectionRadius < SelectionRadius);
             logic.Update(updates);
 
+            yield return new WaitForSeconds(OutsideDebounceWindow);
             updates.Clear();
             logic.Update(updates);
 
@@ -433,6 +435,7 @@ namespace ubco.ovilab.HPUI.Tests
             updates[i1] = new HPUIInteractionData(InsideSelectionRadius, 0, InsideSelectionRadius < SelectionRadius);
             logic.Update(updates);
 
+            yield return new WaitForSeconds(InsideTapTime);
             updates.Clear();
             logic.Update(updates);
 
