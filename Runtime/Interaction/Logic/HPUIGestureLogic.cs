@@ -125,7 +125,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 // Target exited hover state
                 else
                 {
-                    state.SetNotActive();
+                    state.SetNotActive(frameTime);
                     activeInteractables--;
                     updateTrackingInteractable = true;
                 }
@@ -237,7 +237,7 @@ namespace ubco.ovilab.HPUI.Interaction
             // events.  For targets selected withing the window, first
             // prioritize the zOrder, then the distance.
             IHPUIInteractable interactableToBeActive = trackingInteractables
-                .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && (usePreviousSelectableState ? kvp.Value.selectableInPrevFrame: kvp.Value.selectableTarget))
+                .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && (usePreviousSelectableState ? kvp.Value.ActiveTime() > debounceTimeWindow : kvp.Value.selectableTarget))
                 .OrderBy(kvp => kvp.Key.zOrder)
                 .ThenBy(kvp => useHeuristic? kvp.Value.heuristic : kvp.Value.minDistanceToInteractor)
                 .FirstOrDefault().Key;
@@ -348,7 +348,7 @@ namespace ubco.ovilab.HPUI.Interaction
         class HPUIInteractionState
         {
             public static HPUIInteractionState empty = new HPUIInteractionState();
-            public float startTime;
+            public float startTime, activeEndTime;
             public Vector2 startPosition;
             public bool active,
                 selectableTarget;
@@ -371,10 +371,11 @@ namespace ubco.ovilab.HPUI.Interaction
                 active = true;
             }
 
-            public void SetNotActive()
+            public void SetNotActive(float frameTime)
             {
                 selectableTarget = false;
                 active = false;
+                activeEndTime = frameTime;
             }
 
             public void Update()
@@ -386,6 +387,18 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
 
                 selectableInPrevFrame = selectableTarget;
+            }
+
+            public float ActiveTime()
+            {
+                if (active)
+                {
+                    return float.MaxValue;
+                }
+                else
+                {
+                    return activeEndTime - startTime;
+                }
             }
         }
     }
