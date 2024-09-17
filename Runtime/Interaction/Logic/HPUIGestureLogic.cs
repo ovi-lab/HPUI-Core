@@ -59,13 +59,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 bool isTracked = trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state);
                 bool isInFrame = distances.TryGetValue(interactable, out HPUIInteractionData interactionData);
 
-                if (isTracked)
-                {
-                    state.Update();
-                }
-
                 // Target entered hover state
-                if (!isTracked || !state.active)
+                if (!isTracked || !state.Active)
                 {
                     if (isTracked)
                     {
@@ -83,14 +78,14 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (isInFrame)
                 {
-                    if (interactionData.distance < state.minDistanceToInteractor)
+                    if (interactionData.distance < state.MinDistanceToInteractor)
                     {
-                        state.minDistanceToInteractor = interactionData.distance;
+                        state.MinDistanceToInteractor = interactionData.distance;
                     }
 
-                    if (interactionData.heuristic < state.heuristic)
+                    if (interactionData.heuristic < state.Heuristic)
                     {
-                        state.heuristic = interactionData.heuristic;
+                        state.Heuristic = interactionData.heuristic;
                     }
 
                     if (!updateTrackingInteractable && currentTrackingInteractable != interactable && interactionData.heuristic < currentTrackingInteractableHeuristic)
@@ -114,10 +109,11 @@ namespace ubco.ovilab.HPUI.Interaction
                         // Selectable only if within the tapTimeThreshold.
                         if (interactorGestureState == HPUIGesture.Tap)
                         {
-                            state.selectableTarget = true;
+                            state.SetSelectable();
 
-                            state.startTime = frameTime;
-                            success = interactable.ComputeInteractorPosition(interactor, out state.startPosition);
+                            state.StartTime = frameTime;
+                            success = interactable.ComputeInteractorPosition(interactor, out Vector2 startPosition);
+                            state.StartPosition = startPosition;
                             Debug.Assert(success, $"Current tracking interactable ({interactable.transform?.name}) was not hoverd by interactor  {interactor.transform?.name}");
                         }
                     }
@@ -179,13 +175,13 @@ namespace ubco.ovilab.HPUI.Interaction
                 // Giving priority to the ones that was the oldest entered
                 // This minimizes the tracking interactable changing
                 KeyValuePair<IHPUIInteractable, HPUIInteractionState> interactableDataToTrack = trackingInteractables
-                    .Where(kvp => kvp.Value.active)
-                    .OrderBy(kvp => kvp.Value.heuristic)
+                    .Where(kvp => kvp.Value.Active)
+                    .OrderBy(kvp => kvp.Value.Heuristic)
                     .First();
 
                 if (interactableDataToTrack.Key != currentTrackingInteractable)
                 {
-                    currentTrackingInteractableHeuristic = interactableDataToTrack.Value.heuristic;
+                    currentTrackingInteractableHeuristic = interactableDataToTrack.Value.Heuristic;
                     currentTrackingInteractable = interactableDataToTrack.Key;
                     // If interactable change, we need to restart tracking, hence skipping a frame
                     success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
@@ -237,9 +233,10 @@ namespace ubco.ovilab.HPUI.Interaction
             // events.  For targets selected withing the window, first
             // prioritize the zOrder, then the distance.
             IHPUIInteractable interactableToBeActive = trackingInteractables
-                .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) && (usePreviousSelectableState ? kvp.Value.ActiveTime() > debounceTimeWindow : kvp.Value.selectableTarget))
+                .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) &&
+                       (usePreviousSelectableState ? kvp.Value.SelectableInPrevFrames: kvp.Value.SelectableTarget))
                 .OrderBy(kvp => kvp.Key.zOrder)
-                .ThenBy(kvp => useHeuristic? kvp.Value.heuristic : kvp.Value.minDistanceToInteractor)
+                .ThenBy(kvp => useHeuristic? kvp.Value.Heuristic : kvp.Value.MinDistanceToInteractor)
                 .FirstOrDefault().Key;
 
             if (interactableToBeActive != activePriorityInteractable)
@@ -277,7 +274,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     state = HPUIInteractionState.empty;
                 }
 
-                tapEventArgs.SetParams(interactor, activePriorityInteractable, state.startPosition + cumulativeDirection);
+                tapEventArgs.SetParams(interactor, activePriorityInteractable, state.StartPosition + cumulativeDirection);
 
                 try
                 {
@@ -310,7 +307,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     state = HPUIInteractionState.empty;
                 }
                 gestureEventArgs.SetParams(interactor, activePriorityInteractable,
-                                           gestureState, timeDelta, state.startTime, state.startPosition,
+                                           gestureState, timeDelta, state.StartTime, state.StartPosition,
                                            cumulativeDirection, cumulativeDistance, delta,
                                            currentTrackingInteractable, currentPosition);
 
@@ -348,57 +345,40 @@ namespace ubco.ovilab.HPUI.Interaction
         class HPUIInteractionState
         {
             public static HPUIInteractionState empty = new HPUIInteractionState();
-            public float startTime, activeEndTime;
-            public Vector2 startPosition;
-            public bool active,
-                selectableTarget;
-            public float minDistanceToInteractor;
-            public float heuristic;
-            public bool selectableInPrevFrame;
+
+            public float Heuristic { get; set; }
+            public float MinDistanceToInteractor { get; set; }
+            public Vector2 StartPosition { get; set; }
+            public float StartTime { get; set; }
+            public bool Active { get; private set; }
+            public bool SelectableTarget { get; private set; }
+            public bool SelectableInPrevFrames { get; private set; }
 
             public HPUIInteractionState()
             {
-                this.startTime = 0;
-                this.startPosition = Vector2.zero;
-                this.active = true;
-                this.selectableTarget = false;
-                this.minDistanceToInteractor = float.MaxValue;
-                this.heuristic = float.MaxValue;
+                this.StartTime = 0;
+                this.StartPosition = Vector2.zero;
+                this.Active = true;
+                this.SelectableTarget = false;
+                this.MinDistanceToInteractor = float.MaxValue;
+                this.Heuristic = float.MaxValue;
+            }
+
+            public void SetSelectable()
+            {
+                SelectableTarget = true;
+                SelectableInPrevFrames = true;
             }
 
             public void SetActive()
             {
-                active = true;
+                Active = true;
             }
 
             public void SetNotActive(float frameTime)
             {
-                selectableTarget = false;
-                active = false;
-                activeEndTime = frameTime;
-            }
-
-            public void Update()
-            {
-                if (!selectableTarget)
-                {
-                    this.minDistanceToInteractor = float.MaxValue;
-                    this.heuristic = float.MaxValue;
-                }
-
-                selectableInPrevFrame = selectableTarget;
-            }
-
-            public float ActiveTime()
-            {
-                if (active)
-                {
-                    return float.MaxValue;
-                }
-                else
-                {
-                    return activeEndTime - startTime;
-                }
+                SelectableTarget = false;
+                Active = false;
             }
         }
     }
