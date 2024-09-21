@@ -10,20 +10,69 @@ namespace ubco.ovilab.HPUI.Interaction
     /// Encapsulates the logic for HPUI gesture interactions.
     /// The interactor dictates which interactable gets the gesture.
     /// </summary>
+    [Serializable]
     public class HPUIGestureLogic: IHPUIGestureLogic
     {
+        [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
+        [SerializeField]
+        private float tapTimeThreshold;
+        /// <summary>
+        /// The time threshold (in seconds) at which an interaction would be
+        /// treated as a gesture.  That is, if the interactor is in contact with
+        /// an interactable for more than this threshold, it would be treated as a
+        /// gesture.
+        /// </summary>
+        public float TapTimeThreshold
+        {
+            get => tapTimeThreshold;
+            set
+            {
+                tapTimeThreshold = value;
+            }
+        }
+
+        [Tooltip("The distance threshold at which an interaction would be treated as a gesture.")]
+        [SerializeField]
+        private float tapDistanceThreshold;
+        /// <summary>
+        /// The distance threshold (in Unity units) at which an interaction would
+        /// be treated as a gesture.  That is, if the interactor has moved more
+        /// than this value after coming into contact with an interactable, it
+        /// would be treated as a gesture.
+        /// </summary>
+        public float TapDistanceThreshold
+        {
+            get => tapDistanceThreshold;
+            set
+            {
+                tapDistanceThreshold = value;
+            }
+        }
+
+        [Tooltip("After a gesture completes, within this time window, not new gestures will be triggered.")]
+        [SerializeField]
+        private float debounceTimeWindow;
+        /// <summary>
+        /// After a gesture completes, within this time window (in seconds), not
+        /// new gestures will be triggered.  Should be less than <see cref="TapTimeThreshold"/>.
+        /// </summary>
+        public float DebounceTimeWindow
+        {
+            get => debounceTimeWindow;
+            set
+            {
+                debounceTimeWindow = value;
+            }
+        }
+
         private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(() => new HPUITapEventArgs());
         private LinkedPool<HPUIGestureEventArgs> hpuiGestureEventArgsPool = new LinkedPool<HPUIGestureEventArgs>(() => new HPUIGestureEventArgs());
 
-        private float tapTimeThreshold, tapDistanceThreshold, debounceTimeWindow, debounceStartTime;
-        private IHPUIInteractor interactor;
-
-        private float startTime, cumulativeDistance, timeDelta, currentTrackingInteractableHeuristic;
+        private float startTime, cumulativeDistance, timeDelta, currentTrackingInteractableHeuristic, debounceStartTime;
         private Vector2 delta, currentPosition, previousPosition, cumulativeDirection;
-        private bool selectionHappenedLastFrame = false,
-            useHeuristic = false;
         private int activeInteractables = 0;
-        private bool success;
+        private bool success,
+            selectionHappenedLastFrame = false;
 
         private IHPUIInteractable activePriorityInteractable, currentTrackingInteractable;
         private Dictionary<IHPUIInteractable, HPUIInteractionState> trackingInteractables = new Dictionary<IHPUIInteractable, HPUIInteractionState>();
@@ -31,16 +80,31 @@ namespace ubco.ovilab.HPUI.Interaction
         private HPUIGesture interactorGestureState = HPUIGesture.None;
 
         /// <summary>
+        /// Initializes a new instance with default values.
+        /// </summary>
+        public HPUIGestureLogic()
+        {
+            UpdateThresholds(tapTimeThreshold, tapDistanceThreshold, debounceTimeWindow);
+            Reset();
+        }
+
+        /// <summary>
         /// Initializes a new instance of the with the threshold values.
         /// </summary>
-        public HPUIGestureLogic(IHPUIInteractor interactor, float tapTimeThreshold, float tapDistanceThreshold, float debounceTimeWindow, bool useHeuristic)
+        public HPUIGestureLogic(float tapTimeThreshold, float tapDistanceThreshold, float debounceTimeWindow)
+        {
+            UpdateThresholds(tapTimeThreshold, tapDistanceThreshold, debounceTimeWindow);
+        }
+
+        /// <summary>
+        /// Update the threshold values used.
+        /// </summary>
+        public void UpdateThresholds(float tapTimeThreshold, float tapDistanceThreshold, float debounceTimeWindow)
         {
             if (tapTimeThreshold < debounceTimeWindow)
             {
                 throw new ArgumentException("tapTimeThreshold cannot be smaller than the debounceTimeWindow");
             }
-            this.interactor = interactor;
-            this.useHeuristic = useHeuristic;
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
             this.debounceTimeWindow = debounceTimeWindow;
@@ -48,7 +112,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void Update(IDictionary<IHPUIInteractable, HPUIInteractionData> distances)
+        public void Update(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionData> distances)
         {
             bool updateTrackingInteractable = false;
             bool selectionHappening = false;
@@ -142,10 +206,10 @@ namespace ubco.ovilab.HPUI.Interaction
                         switch (interactorGestureState)
                         {
                             case HPUIGesture.Tap:
-                                TriggerTapEvent();
+                                TriggerTapEvent(interactor);
                                 break;
                             case HPUIGesture.Gesture:
-                                TriggerGestureEvent(HPUIGestureState.Stopped);
+                                TriggerGestureEvent(interactor, HPUIGestureState.Stopped);
                                 break;
                         }
                     }
@@ -207,12 +271,12 @@ namespace ubco.ovilab.HPUI.Interaction
                         if (timeDelta > tapTimeThreshold || cumulativeDistance > tapDistanceThreshold)
                         {
                             interactorGestureState = HPUIGesture.Gesture;
-                            ComputeActivePriorityInteractable(false);
-                            TriggerGestureEvent(HPUIGestureState.Started);
+                            ComputeActivePriorityInteractable(interactor, false);
+                            TriggerGestureEvent(interactor, HPUIGestureState.Started);
                         }
                         break;
                     case HPUIGesture.Gesture:
-                        TriggerGestureEvent(HPUIGestureState.Updated);
+                        TriggerGestureEvent(interactor, HPUIGestureState.Updated);
                         break;
                     default:
                         throw new InvalidOperationException("Unknown gesture.");
@@ -226,7 +290,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
         // NOTE: This gets called only within the tapDistanceThreshold window.
         // Thus using distance as opposed to start time to pick the target that is the most ideal.
-        protected void ComputeActivePriorityInteractable(bool usePreviousSelectableState)
+        protected void ComputeActivePriorityInteractable(IHPUIInteractor interactor, bool usePreviousSelectableState)
         {
             // Targets not selected within the priority window
             // (defaults to tapDistanceThreshold), will not get any
@@ -236,7 +300,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) &&
                        (usePreviousSelectableState ? kvp.Value.SelectableInPrevFrames: kvp.Value.SelectableTarget))
                 .OrderBy(kvp => kvp.Key.zOrder)
-                .ThenBy(kvp => useHeuristic? kvp.Value.Heuristic : kvp.Value.MinDistanceToInteractor)
+                .ThenBy(kvp => kvp.Value.Heuristic)
                 .FirstOrDefault().Key;
 
             if (interactableToBeActive != activePriorityInteractable)
@@ -259,11 +323,11 @@ namespace ubco.ovilab.HPUI.Interaction
             cumulativeDirection = Vector2.zero;
         }
 
-        protected void TriggerTapEvent()
+        protected void TriggerTapEvent(IHPUIInteractor interactor)
         {
             using (hpuiTapEventArgsPool.Get(out HPUITapEventArgs tapEventArgs))
             {
-                ComputeActivePriorityInteractable(true);
+                ComputeActivePriorityInteractable(interactor, true);
                 HPUIInteractionState state;
                 if (activePriorityInteractable != null)
                 {
@@ -293,7 +357,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        protected void TriggerGestureEvent(HPUIGestureState gestureState)
+        protected void TriggerGestureEvent(IHPUIInteractor interactor, HPUIGestureState gestureState)
         {
             using (hpuiGestureEventArgsPool.Get(out HPUIGestureEventArgs gestureEventArgs))
             {
