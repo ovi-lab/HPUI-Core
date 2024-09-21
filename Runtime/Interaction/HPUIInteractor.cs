@@ -50,62 +50,6 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        // TODO move these to an asset?
-        [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
-        [SerializeField]
-        private float tapTimeThreshold;
-        /// <summary>
-        /// The time threshold (in seconds) at which an interaction would be
-        /// treated as a gesture.  That is, if the interactor is in contact with
-        /// an interactable for more than this threshold, it would be treated as a
-        /// gesture.
-        /// </summary>
-        public float TapTimeThreshold
-        {
-            get => tapTimeThreshold;
-            set
-            {
-                tapTimeThreshold = value;
-                UpdateLogic();
-            }
-        }
-
-        [Tooltip("The distance threshold at which an interaction would be treated as a gesture.")]
-        [SerializeField]
-        private float tapDistanceThreshold;
-        /// <summary>
-        /// The distance threshold (in Unity units) at which an interaction would
-        /// be treated as a gesture.  That is, if the interactor has moved more
-        /// than this value after coming into contact with an interactable, it
-        /// would be treated as a gesture.
-        /// </summary>
-        public float TapDistanceThreshold
-        {
-            get => tapDistanceThreshold;
-            set
-            {
-                tapDistanceThreshold = value;
-                UpdateLogic();
-            }
-        }
-
-        [Tooltip("After a gesture completes, within this time window, not new gestures will be triggered.")]
-        [SerializeField]
-        private float debounceTimeWindow;
-        /// <summary>
-        /// After a gesture completes, within this time window (in seconds), not
-        /// new gestures will be triggered.  Should be less than <see cref="TapTimeThreshold"/>.
-        /// </summary>
-        public float DebounceTimeWindow
-        {
-            get => debounceTimeWindow;
-            set
-            {
-                debounceTimeWindow = value;
-                UpdateLogic();
-            }
-        }
-
         [SerializeField]
         [Tooltip("If true, will use ray casting, else will use sphere overlap for detecting interactions.")]
         private bool useRayCast = true;
@@ -124,7 +68,6 @@ namespace ubco.ovilab.HPUI.Interaction
             set
             {
                 rayCastTechnique = value;
-                UpdateLogic();
             }
         }
 
@@ -171,7 +114,6 @@ namespace ubco.ovilab.HPUI.Interaction
             set
             {
                 interactionSelectionRadius = value;
-                UpdateLogic();
             }
         }
 
@@ -257,6 +199,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public HPUIInteractorFullRangeAngles FullRangeRayAngles { get => fullRangeRayAngles; set => fullRangeRayAngles = value; }
 
+        [Tooltip("The gesture logic used by the interactor")]
         [SerializeReference, SubclassSelector]
         private IHPUIGestureLogic gestureLogic;
 
@@ -337,7 +280,6 @@ namespace ubco.ovilab.HPUI.Interaction
             keepSelectedTargetValid = true;
             physicsScene = gameObject.scene.GetPhysicsScene();
             activeFingerAngles = FullRangeRayAngles.angles;
-            UpdateLogic();
 
             foreach(XRHandJointID id in trackedJoints)
             {
@@ -404,7 +346,6 @@ namespace ubco.ovilab.HPUI.Interaction
 #if UNITY_EDITOR
             if (onValidateUpdate)
             {
-                UpdateLogic();
                 UpdateVisuals();
                 onValidateUpdate = false;
             }
@@ -640,7 +581,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    GestureLogic.Update(validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic, kvp.Value.selectionCheck, kvp.Value.extra)));
+                    GestureLogic.Update(this, validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic, kvp.Value.selectionCheck, kvp.Value.extra)));
                     UnityEngine.Profiling.Profiler.EndSample();
                 }
             }
@@ -699,23 +640,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
             visualsObject.name = "[HPUI] Visual - Select: " + this;
             visualsObject.transform.localScale = Vector3.one * InteractionSelectionRadius;
-        }
-
-        private void UpdateLogic()
-        {
-            // When values are changed in inspector, update the values
-            if (GestureLogic != null)
-            {
-                if (!(GestureLogic is HPUIGestureLogic))
-                {
-                    Debug.Log($"Non HPUIGestureLogic being used");
-                    return;
-                }
-                GestureLogic.Dispose();
-            }
-
-            // If using raycast, use heuristic
-            GestureLogic = new HPUIGestureLogic(this, TapTimeThreshold, TapDistanceThreshold, DebounceTimeWindow, useHeuristic: useRayCast);
         }
 
         #region IHPUIInteractor interface
