@@ -111,5 +111,9 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public void Dispose()
         {}
+
+        /// <inheritdoc />
+        public void Reset()
+        {}
     }
 }
