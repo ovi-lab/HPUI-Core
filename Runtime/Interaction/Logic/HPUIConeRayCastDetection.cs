@@ -94,11 +94,11 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (this.xrHandTrackingEvents != xrHandTrackingEvents)
             {
-                this.xrHandTrackingEvents.jointsUpdated.RemoveListener(UpdateJointsData);
+                this.xrHandTrackingEvents?.jointsUpdated.RemoveListener(UpdateJointsData);
             }
 
             this.xrHandTrackingEvents = xrHandTrackingEvents;
-            this.xrHandTrackingEvents.jointsUpdated.AddListener(UpdateJointsData);
+            this.xrHandTrackingEvents?.jointsUpdated.AddListener(UpdateJointsData);
         }
 
         /// <summary>
