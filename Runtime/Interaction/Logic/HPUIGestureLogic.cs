@@ -83,10 +83,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// Initializes a new instance with default values.
         /// </summary>
         public HPUIGestureLogic()
-        {
-            UpdateThresholds(tapTimeThreshold, tapDistanceThreshold, debounceTimeWindow);
-            Reset();
-        }
+        {}
 
         /// <summary>
         /// Initializes a new instance of the with the threshold values.
@@ -108,7 +105,6 @@ namespace ubco.ovilab.HPUI.Interaction
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
             this.debounceTimeWindow = debounceTimeWindow;
-            Reset();
         }
 
         /// <inheritdoc />
