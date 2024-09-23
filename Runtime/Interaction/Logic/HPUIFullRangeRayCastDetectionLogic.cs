@@ -34,6 +34,13 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public override void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
+            if (FullRangeRayAngles == null)
+            {
+                Debug.LogError($"The `FullRangeRayAngles` asset is not set!");
+                hoverEndPoint = interactor.GetAttachTransform(null).position;
+                return;
+            }
+
             Process(interactor, interactionManager, FullRangeRayAngles.angles, validTargets, out hoverEndPoint);
         }
     }
