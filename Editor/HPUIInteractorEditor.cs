@@ -14,8 +14,6 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomEditor(typeof(HPUIInteractor), true)]
     public class HPUIInteractorEditor: XRBaseInteractorEditor
     {
-        protected readonly string defaultConeRayAnglesAsset = "Packages/ubc.ok.ovilab.hpui-core/Runtime/Resources/HPUIInteractorRayAngles_intersection.asset";
-        protected readonly string defaultFullRangeRayAnglesAsset = "Packages/ubc.ok.ovilab.hpui-core/Runtime/Resources/HPUIInteractorFullRangeRayAngles.asset";
         private HPUIInteractor t;
         protected List<SerializedProperty> eventProperties;
         protected SerializedProperty coneRayAnglesProperty, fullRangeRayAnglesProperty;
@@ -64,31 +62,6 @@ namespace ubco.ovilab.HPUI.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("HPUI Configurations", EditorStyles.boldLabel);
             base.DrawDerivedProperties();
-            bool isEnabled = GUI.enabled;
-            GUI.enabled = t.RayCastTechnique == HPUIInteractor.RayCastTechniqueEnum.Cone;
-            if (t.ConeRayAngles == null && t.RayCastTechnique == HPUIInteractor.RayCastTechniqueEnum.Cone)
-            {
-                EditorGUILayout.HelpBox("Cone Ray Angles cannot be empty when using cone", MessageType.Warning);
-                if (GUILayout.Button("Use default asset"))
-                {
-                    coneRayAnglesProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<HPUIInteractorConeRayAngles>(defaultConeRayAnglesAsset);
-                    serializedObject.ApplyModifiedProperties();
-                }
-            }
-            EditorGUILayout.PropertyField(coneRayAnglesProperty);
-
-            GUI.enabled = t.RayCastTechnique == HPUIInteractor.RayCastTechniqueEnum.FullRange;
-            if (t.FullRangeRayAngles == null && t.RayCastTechnique == HPUIInteractor.RayCastTechniqueEnum.FullRange)
-            {
-                EditorGUILayout.HelpBox("Full Range Ray Angles cannot be empty when using FullRange", MessageType.Warning);
-                if (GUILayout.Button("Use default asset"))
-                {
-                    fullRangeRayAnglesProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<HPUIInteractorConeRayAngles>(defaultFullRangeRayAnglesAsset);
-                    serializedObject.ApplyModifiedProperties();
-                }
-            }
-            EditorGUILayout.PropertyField(fullRangeRayAnglesProperty);
-            GUI.enabled = isEnabled;
         }
 
         /// <inheritdoc />
