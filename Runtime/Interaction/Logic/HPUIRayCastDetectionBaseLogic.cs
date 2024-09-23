@@ -9,6 +9,9 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 namespace ubco.ovilab.HPUI.Interaction
 {
     /// <summary>
+    /// Base class for deteting interactions using ray casts.  The cone of rays is based on the finger
+    /// segment that is closest to the thumb tip.  The heuristic assigned to the interactable is based
+    /// on the number of rays that makes contact with the interactable and the distances to it.
     /// </summary>
     public abstract class HPUIRayCastDetectionBaseLogic : IHPUIDetectionLogic
     {
@@ -80,6 +83,13 @@ namespace ubco.ovilab.HPUI.Interaction
         public virtual void Dispose()
         {}
 
+        /// <inheritdoc />
+        public virtual void Reset()
+        {}
+
+        /// <summary>
+        /// Given the list of <see cref="HPUIInteractorRayAngle"/>, detect the interactables and populate the <see cref="validTargets"/> dictionary.
+        /// </summary>
         protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, List<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
             DataWriter = "//";
@@ -90,6 +100,7 @@ namespace ubco.ovilab.HPUI.Interaction
             hoverEndPoint = interactionPoint;
             bool flipZAngles = interactor.handedness == InteractorHandedness.Left;
 
+            UnityEngine.Profiling.Profiler.BeginSample("raycast");
             foreach(HPUIInteractorRayAngle angle in activeFingerAngles)
             {
                 bool validInteractable = false;

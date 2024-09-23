@@ -6,7 +6,9 @@ using UnityEngine.XR.Interaction.Toolkit;
 namespace ubco.ovilab.HPUI.Interaction
 {
     /// <summary>
-    /// TODO: docs
+    /// Detects which interactable is being selected with raycasts based on the the <see cref="FullRangeRayAngles"/>.
+    /// The heuristic assigned to the interactable is based on the number of rays that makes contact with the interactable
+    /// and the distances to it..
     /// </summary>
     [Serializable]
     public class HPUIFullRangeRayCastDetectionLogic: HPUIRayCastDetectionBaseLogic
@@ -34,9 +36,5 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             Process(interactor, interactionManager, FullRangeRayAngles.angles, validTargets, out hoverEndPoint);
         }
-
-        /// <inheritdoc />
-        public void Reset()
-        {}
     }
 }
