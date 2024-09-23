@@ -112,7 +112,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void Update(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionData> distances)
+        public void Update(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances)
         {
             bool updateTrackingInteractable = false;
             bool selectionHappening = false;
@@ -121,7 +121,7 @@ namespace ubco.ovilab.HPUI.Interaction
             foreach(IHPUIInteractable interactable in distances.Keys.Union(trackingInteractables.Keys))
             {
                 bool isTracked = trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state);
-                bool isInFrame = distances.TryGetValue(interactable, out HPUIInteractionData interactionData);
+                bool isInFrame = distances.TryGetValue(interactable, out HPUIInteractionInfo interactionData);
 
                 // Target entered hover state
                 if (!isTracked || !state.Active)
@@ -142,11 +142,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (isInFrame)
                 {
-                    if (interactionData.distance < state.MinDistanceToInteractor)
-                    {
-                        state.MinDistanceToInteractor = interactionData.distance;
-                    }
-
                     if (interactionData.heuristic < state.Heuristic)
                     {
                         state.Heuristic = interactionData.heuristic;
@@ -411,7 +406,6 @@ namespace ubco.ovilab.HPUI.Interaction
             public static HPUIInteractionState empty = new HPUIInteractionState();
 
             public float Heuristic { get; set; }
-            public float MinDistanceToInteractor { get; set; }
             public Vector2 StartPosition { get; set; }
             public float StartTime { get; set; }
             public bool Active { get; private set; }
@@ -424,7 +418,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.StartPosition = Vector2.zero;
                 this.Active = true;
                 this.SelectableTarget = false;
-                this.MinDistanceToInteractor = float.MaxValue;
                 this.Heuristic = float.MaxValue;
             }
 

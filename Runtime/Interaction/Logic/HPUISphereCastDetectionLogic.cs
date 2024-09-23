@@ -67,7 +67,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, InteractionInfo> validTargets, out Vector3 hoverEndPoint)
+        public void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
             validTargets.Clear();
 
@@ -99,7 +99,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 {
                     XRInteractableUtility.TryGetClosestPointOnCollider(interactable, interactionPoint, out DistanceInfo info);
                     float dist = Mathf.Sqrt(info.distanceSqr);
-                    validTargets.Add(hpuiInteractable, new InteractionInfo(dist, info.point, info.collider, dist, selectionCheck: dist < InteractionSelectionRadius));
+                    validTargets.Add(hpuiInteractable, new HPUIInteractionInfo(dist, dist < InteractionSelectionRadius, info.point, info.collider, dist, null));
                     if (dist < shortestInteractableDist)
                     {
                         hoverEndPoint = info.point;

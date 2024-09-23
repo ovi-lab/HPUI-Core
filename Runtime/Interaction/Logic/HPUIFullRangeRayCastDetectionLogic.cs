@@ -30,7 +30,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public override void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, InteractionInfo> validTargets, out Vector3 hoverEndPoint)
+        public override void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
             Process(interactor, interactionManager, FullRangeRayAngles.angles, validTargets, out hoverEndPoint);
         }
