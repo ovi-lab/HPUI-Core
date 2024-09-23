@@ -16,14 +16,13 @@ namespace ubco.ovilab.HPUI.Editor
         static readonly int maxTypePopupLineCount = 13;
         static readonly Type unityObjectType = typeof(UnityEngine.Object);
         static readonly Dictionary<Type, PropertyDrawer> drawerCaches = new Dictionary<Type, PropertyDrawer>();
-        static readonly string nullDisplayName = "<null>";
-        static readonly GUIContent contentNullDisplayName = new GUIContent("<null>");
+        static readonly GUIContent contentUknownDisplayName = new GUIContent("Unknown");
         static readonly GUIContent contentIsNotManagedReferenceLabel = new GUIContent("The property type is not manage reference.");
 
         readonly Dictionary<string,AdvancedTypePopup> typePopups = new Dictionary<string,AdvancedTypePopup>();
         readonly Dictionary<string,GUIContent> typeNameCaches = new Dictionary<string,GUIContent>();
 
-        SerializedProperty m_TargetProperty;
+        private SerializedProperty targetProperty;
 
         public override void OnGUI (Rect position, SerializedProperty property, GUIContent label)
         {
@@ -41,7 +40,7 @@ namespace ubco.ovilab.HPUI.Editor
                 if (EditorGUI.DropdownButton(popupPosition, GetTypeName(property), FocusType.Keyboard))
                 {
                     AdvancedTypePopup popup = GetTypePopup(property);
-                    m_TargetProperty = property;
+                    targetProperty = property;
                     popup.Show(popupPosition);
                 }
 
@@ -51,18 +50,25 @@ namespace ubco.ovilab.HPUI.Editor
                     Rect foldoutRect = new Rect(position);
                     foldoutRect.height = EditorGUIUtility.singleLineHeight;
 
-                    // // NOTE: Position x must be adjusted.
-                    // // FIXME: Is there a more essential solution...?
-                    // foldoutRect.x -= 12;
-
                     property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, GUIContent.none, true);
                 }
 
                 // Draw property if expanded.
                 if (property.isExpanded)
                 {
+                    Rect rectBox = EditorGUILayout.BeginVertical(GUI.skin.box);
                     using (new EditorGUI.IndentLevelScope())
                     {
+                        Rect childPosition = position;
+                        childPosition.y += (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing);
+
+                        GUIStyle style = new GUIStyle(GUI.skin.label);
+                        style.fontStyle = FontStyle.BoldAndItalic;
+                        GUIContent referenceName = new GUIContent(property.managedReferenceFullTypename);
+                        float height = style.CalcSize(referenceName).y;
+                        childPosition.height = height;
+                        EditorGUI.LabelField(childPosition, referenceName, style);
+
                         // Check if a custom property drawer exists for this type.
                         PropertyDrawer customDrawer = GetCustomPropertyDrawer(property);
                         if (customDrawer != null)
@@ -76,19 +82,6 @@ namespace ubco.ovilab.HPUI.Editor
                         }
                         else
                         {
-                            // Draw the properties of the child elements.
-                            // NOTE: In the following code, since the foldout layout isn't working properly, I'll iterate through the properties of the child elements myself.
-                            // EditorGUI.PropertyField(position, property, GUIContent.none, true);
-                            Rect childPosition = position;
-                            childPosition.y += (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing);
-
-                            GUIStyle style = new GUIStyle(GUI.skin.label);
-                            style.fontStyle = FontStyle.BoldAndItalic;
-                            GUIContent referenceName = new GUIContent(property.managedReferenceFullTypename);
-                            float height = style.CalcSize(referenceName).y;
-                            childPosition.height = height;
-                            EditorGUI.LabelField(childPosition, referenceName, style);
-
                             childPosition.y += (height + EditorGUIUtility.standardVerticalSpacing);
                             foreach (SerializedProperty childProperty in GetChildProperties(property))
                             {
@@ -100,6 +93,9 @@ namespace ubco.ovilab.HPUI.Editor
                             }
                         }
                     }
+                    EditorGUILayout.Separator();
+                    EditorGUILayout.EndVertical();
+                    EditorGUILayout.Separator();
                 }
             }
             else
@@ -143,30 +139,29 @@ namespace ubco.ovilab.HPUI.Editor
 
             if (!typePopups.TryGetValue(managedReferenceFieldTypename,out AdvancedTypePopup popup))
             {
-                var state = new AdvancedDropdownState();
+                AdvancedDropdownState state = new AdvancedDropdownState();
 
                 Type baseType = GetType(managedReferenceFieldTypename);
-                popup = new AdvancedTypePopup(
-                    TypeCache.GetTypesDerivedFrom(baseType).Append(baseType).Where(p =>
-                    (p.IsPublic || p.IsNestedPublic || p.IsNestedPrivate) &&
-                    !p.IsAbstract &&
-                    !p.IsGenericType &&
-                    !unityObjectType.IsAssignableFrom(p) &&
-                    Attribute.IsDefined(p,typeof(SerializableAttribute))
-                    ),
-                    maxTypePopupLineCount,
-                    nullDisplayName,
-                    state
-                );
+                IEnumerable<Type> types = TypeCache
+                    .GetTypesDerivedFrom(baseType)
+                    .Append(baseType)
+                    .Where(p =>
+                           (p.IsPublic || p.IsNestedPublic || p.IsNestedPrivate) &&
+                           !p.IsAbstract &&
+                           !p.IsGenericType &&
+                           !unityObjectType.IsAssignableFrom(p) &&
+                           Attribute.IsDefined(p, typeof(SerializableAttribute)));
+
+                popup = new AdvancedTypePopup(types, Math.Min(maxTypePopupLineCount, types.Count()), state);
 
                 popup.OnItemSelected += item =>
                 {
                     Type type = item.Type;
 
                     // Apply changes to individual serialized objects.
-                    foreach (var targetObject in m_TargetProperty.serializedObject.targetObjects) {
+                    foreach (var targetObject in targetProperty.serializedObject.targetObjects) {
                         SerializedObject individualObject = new SerializedObject(targetObject);
-                        SerializedProperty individualProperty = individualObject.FindProperty(m_TargetProperty.propertyPath);
+                        SerializedProperty individualProperty = individualObject.FindProperty(targetProperty.propertyPath);
                         object obj = SetManagedReference(individualProperty, type);
                         individualProperty.isExpanded = (obj != null);
 
@@ -190,7 +185,7 @@ namespace ubco.ovilab.HPUI.Editor
 
             if (string.IsNullOrEmpty(managedReferenceFullTypename))
             {
-                return contentNullDisplayName;
+                return contentUknownDisplayName;
             }
 
             if (typeNameCaches.TryGetValue(managedReferenceFullTypename,out GUIContent cachedTypeName))
@@ -219,7 +214,7 @@ namespace ubco.ovilab.HPUI.Editor
             {
                 if (property.isExpanded)
                 {
-                    return EditorGUI.GetPropertyHeight(property, true) + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                    return EditorGUI.GetPropertyHeight(property, true) + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing * 2;
                 }
                 else
                 {

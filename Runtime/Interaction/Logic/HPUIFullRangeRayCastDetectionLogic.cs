@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -7,6 +8,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// <summary>
     /// TODO: docs
     /// </summary>
+    [Serializable]
     public class HPUIFullRangeRayCastDetectionLogic: HPUIRayCastDetectionBaseLogic
     {
         [SerializeField]

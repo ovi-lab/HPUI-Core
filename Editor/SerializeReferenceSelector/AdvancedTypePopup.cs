@@ -29,14 +29,12 @@ namespace ubco.ovilab.HPUI.Editor
     /// This is taken from https://github.com/mackysoft/Unity-SerializeReferenceExtensions
     public class AdvancedTypePopup : AdvancedDropdown
     {
-        private string emptyDisplayName;
         private Type[] types;
 
         public event Action<AdvancedTypePopupItem> OnItemSelected;
 		
-        public AdvancedTypePopup (IEnumerable<Type> types, int maxLineCount, string emptyDisplayName,  AdvancedDropdownState state) : base(state)
+        public AdvancedTypePopup (IEnumerable<Type> types, int maxLineCount, AdvancedDropdownState state) : base(state)
         {
-            this.emptyDisplayName = emptyDisplayName;
             this.types = types.ToArray();
             minimumSize = new Vector2(minimumSize.x,EditorGUIUtility.singleLineHeight * maxLineCount + EditorGUIUtility.singleLineHeight * 2f);
         }
@@ -46,14 +44,6 @@ namespace ubco.ovilab.HPUI.Editor
         {
             AdvancedDropdownItem root = new AdvancedDropdownItem("Select Type");
             int itemCount = 0;
-
-            // Add null item.
-            AdvancedTypePopupItem nullItem = new AdvancedTypePopupItem(null, emptyDisplayName)
-            {
-                id = itemCount++
-            };
-
-            root.AddChild(nullItem);
 
             // Add type items.
             foreach (Type type in types)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
@@ -8,6 +9,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// <summary>
     /// TODO docs
     /// </summary>
+    [Serializable]
     public class HPUIConeRayCastDetectionLogic : HPUIRayCastDetectionBaseLogic
     {
         [SerializeField]
