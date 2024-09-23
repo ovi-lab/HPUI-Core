@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -8,6 +9,7 @@ namespace ubco.ovilab.HPUI.Interaction
 {
     /// <summary>
     /// </summary>
+    [Serializable]
     public class HPUISphereCastDetectionLogic : IHPUIDetectionLogic
     {
         [SerializeField]
