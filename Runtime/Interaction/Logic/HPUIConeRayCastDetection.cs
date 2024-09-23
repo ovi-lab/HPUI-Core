@@ -119,6 +119,25 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public override void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
+            bool failed = false;
+            if (ConeRayAngles == null)
+            {
+                Debug.LogError($"The `ConeRayAngle` asset is not set!");
+                failed = true;
+            }
+
+            if (xrHandTrackingEvents == null)
+            {
+                Debug.LogError($"The `xrHandTrackingEvents` is not set!");
+                failed = true;
+            }
+
+            if (failed)
+            {
+                hoverEndPoint = interactor.GetAttachTransform(null).position;
+                return;
+            }
+
             if (receivedNewJointData)
             {
                 receivedNewJointData = false;
