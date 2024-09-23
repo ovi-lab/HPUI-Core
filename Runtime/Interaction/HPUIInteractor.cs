@@ -59,7 +59,7 @@ namespace ubco.ovilab.HPUI.Interaction
             set
             {
                 detectionLogic = value;
-                detectionLogic.Reset();
+                detectionLogic?.Reset();
             }
         }
 
@@ -76,7 +76,7 @@ namespace ubco.ovilab.HPUI.Interaction
             set
             {
                 gestureLogic = value;
-                gestureLogic.Reset();
+                gestureLogic?.Reset();
             }
         }
 
