@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -11,7 +12,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <param name="interactor">The interactor to use when processing the distances.</param>
         /// <param name="distances">A dictionary containing the distance and heuristic values for interactable currently interacting with.</param>
         /// </summary>
-        public void Update(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionData> distances);
+        public void Update(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances);
 
         /// <summary>
         /// Returns the interactable passed which has the highest priority.
@@ -22,20 +23,23 @@ namespace ubco.ovilab.HPUI.Interaction
     /// <summary>
     /// Struct used to pass distance and heuristic data to logic
     /// </summary>
-    public struct HPUIInteractionData
+    public struct HPUIInteractionInfo
     {
-        public float distance;
         public float heuristic;
-        public float extra;
         public bool isSelection;
+        public Vector3 point;
+        public Collider collider;
+        public float distanceValue;
+        public object extra;
 
-        public HPUIInteractionData(float distance, float heuristic, bool isSelection, float extra=0) : this()
+        public HPUIInteractionInfo(float heuristic, bool isSelection, Vector3 point, Collider collider, float distanceValue, object extra) : this()
         {
-            this.distance = distance;
             this.heuristic = heuristic;
-            this.extra = extra;
             this.isSelection = isSelection;
+            this.point = point;
+            this.collider = collider;
+            this.distanceValue = distanceValue;
+            this.extra = extra;
         }
-
     }
 }

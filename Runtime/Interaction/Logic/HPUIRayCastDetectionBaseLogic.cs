@@ -62,9 +62,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
 
         protected IHPUIInteractor interactor;
-        protected Dictionary<IHPUIInteractable, InteractionInfo> validTargets = new();
+        protected Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
         // Used when computing the centroid
-        protected Dictionary<IHPUIInteractable, List<InteractionInfo>> tempValidTargets = new();
+        protected Dictionary<IHPUIInteractable, List<HPUIInteractionInfo>> tempValidTargets = new();
 
         private RaycastHit[] rayCastHits = new RaycastHit[200];
 
@@ -74,13 +74,13 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public abstract void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, InteractionInfo> validTargets, out Vector3 hoverEndPoint);
+        public abstract void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint);
 
         /// <inheritdoc />
         public virtual void Dispose()
         {}
 
-        protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, List<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, InteractionInfo> validTargets, out Vector3 hoverEndPoint)
+        protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, List<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
             DataWriter = "//";
             validTargets.Clear();
@@ -119,14 +119,15 @@ namespace ubco.ovilab.HPUI.Interaction
                             DataWriter = $"{interactable.transform.name},{angle.X},{angle.Z},{distance}";
                         }
 
-                        List<InteractionInfo> infoList;
+                        List<HPUIInteractionInfo> infoList;
                         if (!tempValidTargets.TryGetValue(hpuiInteractable, out infoList))
                         {
-                            infoList = ListPool<InteractionInfo>.Get();
+                            infoList = ListPool<HPUIInteractionInfo>.Get();
                             tempValidTargets.Add(hpuiInteractable, infoList);
                         }
 
-                        infoList.Add(new InteractionInfo(distance, hitInfo.point, hitInfo.collider, selectionCheck:angle.WithinThreshold(distance)));
+                        // Using distance as the temp/default value for heuristic
+                        infoList.Add(new HPUIInteractionInfo(distance, angle.WithinThreshold(distance), hitInfo.point, hitInfo.collider, distance, null));
                     }
                 }
 
@@ -143,12 +144,12 @@ namespace ubco.ovilab.HPUI.Interaction
             float count = tempValidTargets.Sum(kvp => kvp.Value.Count);
 
             UnityEngine.Profiling.Profiler.BeginSample("raycast centroid");
-            foreach (KeyValuePair<IHPUIInteractable, List<InteractionInfo>> kvp in tempValidTargets)
+            foreach (KeyValuePair<IHPUIInteractable, List<HPUIInteractionInfo>> kvp in tempValidTargets)
             {
                 float localXEndPoint = 0, localYEndPoint = 0, localZEndPoint = 0;
                 float localOverThresholdCount = 0;
 
-                foreach(InteractionInfo i in kvp.Value)
+                foreach(HPUIInteractionInfo i in kvp.Value)
                 {
                     xEndPoint += i.point.x;
                     yEndPoint += i.point.y;
@@ -156,7 +157,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     localXEndPoint += i.point.x;
                     localYEndPoint += i.point.y;
                     localZEndPoint += i.point.z;
-                    if (i.selectionCheck)
+                    if (i.isSelection)
                     {
                         localOverThresholdCount++;
                     }
@@ -164,16 +165,16 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 centroid = new Vector3(localXEndPoint, localYEndPoint, localZEndPoint) / count;
 
-                InteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
+                HPUIInteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
                 // This distance is needed to compute the selection
-                float shortestDistance = kvp.Value.Min(el => el.distance);
+                float shortestDistance = kvp.Value.Min(el => el.distanceValue);
                 closestToCentroid.heuristic = (((float)count / (float)localOverThresholdCount)) * (shortestDistance + 1);
-                closestToCentroid.distance = shortestDistance;
+                closestToCentroid.distanceValue = shortestDistance;
                 closestToCentroid.extra = (float)localOverThresholdCount;
-                closestToCentroid.selectionCheck = localOverThresholdCount > 0;
+                closestToCentroid.isSelection = localOverThresholdCount > 0;
 
                 validTargets.Add(kvp.Key, closestToCentroid);
-                ListPool<InteractionInfo>.Release(kvp.Value);
+                ListPool<HPUIInteractionInfo>.Release(kvp.Value);
             }
 
             if (count > 0)

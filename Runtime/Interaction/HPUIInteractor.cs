@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using Unity.XR.CoreUtils;
 using ubco.ovilab.HPUI.utils;
 
 namespace ubco.ovilab.HPUI.Interaction
@@ -65,7 +64,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public IHPUIGestureLogic GestureLogic { get => gestureLogic; set => value = gestureLogic; }
 
-        private Dictionary<IHPUIInteractable, InteractionInfo> validTargets = new();
+        private Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
 
 // #if UNITY_EDITOR
 //         private bool onValidateUpdate;
@@ -183,7 +182,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    GestureLogic.Update(this, validTargets.ToDictionary(kvp => kvp.Key, kvp => new HPUIInteractionData(kvp.Value.distance, kvp.Value.heuristic, kvp.Value.selectionCheck, kvp.Value.extra)));
+                    GestureLogic.Update(this, validTargets);
                     UnityEngine.Profiling.Profiler.EndSample();
                 }
             }
@@ -196,14 +195,7 @@ namespace ubco.ovilab.HPUI.Interaction
             base.GetValidTargets(targets);
 
             targets.Clear();
-            IEnumerable<IHPUIInteractable> filteredValidTargets = validTargets
-                .Where(kvp => (kvp.Key is IHPUIInteractable))
-                .GroupBy(kvp => kvp.Key.zOrder)
-                .Select(g => g
-                        .OrderBy(kvp => kvp.Value.distance)
-                        .First()
-                        .Key)
-                .OrderBy(ht => ht.zOrder);
+            IEnumerable<IHPUIInteractable> filteredValidTargets = validTargets.Select(el => el.Key);
             targets.AddRange(filteredValidTargets);
         }
 
@@ -228,9 +220,10 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
+        /// <seealso cref="GetHPUIInteractionData"/>
         public bool GetDistanceInfo(IHPUIInteractable interactable, out DistanceInfo distanceInfo)
         {
-            if (validTargets.TryGetValue(interactable, out InteractionInfo info))
+            if (GetHPUIInteractionInfo(interactable, out HPUIInteractionInfo info))
             {
                 distanceInfo = new DistanceInfo
                 {
@@ -245,6 +238,15 @@ namespace ubco.ovilab.HPUI.Interaction
         }
         #endregion
 
+        /// <summary>
+        /// Returns the corresponding <see cref="HPUIInteractionInfo"/> for a given interactable in the current frame.
+        /// If the interactable is not interacted with in the current frame, return false.
+        /// </summary>
+        /// <seealso cref="GetDistanceInfo"/>
+        public bool GetHPUIInteractionInfo(IHPUIInteractable interactable, out HPUIInteractionInfo hpuiInteractionData)
+        {
+            return validTargets.TryGetValue(interactable, out hpuiInteractionData);
+        }
     }
 }
  
