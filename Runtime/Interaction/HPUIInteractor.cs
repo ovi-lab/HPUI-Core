@@ -119,14 +119,8 @@ namespace ubco.ovilab.HPUI.Interaction
             if (onValidateUpdate)
             {
                 onValidateUpdate = false;
-                if (DetectionLogic != null)
-                {
-                    DetectionLogic.Reset();
-                }
-                if (GestureLogic != null)
-                {
-                    GestureLogic.Reset();
-                }
+                DetectionLogic?.Reset();
+                GestureLogic?.Reset();
             }
 #endif
         }
@@ -135,14 +129,8 @@ namespace ubco.ovilab.HPUI.Interaction
         protected override void OnEnable()
         {
             base.OnEnable();
-            if (DetectionLogic != null)
-            {
-                DetectionLogic.Reset();
-            }
-            if (GestureLogic != null)
-            {
-                GestureLogic.Reset();
-            }
+            DetectionLogic?.Reset();
+            GestureLogic?.Reset();
         }
 
         /// <inheritdoc />
