@@ -99,29 +99,6 @@ namespace ubco.ovilab.HPUI.Interaction
             base.Start();
         }
 
-        // protected void UpdateJointsData(XRHandJointsUpdatedEventArgs args)
-        // {
-        //     foreach(XRHandJointID id in trackedJoints)
-        //     {
-        //         if ( args.hand.GetJoint(id).TryGetPose(out Pose pose) )
-        //         {
-        //             jointLocations[id] = xrOriginTransform.TransformPoint(pose.position);
-        //             receivedNewJointData = true;
-        //         }
-        //     }
-        // }
-
-        // protected void ResetAngleFunctions()
-        // {
-        //     xrHandTrackingEvents = GetComponent<XRHandTrackingEvents>();
-        //     xrHandTrackingEvents.handedness = handedness switch {
-        //         InteractorHandedness.Right => Handedness.Right,
-        //         InteractorHandedness.Left => Handedness.Left,
-        //         _ => Handedness.Invalid
-        //     };
-        //     flipZAngles = handedness == InteractorHandedness.Left;
-        // }
-
 #if UNITY_EDITOR
         /// <inheritdoc />
         protected void OnValidate()
@@ -167,9 +144,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 GestureLogic.Reset();
             }
         }
-
-        //FIXME: debug code
-        public Transform o1, o2, o3;
 
         /// <inheritdoc />
         public override void PreprocessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
@@ -278,4 +252,3 @@ namespace ubco.ovilab.HPUI.Interaction
         }
     }
 }
- 

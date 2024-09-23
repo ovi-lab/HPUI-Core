@@ -10,7 +10,6 @@ namespace ubco.ovilab.HPUI.Interaction
     {
         None,
         Tap, Gesture
-        // TODO: Custom gestures?
     }
 
     public enum HPUIGestureState

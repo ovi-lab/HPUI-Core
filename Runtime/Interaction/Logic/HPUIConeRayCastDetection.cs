@@ -8,7 +8,10 @@ using UnityEngine.XR.Interaction.Toolkit;
 namespace ubco.ovilab.HPUI.Interaction
 {
     /// <summary>
-    /// TODO docs
+    /// Detects which interactable is being selected with raycasts based on the the <see cref="ConeRayAngles"/>.
+    /// The cone of rays is based on the finger segment that is closest to the thumb tip.  The heuristic
+    /// assigned to the interactable is based on the number of rays that makes contact with the interactable
+    /// and the distances to it.
     /// </summary>
     [Serializable]
     public class HPUIConeRayCastDetectionLogic : HPUIRayCastDetectionBaseLogic
@@ -167,7 +170,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         /// <inheritdoc />
-        public void Reset()
+        public override void Reset()
         {
             if (XROriginTransform == null)
             {
