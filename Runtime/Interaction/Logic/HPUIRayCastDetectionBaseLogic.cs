@@ -77,7 +77,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public abstract void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, InteractionInfo> validTargets, out Vector3 hoverEndPoint);
 
         /// <inheritdoc />
-        public void Dispose()
+        public virtual void Dispose()
         {}
 
         protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, List<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, InteractionInfo> validTargets, out Vector3 hoverEndPoint)
