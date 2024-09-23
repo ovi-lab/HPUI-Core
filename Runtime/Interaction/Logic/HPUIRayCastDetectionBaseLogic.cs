@@ -64,7 +64,7 @@ namespace ubco.ovilab.HPUI.Interaction
         protected IHPUIInteractor interactor;
         protected Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
         // Used when computing the centroid
-        protected Dictionary<IHPUIInteractable, List<HPUIInteractionInfo>> tempValidTargets = new();
+        protected Dictionary<IHPUIInteractable, List<RaycastInteractionInfo>> tempValidTargets = new();
 
         private RaycastHit[] rayCastHits = new RaycastHit[200];
 
@@ -119,15 +119,15 @@ namespace ubco.ovilab.HPUI.Interaction
                             DataWriter = $"{interactable.transform.name},{angle.X},{angle.Z},{distance}";
                         }
 
-                        List<HPUIInteractionInfo> infoList;
+                        List<RaycastInteractionInfo> infoList;
                         if (!tempValidTargets.TryGetValue(hpuiInteractable, out infoList))
                         {
-                            infoList = ListPool<HPUIInteractionInfo>.Get();
+                            infoList = ListPool<RaycastInteractionInfo>.Get();
                             tempValidTargets.Add(hpuiInteractable, infoList);
                         }
 
                         // Using distance as the temp/default value for heuristic
-                        infoList.Add(new HPUIInteractionInfo(distance, angle.WithinThreshold(distance), hitInfo.point, hitInfo.collider, distance, null));
+                        infoList.Add(new RaycastInteractionInfo(distance, angle.WithinThreshold(distance), hitInfo.point, hitInfo.collider));
                     }
                 }
 
@@ -139,17 +139,41 @@ namespace ubco.ovilab.HPUI.Interaction
             }
             UnityEngine.Profiling.Profiler.EndSample();
 
+            UnityEngine.Profiling.Profiler.BeginSample("raycast centroid");
+            UnityEngine.Profiling.Profiler.EndSample();
+
+            if (ComputeHeuristic(tempValidTargets, validTargets, out Vector3 newHoverEndPoint))
+            {
+                hoverEndPoint = newHoverEndPoint;
+            }
+
+            tempValidTargets.Clear();
+
+            if (data != null)
+            {
+                data.Invoke(DataWriter);
+            }
+        }
+
+        /// <summary>
+        /// Computes the final list of <see cref="HPUIInteractionInfo"/> for each interactable.
+        /// In <see cref="validRayCastTargets"/> for each interactable, the list of information of each ray interactions is porvided.
+        /// That is, in <see cref="validRayCastTargets"/> each the <see cref="RaycastInteractionInfo"/> contains the interaction information
+        /// of a single raycast.  The method also processes the hoverEndPoint based on all the ray information provided.
+        /// This method will upadte the <see cref="validTargets"/> dictionary.
+        /// </summary>
+        protected bool ComputeHeuristic(Dictionary<IHPUIInteractable, List<RaycastInteractionInfo>> validRayCastTargets, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
+        {
             Vector3 centroid;
             float xEndPoint = 0, yEndPoint = 0, zEndPoint = 0;
-            float count = tempValidTargets.Sum(kvp => kvp.Value.Count);
+            float count = validRayCastTargets.Sum(kvp => kvp.Value.Count);
 
-            UnityEngine.Profiling.Profiler.BeginSample("raycast centroid");
-            foreach (KeyValuePair<IHPUIInteractable, List<HPUIInteractionInfo>> kvp in tempValidTargets)
+            foreach (KeyValuePair<IHPUIInteractable, List<RaycastInteractionInfo>> kvp in validRayCastTargets)
             {
                 float localXEndPoint = 0, localYEndPoint = 0, localZEndPoint = 0;
                 float localOverThresholdCount = 0;
 
-                foreach(HPUIInteractionInfo i in kvp.Value)
+                foreach(RaycastInteractionInfo i in kvp.Value)
                 {
                     xEndPoint += i.point.x;
                     yEndPoint += i.point.y;
@@ -165,30 +189,41 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 centroid = new Vector3(localXEndPoint, localYEndPoint, localZEndPoint) / count;
 
-                HPUIInteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
+                RaycastInteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
                 // This distance is needed to compute the selection
                 float shortestDistance = kvp.Value.Min(el => el.distanceValue);
-                closestToCentroid.heuristic = (((float)count / (float)localOverThresholdCount)) * (shortestDistance + 1);
-                closestToCentroid.distanceValue = shortestDistance;
-                closestToCentroid.extra = (float)localOverThresholdCount;
-                closestToCentroid.isSelection = localOverThresholdCount > 0;
+                float heuristic = (((float)count / (float)localOverThresholdCount)) * (shortestDistance + 1);
+                float distanceValue = shortestDistance;
+                bool isSelection = localOverThresholdCount > 0;
 
-                validTargets.Add(kvp.Key, closestToCentroid);
-                ListPool<HPUIInteractionInfo>.Release(kvp.Value);
+                HPUIInteractionInfo hpuiInteractionInfo = new HPUIInteractionInfo(heuristic, isSelection, closestToCentroid.point, closestToCentroid.collider, shortestDistance, null);
+
+                validTargets.Add(kvp.Key, hpuiInteractionInfo);
+                ListPool<RaycastInteractionInfo>.Release(kvp.Value);
             }
 
-            if (count > 0)
-            {
-                hoverEndPoint = new Vector3(xEndPoint, yEndPoint, zEndPoint) / count;;
-            }
+            hoverEndPoint = new Vector3(xEndPoint, yEndPoint, zEndPoint) / count;
 
-            tempValidTargets.Clear();
-
-            if (data != null)
-            {
-                data.Invoke(DataWriter);
-            }
+            return count > 0;
         }
 
+        /// <summary>
+        /// The raycast interactoin information used with the <see cref="HPUIRayCastDetectionBaseLogic.Process"/>
+        /// </summary>
+        protected struct RaycastInteractionInfo
+        {
+            public bool isSelection;
+            public Vector3 point;
+            public Collider collider;
+            public float distanceValue;
+
+            public RaycastInteractionInfo(float distanceValue, bool isSelection, Vector3 point, Collider collider) : this()
+            {
+                this.isSelection = isSelection;
+                this.point = point;
+                this.collider = collider;
+                this.distanceValue = distanceValue;
+            }
+        }
     }
 }
