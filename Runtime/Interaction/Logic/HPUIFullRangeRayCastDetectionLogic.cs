@@ -34,5 +34,9 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             Process(interactor, interactionManager, FullRangeRayAngles.angles, validTargets, out hoverEndPoint);
         }
+
+        /// <inheritdoc />
+        public void Reset()
+        {}
     }
 }

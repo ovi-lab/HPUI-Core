@@ -89,15 +89,6 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         protected void UpdateHandTrackingEventsHook(XRHandTrackingEvents xrHandTrackingEvents)
         {
-            if (XROriginTransform == null)
-            {
-                XROriginTransform = GameObject.FindObjectOfType<XROrigin>()?.transform;
-                if (XROriginTransform == null)
-                {
-                    Debug.LogError($"XR Origin not found! Manually set value for XROriginTransform");
-                }
-            }
-
             if (this.xrHandTrackingEvents != xrHandTrackingEvents)
             {
                 this.xrHandTrackingEvents.jointsUpdated.RemoveListener(UpdateJointsData);
@@ -173,6 +164,20 @@ namespace ubco.ovilab.HPUI.Interaction
         public override void Dispose()
         {
             xrHandTrackingEvents.jointsUpdated.RemoveListener(UpdateJointsData);
+        }
+
+        /// <inheritdoc />
+        public void Reset()
+        {
+            if (XROriginTransform == null)
+            {
+                XROriginTransform = GameObject.FindObjectOfType<XROrigin>()?.transform;
+                if (XROriginTransform == null)
+                {
+                    Debug.LogError($"XR Origin not found! Manually set value for XROriginTransform");
+                }
+            }
+            UpdateHandTrackingEventsHook(xrHandTrackingEvents);
         }
     }
 }

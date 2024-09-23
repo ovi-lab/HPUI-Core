@@ -18,6 +18,11 @@ namespace ubco.ovilab.HPUI.Interaction
         /// Returns the interactable passed which has the highest priority.
         /// </summary>
         public bool IsPriorityTarget(IHPUIInteractable interactable);
+
+        /// <summary>
+        /// Resets/initializes the logic.
+        /// </summary>
+        public void Reset();
     }
 
     /// <summary>

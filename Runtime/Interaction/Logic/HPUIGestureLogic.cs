@@ -283,6 +283,17 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        /// <inheritdoc />
+        public void Reset()
+        {
+            interactorGestureState = HPUIGesture.None;
+            trackingInteractables.Clear();
+            activePriorityInteractable = null;
+            currentTrackingInteractable = null;
+            cumulativeDistance = 0;
+            cumulativeDirection = Vector2.zero;
+        }
+
         // NOTE: This gets called only within the tapDistanceThreshold window.
         // Thus using distance as opposed to start time to pick the target that is the most ideal.
         protected void ComputeActivePriorityInteractable(IHPUIInteractor interactor, bool usePreviousSelectableState)
@@ -306,16 +317,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     currentPosition = newCurrentPosition;
                 }
             }
-        }
-
-        protected void Reset()
-        {
-            interactorGestureState = HPUIGesture.None;
-            trackingInteractables.Clear();
-            activePriorityInteractable = null;
-            currentTrackingInteractable = null;
-            cumulativeDistance = 0;
-            cumulativeDirection = Vector2.zero;
         }
 
         protected void TriggerTapEvent(IHPUIInteractor interactor)

@@ -17,5 +17,10 @@ namespace ubco.ovilab.HPUI.Interaction
         /// Computes and returs a dictionary of iteractables and corresponding interaction data. This data is passed to <see cref="IHPUIGestureLogic"/>
         /// </summary>
         public void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint);
+
+        /// <summary>
+        /// Resets/initializes the logic.
+        /// </summary>
+        public void Reset();
     }
 }

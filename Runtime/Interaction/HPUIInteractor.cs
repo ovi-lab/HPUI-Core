@@ -48,12 +48,20 @@ namespace ubco.ovilab.HPUI.Interaction
         [Space()]
         [Tooltip("TODO")]
         [SerializeReference, SubclassSelector]
-        private IHPUIDetectionLogic interactablesDetector = new HPUIFullRangeRayCastDetectionLogic();
+        private IHPUIDetectionLogic detectionLogic = new HPUIFullRangeRayCastDetectionLogic();
 
         /// <summary>
         /// TODO
         /// </summary>
-        public IHPUIDetectionLogic InteractablesDetector { get => interactablesDetector; set => value = interactablesDetector; }
+        public IHPUIDetectionLogic DetectionLogic
+        {
+            get => detectionLogic;
+            set
+            {
+                detectionLogic = value;
+                detectionLogic.Reset();
+            }
+        }
 
         [Tooltip("The gesture logic used by the interactor")]
         [SerializeReference, SubclassSelector]
@@ -62,16 +70,21 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// The gesture logic used by the interactor
         /// </summary>
-        public IHPUIGestureLogic GestureLogic { get => gestureLogic; set => value = gestureLogic; }
+        public IHPUIGestureLogic GestureLogic
+        {
+            get => gestureLogic;
+            set
+            {
+                gestureLogic = value;
+                gestureLogic.Reset();
+            }
+        }
 
         private Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
 
-// #if UNITY_EDITOR
-//         private bool onValidateUpdate;
-// #endif
-
-        // protected bool receivedNewJointData = false,
-        //     flipZAngles = false;
+#if UNITY_EDITOR
+        private bool onValidateUpdate;
+#endif
 
         /// <inheritdoc />
         protected override void Awake()
@@ -109,34 +122,50 @@ namespace ubco.ovilab.HPUI.Interaction
         //     flipZAngles = handedness == InteractorHandedness.Left;
         // }
 
-// #if UNITY_EDITOR
-//         /// <inheritdoc />
-//         protected void OnValidate()
-//         {
-//             if (Application.isPlaying && gameObject.activeInHierarchy)
-//             {
-//                 // NOTE: some of the setup running in the respective methods are not compatible with
-//                 // OnValidate as they trigger many SendMessage calls
-//                 onValidateUpdate = true;
-//             }
-//         }
-// #endif
+#if UNITY_EDITOR
+        /// <inheritdoc />
+        protected void OnValidate()
+        {
+            if (Application.isPlaying && gameObject.activeInHierarchy)
+            {
+                // NOTE: some of the setup running in the respective methods are not compatible with
+                // OnValidate as they can trigger many SendMessage calls
+                onValidateUpdate = true;
+            }
+        }
+#endif
 
-//         /// <inheritdoc />
-//         protected void Update()
-//         {
-// #if UNITY_EDITOR
-//             if (onValidateUpdate)
-//             {
-//                 onValidateUpdate = false;
-//             }
-// #endif
-//         }
+        /// <inheritdoc />
+        protected void Update()
+        {
+#if UNITY_EDITOR
+            if (onValidateUpdate)
+            {
+                onValidateUpdate = false;
+                if (DetectionLogic != null)
+                {
+                    DetectionLogic.Reset();
+                }
+                if (GestureLogic != null)
+                {
+                    GestureLogic.Reset();
+                }
+            }
+#endif
+        }
 
         /// <inheritdoc />
         protected override void OnEnable()
         {
             base.OnEnable();
+            if (DetectionLogic != null)
+            {
+                DetectionLogic.Reset();
+            }
+            if (GestureLogic != null)
+            {
+                GestureLogic.Reset();
+            }
         }
 
         //FIXME: debug code
@@ -160,7 +189,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 UnityEngine.Profiling.Profiler.BeginSample("interactableDetection");
                 try
                 {
-                    InteractablesDetector.DetectedInteractables(this, interactionManager, validTargets, out hoverEndPoint);
+                    DetectionLogic.DetectedInteractables(this, interactionManager, validTargets, out hoverEndPoint);
                 }
                 catch (System.Exception e)
                 {
