@@ -100,7 +100,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (tapTimeThreshold < debounceTimeWindow)
             {
-                throw new ArgumentException("tapTimeThreshold cannot be smaller than the debounceTimeWindow");
+                throw new ArgumentException($"tapTimeThreshold({tapTimeThreshold}) cannot be smaller than the debounceTimeWindow ({debounceTimeWindow})");
             }
             this.tapTimeThreshold = tapTimeThreshold;
             this.tapDistanceThreshold = tapDistanceThreshold;
