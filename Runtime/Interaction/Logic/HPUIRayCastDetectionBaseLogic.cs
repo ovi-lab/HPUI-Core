@@ -153,9 +153,14 @@ namespace ubco.ovilab.HPUI.Interaction
             UnityEngine.Profiling.Profiler.BeginSample("raycast centroid");
             UnityEngine.Profiling.Profiler.EndSample();
 
-            if (ComputeHeuristic(tempValidTargets, validTargets, out Vector3 newHoverEndPoint))
+            if (ComputeHPUIInteractionInfo(tempValidTargets, validTargets, out Vector3 newHoverEndPoint))
             {
                 hoverEndPoint = newHoverEndPoint;
+            }
+
+            foreach(List<RaycastInteractionInfo> info in tempValidTargets.Values)
+            {
+                ListPool<RaycastInteractionInfo>.Release(info);
             }
 
             tempValidTargets.Clear();
@@ -173,7 +178,9 @@ namespace ubco.ovilab.HPUI.Interaction
         /// of a single raycast.  The method also processes the hoverEndPoint based on all the ray information provided.
         /// This method will upadte the <see cref="validTargets"/> dictionary.
         /// </summary>
-        protected bool ComputeHeuristic(Dictionary<IHPUIInteractable, List<RaycastInteractionInfo>> validRayCastTargets, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
+        protected virtual bool ComputeHPUIInteractionInfo(Dictionary<IHPUIInteractable, List<RaycastInteractionInfo>> validRayCastTargets,
+                                                          Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets,
+                                                          out Vector3 hoverEndPoint)
         {
             Vector3 centroid;
             float xEndPoint = 0, yEndPoint = 0, zEndPoint = 0;
@@ -210,7 +217,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 HPUIInteractionInfo hpuiInteractionInfo = new HPUIInteractionInfo(heuristic, isSelection, closestToCentroid.point, closestToCentroid.collider, shortestDistance, null);
 
                 validTargets.Add(kvp.Key, hpuiInteractionInfo);
-                ListPool<RaycastInteractionInfo>.Release(kvp.Value);
             }
 
             hoverEndPoint = new Vector3(xEndPoint, yEndPoint, zEndPoint) / count;
