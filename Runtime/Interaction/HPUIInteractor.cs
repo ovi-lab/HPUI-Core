@@ -5,6 +5,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using ubco.ovilab.HPUI.utils;
+using UnityEngine.Pool;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -81,11 +82,27 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         private Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
+        private HPUIGesture gestureToTrigger = HPUIGesture.None;
+        private HPUIInteractionEventArgs gestureEventArgs;
+        private IHPUIInteractable priorityInteractable;
+        private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(
+            () => new HPUITapEventArgs(),
+            actionOnRelease: (args) => args.SetParams(null, null, Vector2.zero),
+            maxSize: 100
+        );
+        private LinkedPool<HPUIGestureEventArgs> hpuiGestureEventArgsPool = new LinkedPool<HPUIGestureEventArgs>(
+            () => new HPUIGestureEventArgs(),
+            actionOnRelease: (args) => args.SetParams(null, null, HPUIGestureState.Invalid, 0, 0, Vector2.zero, Vector2.zero, 0, Vector2.zero, null, Vector2.zero),
+            maxSize: 100
+        );
+        private HPUITapEventArgs tapArgsToPopulate;
+        private HPUIGestureEventArgs gestureArgsToPopulate;
 
 #if UNITY_EDITOR
         private bool onValidateUpdate;
 #endif
 
+        #region Unity methods
         /// <inheritdoc />
         protected override void Awake()
         {
@@ -101,7 +118,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
 #if UNITY_EDITOR
         /// <inheritdoc />
-        protected void OnValidate()
+        protected virtual void OnValidate()
         {
             if (Application.isPlaying && gameObject.activeInHierarchy)
             {
@@ -113,7 +130,7 @@ namespace ubco.ovilab.HPUI.Interaction
 #endif
 
         /// <inheritdoc />
-        protected void Update()
+        protected virtual void Update()
         {
 #if UNITY_EDITOR
             if (onValidateUpdate)
@@ -132,7 +149,9 @@ namespace ubco.ovilab.HPUI.Interaction
             DetectionLogic?.Reset();
             GestureLogic?.Reset();
         }
+        #endregion
 
+        #region XRI methods
         /// <inheritdoc />
         public override void PreprocessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
@@ -173,11 +192,56 @@ namespace ubco.ovilab.HPUI.Interaction
                 finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    GestureLogic.Update(this, validTargets);
+                    tapArgsToPopulate = hpuiTapEventArgsPool.Get();
+                    gestureArgsToPopulate = hpuiGestureEventArgsPool.Get();
+                    GestureLogic.ComputeInteraction(this, validTargets, out gestureToTrigger, out priorityInteractable, tapArgsToPopulate, gestureArgsToPopulate);
                     UnityEngine.Profiling.Profiler.EndSample();
                 }
             }
             UnityEngine.Profiling.Profiler.EndSample();
+        }
+
+        /// <inheritdoc />
+        public override void ProcessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
+        {
+            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
+            {
+                switch(gestureToTrigger)
+                {
+                    case HPUIGesture.Tap:
+                        try
+                        {
+                            if (priorityInteractable != null)
+                            {
+                                priorityInteractable?.OnTap(tapArgsToPopulate);
+                            }
+                        }
+                        finally
+                        {
+                            // NOTE: There can be interactables that don't take any events. Even
+                            // when that happens, the interactor's events should get triggered.
+                            tapEvent?.Invoke(tapArgsToPopulate);
+                        }
+                        break;
+                    case HPUIGesture.Gesture:
+                        try
+                        {
+                            if (priorityInteractable != null)
+                            {
+                                priorityInteractable?.OnGesture(gestureArgsToPopulate);
+                            }
+                        }
+                        finally
+                        {
+                            // NOTE: See note when tap gets triggered.
+                            gestureEvent?.Invoke(gestureArgsToPopulate);
+                        }
+                        break;
+                }
+
+                hpuiTapEventArgsPool.Release(tapArgsToPopulate);
+                hpuiGestureEventArgsPool.Release(gestureArgsToPopulate);
+            }
         }
 
         /// <inheritdoc />
@@ -194,22 +258,11 @@ namespace ubco.ovilab.HPUI.Interaction
         public override bool CanSelect(IXRSelectInteractable interactable)
         {
             bool canSelect = ProcessSelectFilters(interactable);
-            return canSelect && (!SelectOnlyPriorityTarget || GestureLogic.IsPriorityTarget(interactable as IHPUIInteractable));
+            return canSelect && (!SelectOnlyPriorityTarget || priorityInteractable == interactable);
         }
+        #endregion
 
         #region IHPUIInteractor interface
-        /// <inheritdoc />
-        public void OnTap(HPUITapEventArgs args)
-        {
-            tapEvent?.Invoke(args);
-        }
-
-        /// <inheritdoc />
-        public void OnGesture(HPUIGestureEventArgs args)
-        {
-            gestureEvent?.Invoke(args);
-        }
-
         /// <inheritdoc />
         /// <seealso cref="GetHPUIInteractionData"/>
         public bool GetDistanceInfo(IHPUIInteractable interactable, out DistanceInfo distanceInfo)
