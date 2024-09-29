@@ -8,16 +8,16 @@ namespace ubco.ovilab.HPUI.Interaction
     {
         /// <summary>
         /// Update method to be called from an interactor. Updates the states of the <see cref="IHPUIInteractable"/> selected by
-        /// the <see cref="IXRInteractor"/> that was passed when initializing this <see cref="HPUIGestureLogic"/>.
+        /// the <see cref="IHPUIInteractor"/>.
         /// <param name="interactor">The interactor to use when processing the distances.</param>
         /// <param name="distances">A dictionary containing the distance and heuristic values for interactable currently interacting with.</param>
+        /// <param name="gesture">The gesture to be triggered.</param>
+        /// <param name="priorityInteractable">The target which is expected to recieve the events.</param>
+        /// <param name="tapArgsToPopulate">If <see cref="gesture"/> is <see cref="HPUIGesture.Tap"/>, this object will be populated.</param>
+        /// <param name="gestureArgsToPopulate">If <see cref="gesture"/> is <see cref="HPUIGesture.Gesture"/>, this object will be populated.</param>
         /// </summary>
-        public void Update(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances);
+        public void ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out HPUIGesture gesture, out IHPUIInteractable priorityInteractable, HPUITapEventArgs tapArgsToPopulate, HPUIGestureEventArgs gestureArgsToPopulate);
 
-        /// <summary>
-        /// Returns the interactable passed which has the highest priority.
-        /// </summary>
-        public bool IsPriorityTarget(IHPUIInteractable interactable);
 
         /// <summary>
         /// Resets/initializes the logic.

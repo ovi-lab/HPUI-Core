@@ -6,29 +6,26 @@ namespace ubco.ovilab.HPUI.Interaction
     public interface IHPUIInteractor: IXRSelectInteractor, IXRHoverInteractor
     {
         /// <summary>
-        /// Event triggered on tap
+        /// Event triggered on tap.
+        /// Avoid holding the reference to the corresponding <see cref="HPUITapEventArgs"/>,
+        /// it may get disposed ouside of this event call.
         /// </summary>
+        /// <seealso cref="HPUITapEventArgs"/>
         public HPUITapEvent TapEvent { get; }
 
         /// <summary>
-        /// Event triggered on gesture
+        /// Event triggered on gesture.
+        /// Avoid holding the reference to the corresponding <see cref="HPUIGestureEventArgs"/>,
+        /// it may get disposed ouside of this event call.
         /// </summary>
+        /// <seealso cref="HPUIGestureEventArgs"/>
         public HPUIGestureEvent GestureEvent { get; }
 
         /// <summary>
-        /// Event that triggers with hover strength data
+        /// Event that triggers with hover strength data.
         /// </summary>
+        /// <seealso cref="HPUIHoverUpdateEventArgs"/>
         public HPUIHoverUpdateEvent HoverUpdateEvent { get; }
-
-        /// <summary>
-        /// This is called when a tap event occurs on the interactable.
-        /// </summary>
-        void OnTap(HPUITapEventArgs args);
-
-        /// <summary>
-        /// This is called when a gesture event occurs on the interactable.
-        /// </summary>
-        void OnGesture(HPUIGestureEventArgs args);
 
         /// <summary>
         /// Get the <see cref="DistanceInfo"/> for a given interactable.
