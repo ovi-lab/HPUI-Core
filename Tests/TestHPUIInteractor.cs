@@ -90,16 +90,6 @@ namespace ubco.ovilab.HPUI.Tests
             distanceInfo = new DistanceInfo();
             return true;
         }
-
-        void IHPUIInteractor.OnGesture(HPUIGestureEventArgs args)
-        {
-            
-        }
-
-        void IHPUIInteractor.OnTap(HPUITapEventArgs args)
-        {
-           
-        }
         #endregion
 
         #region XRI methods
