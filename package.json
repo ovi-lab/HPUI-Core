@@ -1,6 +1,6 @@
 {
     "name": "ubc.ok.ovilab.hpui-core",
-    "version": "0.2.0-pre",
+    "version": "0.2.0",
     "displayName": "HPUI Core",
     "description": "Core functionality of HPUI",
     "unity": "2021.3",
@@ -9,10 +9,14 @@
       "com.unity.xr.interaction.toolkit": "3.0.4",
       "com.unity.textmeshpro": "3.0.6"
     },
+    "license": "MIT",
+    "licenseUrl": "https://github.com/ovi-lab/HPUI-Core/blob/master/LICENSE",
     "author": {
         "name": "Shariff Faleel",
-        "email": "shariff.mfa@outlook.com"
+        "email": "shariff.mfa@outlook.com",
+        "url": "https://shariff-faleel.com"
     },
+    "documentationUrl": "https://ovi-lab.github.io/HPUI-Core/",
     "scopedRegistries": [
     ],
     "samples": [
