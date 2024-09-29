@@ -14,7 +14,7 @@ namespace ubco.ovilab.HPUI.Interaction
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
-    public class HPUIContinuousInteractable: HPUIBaseInteractable, IHPUIContinuousInteractable
+    public class HPUIGeneratedContinuousInteractable: HPUIBaseInteractable, IHPUIContinuousInteractable
     {
         //TODO: make following configs an asset
         [Space()]

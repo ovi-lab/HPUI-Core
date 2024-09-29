@@ -3,7 +3,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 namespace ubco.ovilab.HPUI.Interaction
 {
     [RequireComponent(typeof(StaticMeshCollidersManager))]
-    public class HPUIStaticContinuousInteractable : HPUIBaseInteractable, IHPUIContinuousInteractable
+    public class HPUIMeshContinuousInteractable : HPUIBaseInteractable, IHPUIContinuousInteractable
     {
         /// <inheritdoc />
         public float X_size { get => collidersManager.XWidth * collidersManager.MeshXResolution; }

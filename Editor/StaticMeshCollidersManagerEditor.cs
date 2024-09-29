@@ -40,7 +40,7 @@ namespace ubco.ovilab.HPUI.Editor
 
         private int[] RemapVertices()
         {
-            SkinnedMeshRenderer targetMesh = t.GetComponent<HPUIStaticContinuousInteractable>().StaticHPUIMesh;
+            SkinnedMeshRenderer targetMesh = t.GetComponent<HPUIMeshContinuousInteractable>().StaticHPUIMesh;
             Mesh tempMesh = new Mesh(); 
             if(targetMesh==null)
             {

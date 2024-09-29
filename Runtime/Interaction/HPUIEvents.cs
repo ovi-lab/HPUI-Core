@@ -187,7 +187,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
     /// <summary>
     /// Event related to deformable continuous surface.
-    /// <seealso cref="HPUIContinuousInteractable"/>
+    /// <seealso cref="HPUIGeneratedContinuousInteractable"/>
     /// <seealso cref="DeformableSurface"/>
     /// <seealso cref="DeformableSurfaceCollidersManager"/>
     /// </summary>

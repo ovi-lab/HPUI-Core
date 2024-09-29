@@ -1,9 +1,6 @@
-using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
-
-namespace ubco.ovilab.HPUI.Interaction 
+namespace ubco.ovilab.HPUI.Interaction
 {
-    public interface IHPUIContinuousInteractable
+    public interface IHPUIContinuousInteractable: IHPUIInteractable
     {
         /// <summary>
         /// The size along the abduction-adduction axis of the fingers (x-axis of joints) in unity units.

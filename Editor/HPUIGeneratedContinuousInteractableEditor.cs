@@ -7,23 +7,23 @@ using System.Linq;
 namespace ubco.ovilab.HPUI.Editor
 {
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(HPUIContinuousInteractable), true)]
-    public class HPUIContinuousInteractableEditor: HPUIBaseInteractableEditor
+    [CustomEditor(typeof(HPUIGeneratedContinuousInteractable), true)]
+    public class HPUIGeneratedContinuousInteractableEditor: HPUIBaseInteractableEditor
     {
         private const string UIPrefab = "Packages/ubc.ok.ovilab.hpui-core/Runtime/Assets/HPUIContinousUI.prefab";
-        private HPUIContinuousInteractable t;
+        private HPUIGeneratedContinuousInteractable t;
         private SerializedProperty uiProp;
 
         protected override List<string> EventPropertyNames => base.EventPropertyNames.Union(new List<string>()
         {
             "continuousSurfaceCreatedEvent",
-            "boundsCollider", // NOTE: this is not relevant to the HPUIContinuousInteractable.
+            "boundsCollider", // NOTE: this is not relevant to the HPUIGeneratedContinuousInteractable.
         }).ToList();
 
         protected override void OnEnable()
         {
             base.OnEnable();
-            t = target as HPUIContinuousInteractable;
+            t = target as HPUIGeneratedContinuousInteractable;
         }
 
         public override void OnInspectorGUI()
@@ -34,7 +34,7 @@ namespace ubco.ovilab.HPUI.Editor
             {
                 foreach (Object t in targets)
                 {
-                    (t as HPUIContinuousInteractable)?.ManualRecompute();
+                    (t as HPUIGeneratedContinuousInteractable)?.ManualRecompute();
                 }
             }
             GUI.enabled = true;
