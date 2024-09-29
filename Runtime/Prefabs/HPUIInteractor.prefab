@@ -68,18 +68,36 @@ MonoBehaviour:
       m_Calls: []
   m_StartingHoverFilters: []
   m_StartingSelectFilters: []
-  tapTimeThreshold: 0.3
-  tapDistanceThreshold: 0.01
   tapEvent:
     m_PersistentCalls:
       m_Calls: []
   gestureEvent:
     m_PersistentCalls:
       m_Calls: []
-  interactionHoverRadius: 0.015
-  interactionSelectionRadius: 0.015
   selectOnlyPriorityTarget: 1
-  useRays: 0
+  detectionLogic:
+    rid: 125559390336188416
+  gestureLogic:
+    rid: 1001
+  references:
+    version: 2
+    RefIds:
+    - rid: 1001
+      type: {class: HPUIGestureLogic, ns: ubco.ovilab.HPUI.Interaction, asm: ubco.ovilab.HPUI}
+      data:
+        tapTimeThreshold: 0.3
+        tapDistanceThreshold: 0.2
+        debounceTimeWindow: 0.05
+    - rid: 125559390336188416
+      type: {class: HPUIFullRangeRayCastDetectionLogic, ns: ubco.ovilab.HPUI.Interaction, asm: ubco.ovilab.HPUI}
+      data:
+        interactionHoverRadius: 0.02
+        physicsLayer:
+          serializedVersion: 2
+          m_Bits: 4294967295
+        physicsTriggerInteraction: 1
+        showDebugRayVisual: 1
+        fullRangeRayAngles: {fileID: 11400000, guid: 67fad73b30487374bb349b94840db31b, type: 2}
 --- !u!114 &6470572868118742890
 MonoBehaviour:
   m_ObjectHideFlags: 0
