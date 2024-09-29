@@ -215,15 +215,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
             if (updateTrackingInteractable)
-                // (currentTrackingInteractable == null ||
-                //  !(trackingInteractables.TryGetValue(currentTrackingInteractable,
-                //                                      out HPUIInteractionState currentTrackingInteractableState) &&
-                //    currentTrackingInteractableState.active)))
             {
-                // TODO: revisit this assumption
-                // Any target that is active should be ok for this
-                // Giving priority to the ones that was the oldest entered
-                // This minimizes the tracking interactable changing
                 KeyValuePair<IHPUIInteractable, HPUIInteractionState> interactableDataToTrack = trackingInteractables
                     .Where(kvp => kvp.Value.Active)
                     .OrderBy(kvp => kvp.Value.Heuristic)
@@ -233,10 +225,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 {
                     currentTrackingInteractableHeuristic = interactableDataToTrack.Value.Heuristic;
                     currentTrackingInteractable = interactableDataToTrack.Key;
-                    // If interactable change, we need to restart tracking, hence skipping a frame
                     success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
                     Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
-                    return;
                 }
             }
 
