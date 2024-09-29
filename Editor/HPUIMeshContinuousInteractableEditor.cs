@@ -6,10 +6,10 @@ using UnityEditor;
 namespace ubco.ovilab.HPUI.Editor
 {
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(HPUIStaticContinuousInteractable))]
-    public class HPUIStaticContinuousInteractableEditor : HPUIBaseInteractableEditor
+    [CustomEditor(typeof(HPUIMeshContinuousInteractable))]
+    public class HPUIMeshContinuousInteractableEditor : HPUIBaseInteractableEditor
     {
-        private HPUIStaticContinuousInteractable t;
+        private HPUIMeshContinuousInteractable t;
         private SerializedProperty staticMesh;
         private SerializedProperty meshXResolution;
         
@@ -22,7 +22,7 @@ namespace ubco.ovilab.HPUI.Editor
         protected override void OnEnable()
         {
             base.OnEnable();
-            t = (HPUIStaticContinuousInteractable)target;
+            t = (HPUIMeshContinuousInteractable)target;
             staticMesh = serializedObject.FindProperty("staticHPUIMesh");
             meshXResolution = serializedObject.FindProperty("meshXResolution");
         }

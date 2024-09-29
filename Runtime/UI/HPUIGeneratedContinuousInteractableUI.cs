@@ -6,7 +6,7 @@ using TMPro;
 
 namespace ubco.ovilab.HPUI.UI
 {
-    public class HPUIContinuousInteractableUI : MonoBehaviour
+    public class HPUIGeneratedContinuousInteractableUI : MonoBehaviour
     {
         [SerializeField] private JointFollower jointFollower;
         [SerializeField] private Transform UIRoot;

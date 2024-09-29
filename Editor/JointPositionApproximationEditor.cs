@@ -28,7 +28,7 @@ namespace ubco.ovilab.HPUI.Editor
                 if (GUILayout.Button(new GUIContent("Instantiate & add UI", "Instantiate UI for continuous interface generation and add it")))
                 {
                     GameObject uiObj = PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(UIPrefab)) as GameObject;
-                    uiProp.objectReferenceValue = uiObj.GetComponent<HPUIContinuousInteractableUI>();
+                    uiProp.objectReferenceValue = uiObj.GetComponent<HPUIGeneratedContinuousInteractableUI>();
                     Debug.Log($"[[[{uiProp.objectReferenceValue}]]]");
                 }
             }

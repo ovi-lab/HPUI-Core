@@ -92,7 +92,7 @@ namespace ubco.ovilab.HPUI.Interaction
             tempMesh.GetVertices(vertices);
             tempMesh.GetNormals(normals);
 
-            HPUIContinuousInteractable continuousInteractable = GetComponentInParent<HPUIContinuousInteractable>();
+            HPUIGeneratedContinuousInteractable continuousInteractable = GetComponentInParent<HPUIGeneratedContinuousInteractable>();
 
             maxY = vertices_native.Length - continuousInteractable.X_divisions;
             maxX = continuousInteractable.X_divisions;

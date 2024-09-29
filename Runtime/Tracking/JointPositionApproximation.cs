@@ -10,12 +10,12 @@ using UnityEngine.XR.Hands;
 namespace ubco.ovilab.HPUI.Tracking
 {
     /// <summary>
-    /// This class is used to approximate the joint positions to be used with <see cref="HPUIContinuousInteractable"/>.
+    /// This class is used to approximate the joint positions to be used with <see cref="HPUIGeneratedContinuousInteractable"/>.
     /// </summary>
     public class JointPositionApproximation: HandSubsystemSubscriber
     {
         [Tooltip("(Optional) Will be used to provide feedback during setup.")]
-        [SerializeField] private HPUIContinuousInteractableUI ui;
+        [SerializeField] private HPUIGeneratedContinuousInteractableUI ui;
 
         private enum ApproximationComputeState { None, Starting, DataCollection, Computing, Finished }
         private Transform dummyXROriginTransform;
@@ -43,7 +43,7 @@ namespace ubco.ovilab.HPUI.Tracking
 
         private ApproximationComputeState approximationComputeState = ApproximationComputeState.Starting;
         private JointFollower jointFollower;
-        private HPUIContinuousInteractable continuousInteractable;
+        private HPUIGeneratedContinuousInteractable continuousInteractable;
 
         /// <inheritdoc />
         protected override void ProcessJointData(XRHandSubsystem subsystem, XRHandSubsystem.UpdateSuccessFlags _)
@@ -275,7 +275,7 @@ namespace ubco.ovilab.HPUI.Tracking
         protected override void OnEnable()
         {
             jointFollower = GetComponent<JointFollower>();
-            continuousInteractable = GetComponent<HPUIContinuousInteractable>();
+            continuousInteractable = GetComponent<HPUIGeneratedContinuousInteractable>();
 
             // FIXME: figure out a better way for this sorcery!
             if (jointFollower != null && continuousInteractable != null)
