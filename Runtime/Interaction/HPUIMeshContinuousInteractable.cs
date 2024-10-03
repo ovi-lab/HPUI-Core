@@ -70,7 +70,7 @@ namespace ubco.ovilab.HPUI.Interaction
             base.Awake();
             collidersManager = GetComponent<StaticMeshCollidersManager>();
             Debug.Assert(collidersManager!=null);
-            colliders.AddRange(collidersManager.SetupColliders(StaticHPUIMesh, MeshXResolution));
+            colliders.AddRange(collidersManager.SetupColliders(StaticHPUIMesh, meshXResolution));
         }
         /// <inheritdoc />
         protected override void ComputeSurfaceBounds()
