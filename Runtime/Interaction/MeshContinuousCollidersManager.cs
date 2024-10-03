@@ -11,23 +11,38 @@ namespace ubco.ovilab.HPUI.Interaction
     /// <summary>
     /// Component to manage the colliders for a given rectangular custom mesh, based on <see cref="Interaction.DeformableSurfaceCollidersManager"/>
     /// </summary>
-    public class StaticMeshCollidersManager : MonoBehaviour
+    public class MeshContinuousCollidersManager : MonoBehaviour
     {
         [SerializeField, HideInInspector] private int[] vertexRemapData;
         [Tooltip("Incase the vertices are being ordered in reverse for whatever reason")][SerializeField] private bool flipOrderForRecompute;
 
-        //FIXME: Debug Code
-        // [SerializeField] private GameObject rectifiedVertexDS;
-        // [SerializeField, Range(0, 120)] private int id;
+        [SerializeField] private int meshXResolution;
+
+        [Tooltip("The associated SkinnedMeshRenderer used by this interactable")]
+        [SerializeField] private SkinnedMeshRenderer mesh;
+        /// <summary>
+        /// The associated SkinnedMeshRenderer used by this interactable
+        /// </summary>
+        public SkinnedMeshRenderer Mesh
+        {
+            get
+            {
+                if (mesh == null)
+                {
+                    mesh = GetComponent<SkinnedMeshRenderer>();
+                }
+                return mesh;
+            }
+            set => mesh = value;
+        }
 
         private NativeArray<Vector3> vertices_native, normals_native;
         private List<Vector3> vertices = new List<Vector3>(), normals = new List<Vector3>();
         private NativeArray<int> remapped_vertices_data;
         private TransformAccessArray colliderObjects;
         private Mesh tempMesh;
-        private SkinnedMeshRenderer targetMesh;
         private bool generatedColliders;
-        private int meshXResolution, meshYResolution;
+        private int meshYResolution;
         private float xWidth, yWidth, offsetX, offsetY;
         private Dictionary<Collider, Vector2> colliderCoords = new Dictionary<Collider, Vector2>();
         private Dictionary<Vector2Int, Collider> rawCoordsToCollider = new Dictionary<Vector2Int, Collider>();
@@ -36,7 +51,13 @@ namespace ubco.ovilab.HPUI.Interaction
         public float YWidth => yWidth;
         public float OffsetX => offsetX;
         public float OffsetY => offsetY;
-        public int MeshXResolution => meshXResolution;
+
+        public int MeshXResolution
+        {
+            get => meshXResolution;
+            set => meshXResolution = value;
+        }
+
         public int MeshYResolution => meshYResolution;
         public Dictionary<Vector2Int, Collider> RawCoordsToCollider => rawCoordsToCollider;
 
@@ -47,12 +68,9 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
-            UnityEngine.Profiling.Profiler.BeginSample("StaticMeshCollidersManager.Update");
+            UnityEngine.Profiling.Profiler.BeginSample("MeshContinuousCollidersManager.Update");
             UpdateColliderPositions();
             UnityEngine.Profiling.Profiler.EndSample();
-
-            //FIXME: Debug Code
-            // rectifiedVertexDS.transform.localPosition = vertices[remappedVertices[id]];
         }
 
         private void OnDestroy()
@@ -66,16 +84,14 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Configures the colliders on the respective mesh.
         /// </summary>
-        public List<Collider> SetupColliders(SkinnedMeshRenderer targetMesh, int meshXResolution)
+        public List<Collider> SetupColliders()
         {
-            this.targetMesh = targetMesh;
-            this.meshXResolution = meshXResolution;
             tempMesh = new Mesh();
-            targetMesh.BakeMesh(tempMesh, true);
+            mesh.BakeMesh(tempMesh, true);
 
             if (vertexRemapData == null)
             {
-                throw new ArgumentException("Missing Vertex Remap Data Asset! Create a new one or provide an existing one!");
+                throw new ArgumentException("Run \"Compute Vertex Remapping\" outside play mode first!");
             }
 
             tempMesh.GetVertices(vertices);
@@ -83,19 +99,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
             remapped_vertices_data = new NativeArray<int>(vertexRemapData, Allocator.Persistent);
 
-            try
-            {
-                if (vertices.Count % meshXResolution != 0)
-                {
-                    throw new Exception( $"Total vertex count doesn't divide properly with X mesh resolution! Vertices Count:{vertices.Count} Mesh X Resolution:{meshXResolution}");
-                }
-            }
-            catch
-            {
-                throw new Exception( $"Unable to divide by 0! Vertices Count:{vertices.Count} Mesh X Resolution:{meshXResolution}");
-            }
             meshYResolution = vertices.Count / meshXResolution;
-            Transform meshTransform = targetMesh.gameObject.transform;
+            Transform meshTransform = mesh.gameObject.transform;
 
             xWidth = Vector3.Distance(meshTransform.TransformPoint(vertices[remapped_vertices_data[0]]),
                                       meshTransform.TransformPoint(vertices[remapped_vertices_data[1]]));
@@ -154,7 +159,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
         protected void UpdateColliderPositions()
         {
-            targetMesh.BakeMesh(tempMesh, true);
+            mesh.BakeMesh(tempMesh, true);
             tempMesh.GetVertices(vertices);
             tempMesh.GetNormals(normals);
 
