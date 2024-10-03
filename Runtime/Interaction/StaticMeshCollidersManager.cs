@@ -83,9 +83,16 @@ namespace ubco.ovilab.HPUI.Interaction
             
             remapped_vertices_data = new NativeArray<int>(vertexRemapData, Allocator.Persistent);
 
-            if (vertices.Count % meshXResolution != 0)
+            try
             {
-                throw new Exception($"Total vertex count doesn't divide properly with X mesh resolution! Vertices Count:{vertices.Count} Mesh X Resolution:{meshXResolution}");
+                if (vertices.Count % meshXResolution != 0)
+                {
+                    throw new Exception( $"Total vertex count doesn't divide properly with X mesh resolution! Vertices Count:{vertices.Count} Mesh X Resolution:{meshXResolution}");
+                }
+            }
+            catch
+            {
+                throw new Exception( $"Unable to divide by 0! Vertices Count:{vertices.Count} Mesh X Resolution:{meshXResolution}");
             }
             meshYResolution = vertices.Count / meshXResolution;
             Transform meshTransform = targetMesh.gameObject.transform;
