@@ -57,10 +57,10 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private void OnDestroy()
         {
-            vertices_native.Dispose();
-            normals_native.Dispose();
-            remapped_vertices_data.Dispose();
-            colliderObjects.Dispose();
+            if (vertices_native.IsCreated) vertices_native.Dispose();
+            if (normals_native.IsCreated) normals_native.Dispose();
+            if (remapped_vertices_data.IsCreated) remapped_vertices_data.Dispose();
+            if (colliderObjects.isCreated) colliderObjects.Dispose();
         }
 
         /// <summary>
