@@ -24,7 +24,7 @@ namespace ubco.ovilab.HPUI.Editor
 
             if (GUILayout.Button(buttonContent))
             {
-                int[] remapData = RemapVertices(); 
+                int[] remapData = RemapVertices();
 
                 vertRemapData.arraySize = remapData.Length;
 
@@ -41,7 +41,7 @@ namespace ubco.ovilab.HPUI.Editor
         private int[] RemapVertices()
         {
             SkinnedMeshRenderer targetMesh = t.GetComponent<HPUIMeshContinuousInteractable>().StaticHPUIMesh;
-            Mesh tempMesh = new Mesh(); 
+            Mesh tempMesh = new Mesh();
             if(targetMesh==null)
             {
                 Debug.LogError("Please assign static mesh to the HPUI Static Continuous Interactable Component first!");
@@ -49,7 +49,7 @@ namespace ubco.ovilab.HPUI.Editor
             targetMesh.BakeMesh(tempMesh, true);
             return GetRectifiedIndices(tempMesh, serializedObject.FindProperty("flipOrderForRecompute").boolValue);
         }
-        
+
         private int[] GetRectifiedIndices(Mesh mesh, bool flipOrder)
         {
             int vertexCount = mesh.vertexCount;

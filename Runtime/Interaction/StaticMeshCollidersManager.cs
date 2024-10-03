@@ -15,11 +15,11 @@ namespace ubco.ovilab.HPUI.Interaction
     {
         [SerializeField, HideInInspector] private int[] vertexRemapData;
         [Tooltip("Incase the vertices are being ordered in reverse for whatever reason")][SerializeField] private bool flipOrderForRecompute;
-        
+
         //FIXME: Debug Code
         // [SerializeField] private GameObject rectifiedVertexDS;
         // [SerializeField, Range(0, 120)] private int id;
-        
+
         private NativeArray<Vector3> vertices_native, normals_native;
         private List<Vector3> vertices = new List<Vector3>(), normals = new List<Vector3>();
         private NativeArray<int> remapped_vertices_data;
@@ -46,7 +46,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 return;
             }
-            
+
             UnityEngine.Profiling.Profiler.BeginSample("StaticMeshCollidersManager.Update");
             UpdateColliderPositions();
             UnityEngine.Profiling.Profiler.EndSample();
@@ -70,17 +70,17 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             this.targetMesh = targetMesh;
             this.meshXResolution = meshXResolution;
-            tempMesh = new Mesh(); 
+            tempMesh = new Mesh();
             targetMesh.BakeMesh(tempMesh, true);
-            
+
             if (vertexRemapData == null)
             {
                 throw new ArgumentException("Missing Vertex Remap Data Asset! Create a new one or provide an existing one!");
             }
-            
+
             tempMesh.GetVertices(vertices);
             tempMesh.GetNormals(normals);
-            
+
             remapped_vertices_data = new NativeArray<int>(vertexRemapData, Allocator.Persistent);
 
             try
@@ -129,7 +129,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 colliderCoords.Add(col, coords);
                 rawCoordsToCollider.Add(new Vector2Int(x, y), col);
             }
-            
+
             colliderObjects = new TransformAccessArray(colliderTransforms);
             vertices_native = new NativeArray<Vector3>(vertices.ToArray(), Allocator.Persistent);
             normals_native = new NativeArray<Vector3>(normals.ToArray(), Allocator.Persistent);
@@ -151,7 +151,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
             return coordsForCol;
         }
-        
+
         protected void UpdateColliderPositions()
         {
             targetMesh.BakeMesh(tempMesh, true);
@@ -160,7 +160,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
             vertices_native.CopyFrom(vertices.ToArray());
             normals_native.CopyFrom(normals.ToArray());
-            
+
             DeformedCollidersJob job = new DeformedCollidersJob()
             {
                 Normals = normals_native,
@@ -173,17 +173,17 @@ namespace ubco.ovilab.HPUI.Interaction
             JobHandle jobHandle = job.Schedule(colliderObjects);
             jobHandle.Complete();
         }
-        
+
         struct DeformedCollidersJob: IJobParallelForTransform
         {
             private Vector3 right, forward, temppos;
-            public float ScaleFactor, GridSize; 
+            public float ScaleFactor, GridSize;
             public int MaxX, MaxY;
 
             [ReadOnly] public NativeArray<Vector3> Vertices;
             [ReadOnly] public NativeArray<Vector3> Normals;
             [ReadOnly] public NativeArray<int> RemappedIndices;
-	
+
             public void Execute(int i, TransformAccess col)
             {
                 temppos = Vertices[RemappedIndices[i]];
@@ -193,7 +193,7 @@ namespace ubco.ovilab.HPUI.Interaction
                     forward = Vertices[RemappedIndices[i - MaxX]] - Vertices[RemappedIndices[i]];
                 else
                     forward = Vertices[RemappedIndices[i+ MaxX]] - Vertices[RemappedIndices[i]];
-                
+
                 col.localPosition = temppos;
                 col.localRotation = Quaternion.LookRotation(forward, Normals[RemappedIndices[i]]);
             }
