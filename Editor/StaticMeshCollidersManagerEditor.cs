@@ -20,7 +20,7 @@ namespace ubco.ovilab.HPUI.Editor
             SerializedProperty vertRemapData = serializedObject.FindProperty("vertexRemapData");
             t = (StaticMeshCollidersManager)target;
 
-            GUIContent buttonContent = new GUIContent("Compute Vertex Remapping", "Run this with the hand upright and a blank Vertex Remap Data asset assigned outside of play mode");
+            GUIContent buttonContent = new GUIContent("Compute Vertex Remapping", "Run this with the hand upright outside of play mode");
 
             if (GUILayout.Button(buttonContent))
             {
