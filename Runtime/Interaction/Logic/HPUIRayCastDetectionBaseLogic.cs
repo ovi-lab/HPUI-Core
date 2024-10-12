@@ -25,12 +25,17 @@ namespace ubco.ovilab.HPUI.Interaction
         public float InteractionHoverRadius { get => interactionHoverRadius; set => interactionHoverRadius = value; }
 
         [SerializeField]
-        [Tooltip("Physics layer mask used for limiting poke sphere overlap.")]
+        [Tooltip("Physics layer mask used for limiting raycast collisions.")]
         private LayerMask physicsLayer = Physics.AllLayers;
 
         /// <summary>
-        /// Physics layer mask used for limiting poke sphere overlap.
+        /// Physics layer mask used for limiting raycast collisions.
+        /// This is different from <see cref="XRBaseInteractor.interactionLayers"/>.
+        /// <see cref="XRBaseInteractor.interactionLayers"/> is
+        /// related to filtering interactions in XRI.  This is related
+        /// filtering the physics interactions.
         /// </summary>
+        /// <seealso cref="Physics.RaycastNonAlloc"/>
         public LayerMask PhysicsLayer { get => physicsLayer; set => physicsLayer = value; }
 
         [SerializeField]
@@ -61,8 +66,13 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        /// <summary>
+        /// If subscribed to, provides the data of the raycasts during each frame.
+        /// Each ray cast that hit a valid interactable will have the following format:
+        /// - {interactable.transform.name},{angle.X},{angle.Z},{distance}
+        /// Each raycasr is seperated by "::".
+        /// </summary>
         public event System.Action<string> data;
-
 
         protected IHPUIInteractor interactor;
         protected Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();

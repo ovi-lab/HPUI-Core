@@ -22,12 +22,17 @@ namespace ubco.ovilab.HPUI.Interaction
         public float InteractionHoverRadius { get => interactionHoverRadius; set => interactionHoverRadius = value; }
 
         [SerializeField]
-        [Tooltip("Physics layer mask used for limiting poke sphere overlap.")]
+        [Tooltip("Physics layer mask used for limiting physics collisions.")]
         private LayerMask physicsLayer = Physics.AllLayers;
 
         /// <summary>
-        /// Physics layer mask used for limiting poke sphere overlap.
+        /// Physics layer mask used for limiting physics collisions with OverlapSphere.
+        /// This is different from <see cref="XRBaseInteractor.interactionLayers"/>.
+        /// <see cref="XRBaseInteractor.interactionLayers"/> is
+        /// related to filtering interactions in XRI.  This is related
+        /// filtering the physics interactions.
         /// </summary>
+        /// <seealso cref="PhysicsScene.OverlapSphere"/>
         public LayerMask PhysicsLayer { get => physicsLayer; set => physicsLayer = value; }
 
         [SerializeField]
