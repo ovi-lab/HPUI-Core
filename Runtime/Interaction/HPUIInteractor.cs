@@ -6,11 +6,17 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using ubco.ovilab.HPUI.utils;
 using UnityEngine.Pool;
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
     /// <summary>
-    /// Base HPUI interactor. Selects/hovers only the closest interactable for a given zOrder.
+    /// Base HPUI interactor.
+    ///
+    /// NOTES:
+    /// - The target filter is exectued after <see cref="DetectionLogic"/> and before the <see cref="GestureLogic"/>.
+    ///   It does not consider the order as this uses the heuristic reported by the <see cref="DetectionLogic"/>. 
+    ///   The heuristic data can be accessed with <see cref="GetHPUIInteractionInfo"/>.
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
@@ -47,12 +53,12 @@ namespace ubco.ovilab.HPUI.Interaction
         public bool SelectOnlyPriorityTarget { get => selectOnlyPriorityTarget; set => selectOnlyPriorityTarget = value; }
 
         [Space()]
-        [Tooltip("TODO")]
+        [Tooltip("The detection logic used to detect interactables interacting in current frame and compute the heuristic.")]
         [SerializeReference, SubclassSelector]
         private IHPUIDetectionLogic detectionLogic = new HPUIFullRangeRayCastDetectionLogic();
 
         /// <summary>
-        /// TODO
+        /// The detection logic used to detect interactables interacting in current frame and compute the heuristic.
         /// </summary>
         public IHPUIDetectionLogic DetectionLogic
         {
@@ -82,6 +88,8 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         private Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
+        static readonly List<IXRInteractable> tempValidTargets = new(); // reusable list when processing valid targets
+        static readonly List<IXRInteractable> tempResults = new(); // reusable list when processing valid targets
         private HPUIGesture gestureToTrigger = HPUIGesture.None;
         private HPUIInteractionEventArgs gestureEventArgs;
         private IHPUIInteractable priorityInteractable;
@@ -162,6 +170,8 @@ namespace ubco.ovilab.HPUI.Interaction
             if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
             {
                 validTargets.Clear();
+                tempValidTargets.Clear();
+                tempResults.Clear();
 
                 Transform attachTransform = GetAttachTransform(null);
                 Vector3 interactionPoint = attachTransform.position;
@@ -171,6 +181,39 @@ namespace ubco.ovilab.HPUI.Interaction
                 try
                 {
                     DetectionLogic.DetectedInteractables(this, interactionManager, validTargets, out hoverEndPoint);
+                    tempResults.AddRange(validTargets.Keys);
+
+                    // Remove interactables that will not get triggered because of the mismatch between the interactionLayers
+                    for (int i = 0; i < tempResults.Count; ++i)
+                    {
+                        IXRInteractable interactable = tempResults[i];
+                        if ((this.interactionLayers & interactable.interactionLayers) == 0)
+                        {
+                            validTargets.Remove(interactable as IHPUIInteractable);
+                        }
+                        else
+                        {
+                            tempValidTargets.Add(interactable);
+                        }
+                    }
+                    tempResults.Clear();
+
+                    IXRTargetFilter filter = targetFilter;
+                    if (filter != null && filter.canProcess)
+                    {
+                        filter.Process(this, tempValidTargets, tempResults);
+
+                        // Copy results elements to targets
+                        tempValidTargets.Clear();
+                        tempValidTargets.AddRange(validTargets.Keys);
+                        foreach (IXRInteractable interactable in tempValidTargets)
+                        {
+                            if (!tempResults.Contains(interactable))
+                            {
+                                validTargets.Remove(interactable as IHPUIInteractable);
+                            }
+                        }
+                    }
                 }
                 catch (System.Exception e)
                 {
