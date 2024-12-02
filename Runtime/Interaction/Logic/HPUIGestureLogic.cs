@@ -137,10 +137,12 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (isInFrame)
                 {
-                    if (interactionData.heuristic < state.Heuristic)
+                    if (interactionData.heuristic < state.LowestHeuristicValue)
                     {
-                        state.Heuristic = interactionData.heuristic;
+                        state.LowestHeuristicValue = interactionData.heuristic;
                     }
+
+                    state.CurrentHeuristicValue = interactionData.heuristic;
 
                     if (!updateTrackingInteractable && currentTrackingInteractable != interactable && interactionData.heuristic < currentTrackingInteractableHeuristic)
                     {
@@ -218,12 +220,12 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 KeyValuePair<IHPUIInteractable, HPUIInteractionState> interactableDataToTrack = trackingInteractables
                     .Where(kvp => kvp.Value.Active)
-                    .OrderBy(kvp => kvp.Value.Heuristic)
+                    .OrderBy(kvp => kvp.Value.CurrentHeuristicValue)
                     .First();
 
                 if (interactableDataToTrack.Key != currentTrackingInteractable)
                 {
-                    currentTrackingInteractableHeuristic = interactableDataToTrack.Value.Heuristic;
+                    currentTrackingInteractableHeuristic = interactableDataToTrack.Value.CurrentHeuristicValue;
                     currentTrackingInteractable = interactableDataToTrack.Key;
                     success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
                     Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
@@ -283,7 +285,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) &&
                        (usePreviousSelectableState ? kvp.Value.SelectableInPrevFrames: kvp.Value.SelectableTarget))
                 .OrderBy(kvp => kvp.Key.zOrder)
-                .ThenBy(kvp => kvp.Value.Heuristic)
+                .ThenBy(kvp => kvp.Value.LowestHeuristicValue)
                 .FirstOrDefault().Key;
 
             if (interactableToBeActive != activePriorityInteractable)
@@ -341,7 +343,8 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             public static HPUIInteractionState empty = new HPUIInteractionState();
 
-            public float Heuristic { get; set; }
+            public float LowestHeuristicValue { get; set; }
+            public float CurrentHeuristicValue { get; set; }
             public Vector2 StartPosition { get; set; }
             public float StartTime { get; set; }
             public bool Active { get; private set; }
@@ -354,7 +357,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.StartPosition = Vector2.zero;
                 this.Active = true;
                 this.SelectableTarget = false;
-                this.Heuristic = float.MaxValue;
+                this.LowestHeuristicValue = float.MaxValue;
+                this.CurrentHeuristicValue = 0;
             }
 
             public void SetSelectable()
