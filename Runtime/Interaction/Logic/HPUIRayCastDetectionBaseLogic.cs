@@ -199,7 +199,8 @@ namespace ubco.ovilab.HPUI.Interaction
             foreach (KeyValuePair<IHPUIInteractable, List<RaycastInteractionInfo>> kvp in validRayCastTargets)
             {
                 float localXEndPoint = 0, localYEndPoint = 0, localZEndPoint = 0;
-                float localOverThresholdCount = 0;
+                float localOverThresholdCount = 0,
+                    localCount = 0;
 
                 foreach(RaycastInteractionInfo i in kvp.Value)
                 {
@@ -209,13 +210,15 @@ namespace ubco.ovilab.HPUI.Interaction
                     localXEndPoint += i.point.x;
                     localYEndPoint += i.point.y;
                     localZEndPoint += i.point.z;
+
+                    localCount++;
                     if (i.isSelection)
                     {
                         localOverThresholdCount++;
                     }
                 }
 
-                centroid = new Vector3(localXEndPoint, localYEndPoint, localZEndPoint) / count;
+                centroid = new Vector3(localXEndPoint, localYEndPoint, localZEndPoint) / localCount;
 
                 RaycastInteractionInfo closestToCentroid = kvp.Value.OrderBy(el => (el.point - centroid).magnitude).First();
                 // This distance is needed to compute the selection
