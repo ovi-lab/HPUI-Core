@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -51,28 +50,11 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public bool ShowDebugRayVisual { get => showDebugRayVisual; set => showDebugRayVisual = value; }
 
-        // FIXME: debug code
-        StringBuilder dataWriter = new StringBuilder(65000);
-        public string DataWriter {
-            get
-            {
-                string toReturn = dataWriter.ToString();
-                dataWriter.Clear();
-                return toReturn;
-            }
-            set
-            {
-                dataWriter.AppendFormat("::{0}", value);
-            }
-        }
 
         /// <summary>
         /// If subscribed to, provides the data of the raycasts during each frame.
-        /// Each ray cast that hit a valid interactable will have the following format:
-        /// - {interactable.transform.name},{angle.X},{angle.Z},{distance}
-        /// Each raycasr is seperated by "::".
         /// </summary>
-        public event System.Action<string> data;
+        public event System.Action<List<RaycastDataRecord>> raycastData;
 
         protected IHPUIInteractor interactor;
         protected Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
@@ -80,6 +62,7 @@ namespace ubco.ovilab.HPUI.Interaction
         protected Dictionary<IHPUIInteractable, List<RaycastInteractionInfo>> tempValidTargets = new();
 
         private RaycastHit[] rayCastHits = new RaycastHit[200];
+        private List<RaycastDataRecord> raycastDataRecords = new();
 
         public void SetInteractor(IHPUIInteractor interactor)
         {
@@ -102,7 +85,6 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, List<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
-            DataWriter = "//";
             validTargets.Clear();
 
             Transform attachTransform = interactor.GetAttachTransform(null);
@@ -135,9 +117,9 @@ namespace ubco.ovilab.HPUI.Interaction
                         float sign = Vector3.Dot(hitInfo.collider.transform.up, direction) < 0 ? 1 : -1;
                         float distance = hitInfo.distance * sign;
 
-                        if (data != null)
+                        if (raycastData != null)
                         {
-                            DataWriter = $"{interactable.transform.name},{angle.X},{angle.Z},{distance}";
+                            raycastDataRecords.Add(new RaycastDataRecord(interactable.transform.name, angle.X, angle.Z, distance));
                         }
 
                         List<RaycastInteractionInfo> infoList;
@@ -175,9 +157,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
             tempValidTargets.Clear();
 
-            if (data != null)
+            if (raycastData != null)
             {
-                data.Invoke(DataWriter);
+                raycastData.Invoke(raycastDataRecords);
             }
         }
 
@@ -253,6 +235,25 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.point = point;
                 this.collider = collider;
                 this.distanceValue = distanceValue;
+            }
+        }
+
+        /// <summary>
+        /// Record of a single raycast
+        /// </summary>
+        public struct RaycastDataRecord
+        {
+            public string interactableTransformName;
+            public float angleX;
+            public float angleZ;
+            public float distance;
+
+            public RaycastDataRecord(string name, float x, float z, float distance) : this()
+            {
+                this.interactableTransformName = name;
+                this.angleX = x;
+                this.angleZ = z;
+                this.distance = distance;
             }
         }
     }
