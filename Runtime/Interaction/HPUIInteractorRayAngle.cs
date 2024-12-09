@@ -85,6 +85,28 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             return GetDirection(x, z, attachTransform.right, attachTransform.forward, attachTransform.up, flipZAngles);
         }
+
+        #region Equality overrides
+        public override bool Equals(object obj)
+        {
+            return (obj is HPUIInteractorRayAngle rayAngleObj) && rayAngleObj.X == this.x && rayAngleObj.z == this.z;
+        }
+
+        public override int GetHashCode()
+        {
+            return x.GetHashCode() ^ z.GetHashCode();
+        }
+
+        public static bool operator ==(HPUIInteractorRayAngle a, HPUIInteractorRayAngle b)
+        {
+            return Mathf.Approximately(a.X, b.X) && Mathf.Approximately(a.Z, b.Z);
+        }
+
+        public static bool operator !=(HPUIInteractorRayAngle a, HPUIInteractorRayAngle b)
+        {
+            return !Mathf.Approximately(a.X, b.X) || !Mathf.Approximately(a.Z, b.Z);
+        }
+        #endregion
     }
 }
  

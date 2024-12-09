@@ -119,7 +119,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                         if (raycastData != null)
                         {
-                            raycastDataRecords.Add(new RaycastDataRecord(interactable.transform.name, angle.X, angle.Z, distance));
+                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, angle.X, angle.Z, distance));
                         }
 
                         List<RaycastInteractionInfo> infoList;
@@ -243,14 +243,14 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public struct RaycastDataRecord
         {
-            public string interactableTransformName;
+            public IHPUIInteractable interactable;
             public float angleX;
             public float angleZ;
             public float distance;
 
-            public RaycastDataRecord(string name, float x, float z, float distance) : this()
+            public RaycastDataRecord(IHPUIInteractable interactable, float x, float z, float distance) : this()
             {
-                this.interactableTransformName = name;
+                this.interactable = interactable;
                 this.angleX = x;
                 this.angleZ = z;
                 this.distance = distance;
