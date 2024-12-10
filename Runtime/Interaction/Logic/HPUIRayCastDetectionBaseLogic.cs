@@ -160,6 +160,7 @@ namespace ubco.ovilab.HPUI.Interaction
             if (raycastData != null)
             {
                 raycastData.Invoke(raycastDataRecords);
+                raycastDataRecords = new();
             }
         }
 

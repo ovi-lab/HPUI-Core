@@ -8,9 +8,11 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomEditor(typeof(EstimateConeRayAngles), true)]
     public class EstimateConeRayAnglesEditor: UnityEditor.Editor
     {
+        private enum State { Wait, Started, Processing }
+
         private static readonly string[] excludedSerializedNames = new string[]{"generatedConeRayAngles"};
         private EstimateConeRayAngles t;
-        private bool startedEstimation = false;
+        private State state = State.Wait;
         private SerializedObject generatedConeRayAnglesObj;
 
         private HPUIInteractorConeRayAngles angles;
@@ -25,20 +27,30 @@ namespace ubco.ovilab.HPUI.Editor
         {
             base.OnInspectorGUI();
             GUI.enabled = EditorApplication.isPlaying;
-            if (!startedEstimation && GUILayout.Button(new GUIContent("Start estimation", "TODO")))
+            if (state == State.Wait && GUILayout.Button(new GUIContent("Start estimation", "TODO")))
             {
-                startedEstimation = true;
+                state = State.Started;
                 t.StartEstimation();
             }
-            if (startedEstimation && GUILayout.Button(new GUIContent("Finish estimation", "TODO")))
+
+            if (state == State.Started && GUILayout.Button(new GUIContent("Finish estimation", "TODO")))
             {
-                startedEstimation = false;
-                angles = t.FinishEstimation();
-                generatedConeRayAnglesObj = new SerializedObject(angles);
+                state = State.Processing;
+                t.FinishEstimation((angles) =>
+                {
+                    state = State.Wait;
+                    this.angles = angles;
+                });
+            }
+
+            if (state == State.Processing)
+            {
+                EditorGUILayout.LabelField("Processing...");
             }
 
             if (angles != null)
             {
+                generatedConeRayAnglesObj = new SerializedObject(angles);
                 bool guiState = GUI.enabled;
                 GUI.enabled = false;
                 EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexDistalAngles"));
