@@ -179,7 +179,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         };
                 }
             }
-            Process(interactor, interactionManager, ConeRayAngles.IndexDistalAngles, validTargets, out hoverEndPoint);
+            Process(interactor, interactionManager, activeFingerAngles, validTargets, out hoverEndPoint);
         }
 
         /// <inheritdoc />
