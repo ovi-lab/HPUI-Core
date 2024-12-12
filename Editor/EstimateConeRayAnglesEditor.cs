@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 
 namespace ubco.ovilab.HPUI.Editor
 {
@@ -10,33 +13,66 @@ namespace ubco.ovilab.HPUI.Editor
     {
         private enum State { Wait, Started, Processing }
 
-        private static readonly string[] excludedSerializedNames = new string[]{"generatedConeRayAngles"};
+        private static readonly string[] excludedSerializedNames = new string[]{ "generatedConeRayAngles", "interactableToSegmentMapping" };
         private EstimateConeRayAngles t;
         private State state = State.Wait;
         private SerializedObject generatedConeRayAnglesObj;
+        private SerializedProperty mappingProp;
 
         private HPUIInteractorConeRayAngles angles;
         private string saveName = "Assets/NewHPUIInteractorConeRayAngles.asset";
+        private bool estimatedResultsFoldout = false;
+        private List<HPUIInteractorConeRayAngleSegment> availableSegments = new(),
+            allSegments;
 
         protected void OnEnable()
         {
             t = target as EstimateConeRayAngles;
+            mappingProp = serializedObject.FindProperty("interactableToSegmentMapping");
+            allSegments = Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)).OfType<HPUIInteractorConeRayAngleSegment>().ToList();
         }
 
         public override void OnInspectorGUI()
         {
-            base.OnInspectorGUI();
-            GUI.enabled = EditorApplication.isPlaying;
-            if (state == State.Wait && GUILayout.Button(new GUIContent("Start estimation", "TODO")))
+            SerializedProperty iterator = serializedObject.GetIterator();
+            bool enterChildren = true;
+            while (iterator.NextVisible(enterChildren))
             {
-                state = State.Started;
-                t.StartEstimation();
+                enterChildren = false;
+                if (!excludedSerializedNames.Contains(iterator.name))
+                {
+                    using (new EditorGUI.DisabledScope("m_Script" == iterator.propertyPath))
+                    {
+                        EditorGUILayout.PropertyField(iterator, true);
+                    }
+                }
             }
 
-            if (state == State.Started && GUILayout.Button(new GUIContent("Finish estimation", "TODO")))
+            EditorGUILayout.Space();
+            IEnumerable<HPUIInteractorConeRayAngleSegment> availableSegments = t.InteractableToSegmentMapping.Select(el => el.segment);
+            IEnumerable<HPUIInteractorConeRayAngleSegment> missingSegments = allSegments.Where(el => !availableSegments.Contains(el));
+
+            if (missingSegments.Count() != 0)
+            {
+                EditorGUILayout.HelpBox($"Segments missing ({missingSegments.Count()}): {string.Join(", ", missingSegments)}", MessageType.Error);
+            }
+
+            EditorGUILayout.PropertyField(mappingProp);
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Editor only functions (play mode)", EditorStyles.boldLabel);
+
+            GUI.enabled = EditorApplication.isPlaying;
+            if (state == State.Wait && GUILayout.Button(new GUIContent("Start data collection", "Sets up the intertactables to collect data necessary for estimation.")))
+            {
+                state = State.Started;
+                t.StartDataCollection();
+            }
+
+            if (state == State.Started && GUILayout.Button(new GUIContent("Finish data collection and estimate", "Finish data collection and start estimation of cones.")))
             {
                 state = State.Processing;
-                t.FinishEstimation((angles) =>
+                t.FinishAndEstimate((angles) =>
                 {
                     state = State.Wait;
                     this.angles = angles;
@@ -45,7 +81,7 @@ namespace ubco.ovilab.HPUI.Editor
 
             if (state == State.Processing)
             {
-                EditorGUILayout.LabelField("Processing...");
+                EditorGUILayout.LabelField("Processing new cone ray angles...");
             }
 
             if (angles != null)
@@ -53,12 +89,30 @@ namespace ubco.ovilab.HPUI.Editor
                 generatedConeRayAnglesObj = new SerializedObject(angles);
                 bool guiState = GUI.enabled;
                 GUI.enabled = false;
-                EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexDistalAngles"));
-                EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexIntermediateAngles"));
+
+                estimatedResultsFoldout = EditorGUILayout.Foldout(estimatedResultsFoldout, "Estimated data");
+                if (estimatedResultsFoldout)
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexDistalAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexIntermediateAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexProximalAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleDistalAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleIntermediateAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleProximalAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingDistalAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingIntermediateAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingProximalAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleDistalAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleIntermediateAngles"));
+                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleProximalAngles"));
+                    }
+                }
                 GUI.enabled = guiState;
 
                 saveName = EditorGUILayout.TextField("Save name", saveName);
-                if(GUILayout.Button(new GUIContent("Save", "TODO")))
+                if(GUILayout.Button(new GUIContent("Save", "Save the asset in the above location.")))
                 {
                     AssetDatabase.CreateAsset(angles, saveName);
                     AssetDatabase.SaveAssets();
@@ -67,6 +121,35 @@ namespace ubco.ovilab.HPUI.Editor
 
             GUI.enabled = true;
             serializedObject.ApplyModifiedProperties();
+        }
+    }
+
+    [CustomPropertyDrawer(typeof(ConeRayAnglesEstimationPair), true)]
+    public class ConeRayAnglesEstimationPairPropertyDrawer: PropertyDrawer
+    {
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing * 2;
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+            SerializedProperty interactableProp = property.FindPropertyRelative("interactable");
+            SerializedProperty segmentProp = property.FindPropertyRelative("segment");
+
+            float width = EditorGUIUtility.currentViewWidth;
+            float segmentHeight = EditorGUIUtility.singleLineHeight;
+
+            // Calculate rects
+            Rect interactableRect = new Rect(position.x, position.y, position.width * 0.49f, segmentHeight);
+            Rect taregetRect = new Rect(position.x + position.width * 0.51f, position.y, position.width * 0.49f, segmentHeight);
+
+            // Draw fields - pass GUIContent.none to each so they are drawn without labels
+            EditorGUI.PropertyField(interactableRect, interactableProp, GUIContent.none);
+            EditorGUI.PropertyField(taregetRect, segmentProp, GUIContent.none);
+
+            EditorGUI.EndProperty();
         }
     }
 }

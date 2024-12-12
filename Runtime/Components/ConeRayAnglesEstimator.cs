@@ -9,13 +9,19 @@ using System.Collections;
 namespace ubco.ovilab.HPUI.Interaction
 {
     [Serializable]
+    /// <summary>
+    /// Container that associates an <see cref="HPUIBaseInteractable"/> with a <see cref="HPUIInteractorConeRayAngleSegment"/>.
+    /// </summary>
     public struct ConeRayAnglesEstimationPair
     {
         public HPUIBaseInteractable interactable;
-        public HPUIInteractorConeRayAngleSegments segment;
+        public HPUIInteractorConeRayAngleSegment segment;
     }
 
-    public enum HPUIInteractorConeRayAngleSegments
+    /// <summary>
+    /// Segments of the cone estimation.
+    /// </summary>
+    public enum HPUIInteractorConeRayAngleSegment
     {
         IndexDistalSegment,
         IndexIntermediateSegment,
@@ -31,6 +37,10 @@ namespace ubco.ovilab.HPUI.Interaction
         LittleProximalSegment
     }
 
+    /// <summary>
+    /// Estimates a new set of cone ray angles to be used for <see cref="HPUIInteractor.DetectionLogic"/>.
+    /// TODO steps
+    /// </summary>
     public class ConeRayAnglesEstimator
     {
         private HPUIInteractor interactor;
@@ -59,7 +69,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
 
             Assert.AreEqual(interactableSegmentPairs.Select(el => el.segment).Distinct().Count(),
-                            Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegments)).Length,
+                            Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)).Length,
                             "Expecting all segments in interactableToSegmentMapping");
         }
 
@@ -104,12 +114,12 @@ namespace ubco.ovilab.HPUI.Interaction
         protected virtual IEnumerator EstimationCoroutine(Action<HPUIInteractorConeRayAngles> callback, HPUIInteractorConeRayAngles estimatedConeRayAngles)
         {
             yield return null;
-            HPUIInteractorConeRayAngleSegments[] segments = (HPUIInteractorConeRayAngleSegments[])Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegments));
+            HPUIInteractorConeRayAngleSegment[] segments = (HPUIInteractorConeRayAngleSegment[])Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment));
 
             Task<List<HPUIInteractorRayAngle>>[] tasks = new Task<List<HPUIInteractorRayAngle>>[segments.Length];
 
             int i = 0;
-            foreach (HPUIInteractorConeRayAngleSegments segment in segments)
+            foreach (HPUIInteractorConeRayAngleSegment segment in segments)
             {
                 tasks[i++] = Task.Run(() =>
                 {
@@ -169,47 +179,47 @@ namespace ubco.ovilab.HPUI.Interaction
 
             for (i = 0; i < segments.Length; ++i)
             {
-                HPUIInteractorConeRayAngleSegments segment = segments[i];
+                HPUIInteractorConeRayAngleSegment segment = segments[i];
                 List<HPUIInteractorRayAngle> coneAnglesForSegment = tasks[i].Result;
                 switch (segment)
                 {
-                    case HPUIInteractorConeRayAngleSegments.IndexDistalSegment:
+                    case HPUIInteractorConeRayAngleSegment.IndexDistalSegment:
                         estimatedConeRayAngles.IndexDistalAngles = coneAnglesForSegment;
                         break;
-                    case HPUIInteractorConeRayAngleSegments.IndexIntermediateSegment:
+                    case HPUIInteractorConeRayAngleSegment.IndexIntermediateSegment:
                         estimatedConeRayAngles.IndexIntermediateAngles = coneAnglesForSegment;
                         break;
-                        case HPUIInteractorConeRayAngleSegments.IndexProximalSegment:
+                        case HPUIInteractorConeRayAngleSegment.IndexProximalSegment:
                             estimatedConeRayAngles.IndexProximalAngles = coneAnglesForSegment;
                             break;
 
-                        case HPUIInteractorConeRayAngleSegments.MiddleDistalSegment:
+                        case HPUIInteractorConeRayAngleSegment.MiddleDistalSegment:
                             estimatedConeRayAngles.MiddleDistalAngles = coneAnglesForSegment;
                             break;
-                        case HPUIInteractorConeRayAngleSegments.MiddleIntermediateSegment:
+                        case HPUIInteractorConeRayAngleSegment.MiddleIntermediateSegment:
                             estimatedConeRayAngles.MiddleIntermediateAngles = coneAnglesForSegment;
                             break;
-                        case HPUIInteractorConeRayAngleSegments.MiddleProximalSegment:
+                        case HPUIInteractorConeRayAngleSegment.MiddleProximalSegment:
                             estimatedConeRayAngles.MiddleProximalAngles = coneAnglesForSegment;
                             break;
 
-                        case HPUIInteractorConeRayAngleSegments.RingDistalSegment:
+                        case HPUIInteractorConeRayAngleSegment.RingDistalSegment:
                             estimatedConeRayAngles.RingDistalAngles = coneAnglesForSegment;
                             break;
-                        case HPUIInteractorConeRayAngleSegments.RingIntermediateSegment:
+                        case HPUIInteractorConeRayAngleSegment.RingIntermediateSegment:
                             estimatedConeRayAngles.RingIntermediateAngles = coneAnglesForSegment;
                             break;
-                        case HPUIInteractorConeRayAngleSegments.RingProximalSegment:
+                        case HPUIInteractorConeRayAngleSegment.RingProximalSegment:
                             estimatedConeRayAngles.RingProximalAngles = coneAnglesForSegment;
                             break;
 
-                        case HPUIInteractorConeRayAngleSegments.LittleDistalSegment:
+                        case HPUIInteractorConeRayAngleSegment.LittleDistalSegment:
                             estimatedConeRayAngles.LittleDistalAngles = coneAnglesForSegment;
                             break;
-                        case HPUIInteractorConeRayAngleSegments.LittleIntermediateSegment:
+                        case HPUIInteractorConeRayAngleSegment.LittleIntermediateSegment:
                             estimatedConeRayAngles.LittleIntermediateAngles = coneAnglesForSegment;
                             break;
-                        case HPUIInteractorConeRayAngleSegments.LittleProximalSegment:
+                        case HPUIInteractorConeRayAngleSegment.LittleProximalSegment:
                             estimatedConeRayAngles.LittleProximalAngles = coneAnglesForSegment;
                             break;
                 }
@@ -228,9 +238,9 @@ namespace ubco.ovilab.HPUI.Interaction
         protected struct InteractionDataRecord
         {
             public List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> records;
-            public HPUIInteractorConeRayAngleSegments segment;
+            public HPUIInteractorConeRayAngleSegment segment;
 
-            public InteractionDataRecord(List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> records, HPUIInteractorConeRayAngleSegments segment) : this()
+            public InteractionDataRecord(List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> records, HPUIInteractorConeRayAngleSegment segment) : this()
             {
                 this.records = records;
                 this.segment = segment;
