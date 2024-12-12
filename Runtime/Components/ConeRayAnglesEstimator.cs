@@ -3,44 +3,32 @@ using UnityEngine;
 using System;
 using UnityEngine.Assertions;
 using System.Linq;
-using UnityEngine.XR.Hands;
 using System.Threading.Tasks;
 using System.Collections;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
-    public class EstimateConeRayAngles: MonoBehaviour
-    {
-        [SerializeField]
-        [Tooltip("Corresponding Interactor")]
-        private HPUIInteractor interactor;
-
-        [SerializeField]
-        [Tooltip("Interactable segment pair")]
-        private List<ConeRayAnglesEstimationPair> interactableToSegmentMapping;
-
-        private ConeRayAnglesEstimator estimator;
-
-        public void StartEstimation()
-        {
-            estimator = new ConeRayAnglesEstimator(interactor, interactableToSegmentMapping);
-        }
-
-        public void FinishEstimation(Action<HPUIInteractorConeRayAngles> callback)
-        {
-            estimator.EstimateConeRayAngles((angles) =>
-            {
-                interactor.DetectionLogic = new HPUIConeRayCastDetectionLogic(interactor.DetectionLogic.InteractionHoverRadius, angles, interactor.GetComponent<XRHandTrackingEvents>());
-                callback.Invoke(angles);
-            });
-        }
-    }
-
     [Serializable]
     public struct ConeRayAnglesEstimationPair
     {
         public HPUIBaseInteractable interactable;
         public HPUIInteractorConeRayAngleSegments segment;
+    }
+
+    public enum HPUIInteractorConeRayAngleSegments
+    {
+        IndexDistalSegment,
+        IndexIntermediateSegment,
+        IndexProximalSegment,
+        MiddleDistalSegment,
+        MiddleIntermediateSegment,
+        MiddleProximalSegment,
+        RingDistalSegment,
+        RingIntermediateSegment,
+        RingProximalSegment,
+        LittleDistalSegment,
+        LittleIntermediateSegment,
+        LittleProximalSegment
     }
 
     public class ConeRayAnglesEstimator
@@ -191,39 +179,39 @@ namespace ubco.ovilab.HPUI.Interaction
                     case HPUIInteractorConeRayAngleSegments.IndexIntermediateSegment:
                         estimatedConeRayAngles.IndexIntermediateAngles = coneAnglesForSegment;
                         break;
-                    case HPUIInteractorConeRayAngleSegments.IndexProximalSegment:
-                        estimatedConeRayAngles.IndexProximalAngles = coneAnglesForSegment;
-                        break;
+                        case HPUIInteractorConeRayAngleSegments.IndexProximalSegment:
+                            estimatedConeRayAngles.IndexProximalAngles = coneAnglesForSegment;
+                            break;
 
-                    case HPUIInteractorConeRayAngleSegments.MiddleDistalSegment:
-                        estimatedConeRayAngles.MiddleDistalAngles = coneAnglesForSegment;
-                        break;
-                    case HPUIInteractorConeRayAngleSegments.MiddleIntermediateSegment:
-                        estimatedConeRayAngles.MiddleIntermediateAngles = coneAnglesForSegment;
-                        break;
-                    case HPUIInteractorConeRayAngleSegments.MiddleProximalSegment:
-                        estimatedConeRayAngles.MiddleProximalAngles = coneAnglesForSegment;
-                        break;
+                        case HPUIInteractorConeRayAngleSegments.MiddleDistalSegment:
+                            estimatedConeRayAngles.MiddleDistalAngles = coneAnglesForSegment;
+                            break;
+                        case HPUIInteractorConeRayAngleSegments.MiddleIntermediateSegment:
+                            estimatedConeRayAngles.MiddleIntermediateAngles = coneAnglesForSegment;
+                            break;
+                        case HPUIInteractorConeRayAngleSegments.MiddleProximalSegment:
+                            estimatedConeRayAngles.MiddleProximalAngles = coneAnglesForSegment;
+                            break;
 
-                    case HPUIInteractorConeRayAngleSegments.RingDistalSegment:
-                        estimatedConeRayAngles.RingDistalAngles = coneAnglesForSegment;
-                        break;
-                    case HPUIInteractorConeRayAngleSegments.RingIntermediateSegment:
-                        estimatedConeRayAngles.RingIntermediateAngles = coneAnglesForSegment;
-                        break;
-                    case HPUIInteractorConeRayAngleSegments.RingProximalSegment:
-                        estimatedConeRayAngles.RingProximalAngles = coneAnglesForSegment;
-                        break;
+                        case HPUIInteractorConeRayAngleSegments.RingDistalSegment:
+                            estimatedConeRayAngles.RingDistalAngles = coneAnglesForSegment;
+                            break;
+                        case HPUIInteractorConeRayAngleSegments.RingIntermediateSegment:
+                            estimatedConeRayAngles.RingIntermediateAngles = coneAnglesForSegment;
+                            break;
+                        case HPUIInteractorConeRayAngleSegments.RingProximalSegment:
+                            estimatedConeRayAngles.RingProximalAngles = coneAnglesForSegment;
+                            break;
 
-                    case HPUIInteractorConeRayAngleSegments.LittleDistalSegment:
-                        estimatedConeRayAngles.LittleDistalAngles = coneAnglesForSegment;
-                        break;
-                    case HPUIInteractorConeRayAngleSegments.LittleIntermediateSegment:
-                        estimatedConeRayAngles.LittleIntermediateAngles = coneAnglesForSegment;
-                        break;
-                    case HPUIInteractorConeRayAngleSegments.LittleProximalSegment:
-                        estimatedConeRayAngles.LittleProximalAngles = coneAnglesForSegment;
-                        break;
+                        case HPUIInteractorConeRayAngleSegments.LittleDistalSegment:
+                            estimatedConeRayAngles.LittleDistalAngles = coneAnglesForSegment;
+                            break;
+                        case HPUIInteractorConeRayAngleSegments.LittleIntermediateSegment:
+                            estimatedConeRayAngles.LittleIntermediateAngles = coneAnglesForSegment;
+                            break;
+                        case HPUIInteractorConeRayAngleSegments.LittleProximalSegment:
+                            estimatedConeRayAngles.LittleProximalAngles = coneAnglesForSegment;
+                            break;
                 }
             }
 
@@ -248,22 +236,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.segment = segment;
             }
         }
-    }
-
-    public enum HPUIInteractorConeRayAngleSegments
-    {
-        IndexDistalSegment,
-        IndexIntermediateSegment,
-        IndexProximalSegment,
-        MiddleDistalSegment,
-        MiddleIntermediateSegment,
-        MiddleProximalSegment,
-        RingDistalSegment,
-        RingIntermediateSegment,
-        RingProximalSegment,
-        LittleDistalSegment,
-        LittleIntermediateSegment,
-        LittleProximalSegment
     }
 }
  
