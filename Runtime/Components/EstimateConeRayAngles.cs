@@ -26,24 +26,28 @@ namespace ubco.ovilab.HPUI.Interaction
         public List<ConeRayAnglesEstimationPair> InteractableToSegmentMapping { get => interactableToSegmentMapping; set => interactableToSegmentMapping = value; }
 
         private ConeRayAnglesEstimator estimator;
-        private HPUIInteractorFullRangeAngles fullrangeAnglesReference;
+        private HPUIFullRangeRayCastDetectionLogic fullrangeRaycastDetectionLogicReference;
 
         /// <summary>
         /// Intiate data collection. If this component was used to generate an asset, and
-        /// the detection logic is not a <see cref="HPUIInteractorFullRangeAngles"/>, the
+        /// the detection logic is not a <see cref="HPUIFullRangeRayCastDetectionLogic"/>, the
         /// HPUIInteractorFullRangeAngles before the asset was generated will be set as the
         /// detection logic of the interactor.
         /// </summary>
         public void StartDataCollection()
         {
-            if (!(Interactor.DetectionLogic is HPUIInteractorFullRangeAngles))
+            if (!(Interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic))
             {
-                if (fullrangeAnglesReference == null)
+                if (fullrangeRaycastDetectionLogicReference == null)
                 {
                     throw new ArgumentException("Expected interactor to be configured with HPUIInteractorFullRangeAngles.");
                 }
 
-                Interactor.DetectionLogic = fullrangeAnglesReference as IHPUIDetectionLogic;
+                Interactor.DetectionLogic = fullrangeRaycastDetectionLogicReference as IHPUIDetectionLogic;
+            }
+            else
+            {
+                fullrangeRaycastDetectionLogicReference = Interactor.DetectionLogic as HPUIFullRangeRayCastDetectionLogic;
             }
             estimator = new ConeRayAnglesEstimator(Interactor, InteractableToSegmentMapping);
         }
