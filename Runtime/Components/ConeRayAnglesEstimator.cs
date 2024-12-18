@@ -159,10 +159,15 @@ namespace ubco.ovilab.HPUI.Interaction
                                                                 .raycastRecordsForFrame);
                         }
                     }
+                    if (filteredInteractionRecords.Count() == 0)
+                    {
+                        return new List<HPUIInteractorRayAngle>();
+                    }
 
+                    // KLUDGE: Does AsParallel help?
                     List<HPUIInteractorRayAngle> coneAnglesForSegment = filteredInteractionRecords.AsParallel()
                         .Where(record => validInteractables.Contains(record.interactable))
-                        .Select(record => new {angle = new HPUIInteractorRayAngle(record.angleX, record.angleZ, 0), distance = record.distance})
+                        .Select(record => new { angle = new HPUIInteractorRayAngle(record.angleX, record.angleZ, 0), distance = record.distance })
                         // Since the same detection ray angle asset is used, we assume the x, z pairs are going to match.
                         .GroupBy(record => record.angle, (angle, records) => new HPUIInteractorRayAngle(angle.X, angle.Z, records.Select(r => r.distance).Sum() / records.Count()))
                         .ToList();
@@ -174,6 +179,13 @@ namespace ubco.ovilab.HPUI.Interaction
 
             while (tasks.Any(t => !t.IsCompleted))
             {
+                IEnumerable<Exception> exceptions = tasks.Select(t => t.Exception).Where(t => t != null);
+                if(exceptions.Count() != 0)
+                {
+                    // Throwing the first thing that comes through.
+                    // MAYBE: Should all of them be processed somehow?
+                    throw exceptions.First();
+                }
                 yield return null;
             }
 
