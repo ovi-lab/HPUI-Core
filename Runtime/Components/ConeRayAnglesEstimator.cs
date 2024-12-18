@@ -5,8 +5,9 @@ using UnityEngine.Assertions;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections;
+using ubco.ovilab.HPUI.Interaction;
 
-namespace ubco.ovilab.HPUI.Interaction
+namespace ubco.ovilab.HPUI.Components
 {
     [Serializable]
     /// <summary>
@@ -19,7 +20,7 @@ namespace ubco.ovilab.HPUI.Interaction
     }
 
     /// <summary>
-    /// Segments of the cone estimation.
+    /// Segments of the cone estimation. Corresponds to the fields of <see cref="HPUIInteractorConeRayAngles"/>
     /// </summary>
     public enum HPUIInteractorConeRayAngleSegment
     {
@@ -39,8 +40,24 @@ namespace ubco.ovilab.HPUI.Interaction
 
     /// <summary>
     /// Estimates a new set of cone ray angles to be used for <see cref="HPUIInteractor.DetectionLogic"/>.
-    /// TODO steps
     /// </summary>
+    /// <example>
+    /// The following example does an estimation and save the asset once it is done.
+    /// <code>
+    /// ConeRayAnglesEstimator estimator = new ConeRayAnglesEstimator(interactor, interactableSegmentPairs);
+    /// estimator.EstimateConeRayAngles((asset) => {
+    ///     AssetDatabase.CreateAsset(asset, "Assets/NewConeAngles.asset");
+    ///     AssetDatabase.SaveAssets();
+    /// })
+    /// </code>
+    /// </example>
+    /// <remarks>
+    /// This uses <see cref="IHPUIInteractable.GestureEvent"/> to collect the data. Also, the interactor
+    /// used is expected to be configured with a <see cref="HPUIFullRangeRayCastDetectionLogic"/>
+    /// for <see cref="HPUIInteractor.DetectionLogic"/>. The data is colected by subscribing to
+    /// <see cref="HPUIFullRangeRayCastDetectionLogic.raycastData"/>
+    /// </remarks>
+    /// <seealso cref="EstimateConeRayAngles"/>
     public class ConeRayAnglesEstimator
     {
         private HPUIInteractor interactor;
@@ -50,12 +67,34 @@ namespace ubco.ovilab.HPUI.Interaction
         private List<InteractionDataRecord> interactionRecords = new();
         private List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> currentInteractionData = new();
 
-        public ConeRayAnglesEstimator(HPUIInteractor interactor, List<ConeRayAnglesEstimationPair> interactableSegmentPairs)
+        /// <summary>
+        /// Instantiates the estimator. This will subscribe to <see cref="HPUIInteractor.DetectionLogic"/>interactor.DetectionLogic</see>
+        /// and the <see cref="IHPUIInteractable.GestureEvent">GestureEvent</see> of each
+        /// interactable in interactableSegmentPairs.
+        /// </summary>
+        /// <param name="interactor">
+        ///   <see cref="HPUIFullRangeRayCastDetectionLogic"/> for <see cref="HPUIInteractor.DetectionLogic"/>.
+        ///   If not configured as such, a ArgumentException will be thrown.
+        /// </param>
+        /// <param name="interactableSegmentPairs">
+        ///   List of <see cref="ConeRayAnglesEstimationPair"/>.
+        /// </param>
+        /// <param name="ignoreMissingSegments">
+        ///   If not true, interactableSegmentPairs should have atleast one entry for each
+        ///   <see cref="HPUIInteractorConeRayAngleSegment"/>.
+        /// </param>
+        public ConeRayAnglesEstimator(HPUIInteractor interactor, List<ConeRayAnglesEstimationPair> interactableSegmentPairs, bool ignoreMissingSegments=false)
         {
             if (!(interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic fullRayDetectionLogic))
             {
                 throw new ArgumentException("Interactor is expected to have `HPUIFullRangeRayCastDetectionLogic` as the DetectionLogic.");
             }
+
+            if (!ignoreMissingSegments && interactableSegmentPairs.Select(el => el.segment).Distinct().Count() != Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)).Length)
+            {
+                throw new ArgumentException("Expecting all segments in interactableToSegmentMapping");
+            }
+
             this.interactor = interactor;
             this.interactableSegmentPairs = interactableSegmentPairs;
             this.fullRayDetectionLogic = fullRayDetectionLogic;
@@ -67,13 +106,12 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 interactable.GestureEvent.AddListener(OnGestureCallback);
             }
-
-            Assert.AreEqual(interactableSegmentPairs.Select(el => el.segment).Distinct().Count(),
-                            Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)).Length,
-                            "Expecting all segments in interactableToSegmentMapping");
         }
 
-        private void RaycastDataCallback(List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecords)
+        /// <summary>
+        /// The callback used to get the data from the <see cref="HPUIFullRangeRayCastDetectionLogic.raycastData"/>.
+        /// </summary>
+        protected void RaycastDataCallback(List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecords)
         {
             Assert.AreEqual(fullRangeAngles, ((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles);
             if (raycastDataRecords.Count > 0)
@@ -82,7 +120,10 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        protected virtual void OnGestureCallback(HPUIGestureEventArgs args)
+        /// <summary>
+        /// The callback used with the interactable gesture event to track the events.
+        /// </summary>
+        protected void OnGestureCallback(HPUIGestureEventArgs args)
         {
             if (args.State == HPUIGestureState.Stopped)
             {
@@ -97,7 +138,15 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        public virtual void EstimateConeRayAngles(Action<HPUIInteractorConeRayAngles> callback)
+        /// <summary>
+        /// Stops the data collection and initates the estimation. Once done, callback will be invoked with the estimated asset.
+        /// </summary>
+        /// <remarks>
+        /// This will unsubscribe to <see cref="HPUIInteractor.DetectionLogic"/>interactor.DetectionLogic</see>
+        /// and the <see cref="IHPUIInteractable.GestureEvent">GestureEvent</see> of each
+        /// interactable it is tracking.
+        /// </remarks>
+        public void EstimateConeRayAngles(Action<HPUIInteractorConeRayAngles> callback)
         {
             HPUIInteractorConeRayAngles estimatedConeRayAngles = ScriptableObject.CreateInstance<HPUIInteractorConeRayAngles>();
 
@@ -111,7 +160,10 @@ namespace ubco.ovilab.HPUI.Interaction
             interactor.StartCoroutine(EstimationCoroutine(callback, estimatedConeRayAngles));
         }
 
-        protected virtual IEnumerator EstimationCoroutine(Action<HPUIInteractorConeRayAngles> callback, HPUIInteractorConeRayAngles estimatedConeRayAngles)
+        /// <summary>
+        /// Coroutine that does the actual work of <see cref="EstimateConeRayAngles"/>.
+        /// </summary>
+        protected IEnumerator EstimationCoroutine(Action<HPUIInteractorConeRayAngles> callback, HPUIInteractorConeRayAngles estimatedConeRayAngles)
         {
             yield return null;
             HPUIInteractorConeRayAngleSegment[] segments = (HPUIInteractorConeRayAngleSegment[])Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment));
@@ -121,60 +173,7 @@ namespace ubco.ovilab.HPUI.Interaction
             int i = 0;
             foreach (HPUIInteractorConeRayAngleSegment segment in segments)
             {
-                tasks[i++] = Task.Run(() =>
-                {
-                    List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> filteredInteractionRecords = new();
-
-                    List<IHPUIInteractable> validInteractables = interactableSegmentPairs.Where(pair => pair.segment == segment).Select(pair => pair.interactable as IHPUIInteractable).ToList();
-
-                    // For each interaction, get the frame with the shortest distance
-                    foreach (InteractionDataRecord interactionRecord in this.interactionRecords)
-                    {
-                        if (interactionRecord.segment == segment)
-                        {
-                            var minDistRaycastRecords = interactionRecord.records.AsParallel()
-                                .Select(frameRaycastRecords =>
-                                {
-                                    var filteredRecords = frameRaycastRecords.Where(raycastRecord => validInteractables.Contains(raycastRecord.interactable));
-                                    if (filteredRecords.Count() == 0)
-                                    {
-                                        return null;
-                                    }
-                                    else
-                                    {
-                                        return new
-                                        {
-                                            distance = filteredRecords.Min(raycastRecord => raycastRecord.distance),
-                                            raycastRecordsForFrame = frameRaycastRecords
-                                        };
-                                    }
-                                })
-                                .Where(frameRaycastRecords => frameRaycastRecords != null);
-
-                            Assert.IsTrue(minDistRaycastRecords.Count() > 0, "There's an interaction where no rays had interacted with any of the expected targets. Something has gone wrong!");
-
-                            filteredInteractionRecords.AddRange(minDistRaycastRecords
-                                                                .OrderBy(frameRaycastRecords => frameRaycastRecords.distance)
-                                                                .First()
-                                                                .raycastRecordsForFrame);
-                        }
-                    }
-                    if (filteredInteractionRecords.Count() == 0)
-                    {
-                        return new List<HPUIInteractorRayAngle>();
-                    }
-
-                    // KLUDGE: Does AsParallel help?
-                    List<HPUIInteractorRayAngle> coneAnglesForSegment = filteredInteractionRecords.AsParallel()
-                        .Where(record => validInteractables.Contains(record.interactable))
-                        .Select(record => new { angle = new HPUIInteractorRayAngle(record.angleX, record.angleZ, 0), distance = record.distance })
-                        // Since the same detection ray angle asset is used, we assume the x, z pairs are going to match.
-                        .GroupBy(record => record.angle, (angle, records) => new HPUIInteractorRayAngle(angle.X, angle.Z, records.Select(r => r.distance).Sum() / records.Count()))
-                        .ToList();
-
-                    return coneAnglesForSegment;
-                });
-
+                tasks[i++] = Task.Run(() => EstimateConeAnglesForSegment(segment, interactionRecords, interactableSegmentPairs));
             }
 
             while (tasks.Any(t => !t.IsCompleted))
@@ -247,6 +246,80 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        /// <summary>
+        /// For a given segment, computes the List of <see cref="HPUIInteractorRayAngle">.
+        /// </summary>
+        /// <param name="segment">
+        ///   The <see cref="HPUIInteractorConeRayAngleSegment"/> for which cone
+        ///   angles are being computed.
+        /// </param>
+        /// <param name="interactionRecords">
+        ///   Each <see cref="InteractionDataRecord"/> in the list is expected to be the data collected during a single gesture event.
+        ///   The <see cref="InteractionDataRecord.segment">segment</see> of each record will be based on the interactableSegmentPairs
+        ///   passed in the constructor.
+        /// </param>
+        /// <param name="interactableSegmentPairs">
+        ///   The interactableSegmentPairs passed in the constructor.
+        /// </param>
+        protected virtual List<HPUIInteractorRayAngle> EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment,
+                                                                                    List<InteractionDataRecord> interactionRecords,
+                                                                                    List<ConeRayAnglesEstimationPair> interactableSegmentPairs)
+        {
+            List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> filteredInteractionRecords = new();
+
+            List<IHPUIInteractable> validInteractables = interactableSegmentPairs.Where(pair => pair.segment == segment).Select(pair => pair.interactable as IHPUIInteractable).ToList();
+
+            // For each interaction, get the frame with the shortest distance
+            foreach (InteractionDataRecord interactionRecord in interactionRecords)
+            {
+                if (interactionRecord.segment == segment)
+                {
+                    var minDistRaycastRecords = interactionRecord.records.AsParallel()
+                        .Select(frameRaycastRecords =>
+                        {
+                            var filteredRecords = frameRaycastRecords.Where(raycastRecord => validInteractables.Contains(raycastRecord.interactable));
+                            if (filteredRecords.Count() == 0)
+                            {
+                                return null;
+                            }
+                            else
+                            {
+                                return new
+                                {
+                                    distance = filteredRecords.Min(raycastRecord => raycastRecord.distance),
+                                    raycastRecordsForFrame = frameRaycastRecords
+                                };
+                            }
+                        })
+                        .Where(frameRaycastRecords => frameRaycastRecords != null);
+
+                    Assert.IsTrue(minDistRaycastRecords.Count() > 0, "There's an interaction where no rays had interacted with any of the expected targets. Something has gone wrong!");
+
+                    filteredInteractionRecords.AddRange(minDistRaycastRecords
+                                                        .OrderBy(frameRaycastRecords => frameRaycastRecords.distance)
+                                                        .First()
+                                                        .raycastRecordsForFrame);
+                }
+            }
+            if (filteredInteractionRecords.Count() == 0)
+            {
+                return new List<HPUIInteractorRayAngle>();
+            }
+
+            // KLUDGE: Does AsParallel help?
+            List<HPUIInteractorRayAngle> coneAnglesForSegment = filteredInteractionRecords.AsParallel()
+                .Where(record => validInteractables.Contains(record.interactable))
+                .Select(record => new { angle = new HPUIInteractorRayAngle(record.angleX, record.angleZ, 0), distance = record.distance })
+                // Since the same detection ray angle asset is used, we assume the x, z pairs are going to match.
+                .GroupBy(record => record.angle, (angle, records) => new HPUIInteractorRayAngle(angle.X, angle.Z, records.Select(r => r.distance).Sum() / records.Count()))
+                .ToList();
+
+            return coneAnglesForSegment;
+        }
+
+        /// <summary>
+        /// Holds all the data collected for a single gesture event.
+        /// </summary>
         protected struct InteractionDataRecord
         {
             public List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> records;

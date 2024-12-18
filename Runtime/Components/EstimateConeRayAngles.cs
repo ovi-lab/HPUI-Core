@@ -2,9 +2,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using UnityEngine.XR.Hands;
+using ubco.ovilab.HPUI.Interaction;
 
-namespace ubco.ovilab.HPUI.Interaction
+namespace ubco.ovilab.HPUI.Components
 {
+    /// <summary>
+    /// Convinent wrapper component for <see cref="ConeRayAnglesEstimator"/>.
+    /// See <see cref="ConeRayAnglesEstimator"/> for more details.
+    /// </summary>
     public class EstimateConeRayAngles: MonoBehaviour
     {
         [SerializeField]

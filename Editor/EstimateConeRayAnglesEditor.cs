@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
+using ubco.ovilab.HPUI.Components;
 using System.Collections.Generic;
 using System;
 using System.Linq;
@@ -121,6 +122,11 @@ namespace ubco.ovilab.HPUI.Editor
                     if (!saveName.StartsWith("Assets/"))
                     {
                         EditorGUILayout.HelpBox("Save name not in Assets folder", MessageType.Warning);
+                    }
+
+                    if (!saveName.EndsWith(".assets"))
+                    {
+                        EditorGUILayout.HelpBox("Asset name should end with `.asset`", MessageType.Warning);
                     }
 
                     saveName = EditorGUILayout.TextField("Save name", saveName);
