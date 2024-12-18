@@ -11,7 +11,7 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomEditor(typeof(EstimateConeRayAngles), true)]
     public class EstimateConeRayAnglesEditor: UnityEditor.Editor
     {
-        private enum State { Wait, Started, Processing }
+        private enum State { Wait, Started, Processing, Processed }
 
         private static readonly string[] excludedSerializedNames = new string[]{ "generatedConeRayAngles", "interactableToSegmentMapping" };
         private EstimateConeRayAngles t;
@@ -60,66 +60,80 @@ namespace ubco.ovilab.HPUI.Editor
             EditorGUILayout.PropertyField(mappingProp);
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Editor only functions (play mode)", EditorStyles.boldLabel);
-
-            GUI.enabled = EditorApplication.isPlaying;
-            if (state == State.Wait && GUILayout.Button(new GUIContent("Start data collection", "Sets up the intertactables to collect data necessary for estimation.")))
+            if (missingSegments.Count() == 0)
             {
-                state = State.Started;
-                t.StartDataCollection();
-            }
+                EditorGUILayout.LabelField("Editor only functions (play mode)", EditorStyles.boldLabel);
 
-            if (state == State.Started && GUILayout.Button(new GUIContent("Finish data collection and estimate", "Finish data collection and start estimation of cones.")))
-            {
-                state = State.Processing;
-                t.FinishAndEstimate((angles) =>
+                GUI.enabled = EditorApplication.isPlaying;
+                if ((state == State.Wait || state == State.Processed) &&
+                    GUILayout.Button(new GUIContent((state == State.Processed ? "Restart": "Start") + " data collection", "Sets up the intertactables to collect data necessary for estimation.")))
                 {
-                    state = State.Wait;
-                    this.angles = angles;
-                });
-            }
-
-            if (state == State.Processing)
-            {
-                EditorGUILayout.LabelField("Processing new cone ray angles...");
-            }
-
-            if (angles != null)
-            {
-                generatedConeRayAnglesObj = new SerializedObject(angles);
-                bool guiState = GUI.enabled;
-                GUI.enabled = false;
-
-                estimatedResultsFoldout = EditorGUILayout.Foldout(estimatedResultsFoldout, "Estimated data");
-                if (estimatedResultsFoldout)
-                {
-                    using (new EditorGUI.IndentLevelScope())
+                    if (state == State.Wait || EditorUtility.DisplayDialog("Restart data collection", "Restarting data collection will discard previous data. Continue?", "Yes", "No"))
                     {
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexDistalAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexIntermediateAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexProximalAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleDistalAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleIntermediateAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleProximalAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingDistalAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingIntermediateAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingProximalAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleDistalAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleIntermediateAngles"));
-                        EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleProximalAngles"));
+                        angles = null;
+                        state = State.Started;
+                        t.StartDataCollection();
                     }
                 }
-                GUI.enabled = guiState;
 
-                saveName = EditorGUILayout.TextField("Save name", saveName);
-                if(GUILayout.Button(new GUIContent("Save", "Save the asset in the above location.")))
+                if (state == State.Started && GUILayout.Button(new GUIContent("Finish data collection and estimate", "Finish data collection and start estimation of cones.")))
                 {
-                    AssetDatabase.CreateAsset(angles, saveName);
-                    AssetDatabase.SaveAssets();
+                    state = State.Processing;
+                    t.FinishAndEstimate((angles) =>
+                    {
+                        state = State.Processed;
+                        this.angles = angles;
+                    });
                 }
+
+                if (state == State.Processing)
+                {
+                    EditorGUILayout.LabelField("Processing new cone ray angles...");
+                }
+
+                if (angles != null)
+                {
+                    generatedConeRayAnglesObj = new SerializedObject(angles);
+                    bool guiState = GUI.enabled;
+                    GUI.enabled = false;
+
+                    estimatedResultsFoldout = EditorGUILayout.Foldout(estimatedResultsFoldout, "Estimated data (preview)");
+                    if (estimatedResultsFoldout)
+                    {
+                        using (new EditorGUI.IndentLevelScope())
+                        {
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexDistalAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexIntermediateAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("IndexProximalAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleDistalAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleIntermediateAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("MiddleProximalAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingDistalAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingIntermediateAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("RingProximalAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleDistalAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleIntermediateAngles"));
+                            EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleProximalAngles"));
+                        }
+                    }
+                    GUI.enabled = guiState;
+
+                    if (!saveName.StartsWith("Assets/"))
+                    {
+                        EditorGUILayout.HelpBox("Save name not in Assets folder", MessageType.Warning);
+                    }
+
+                    saveName = EditorGUILayout.TextField("Save name", saveName);
+
+                    if (GUILayout.Button(new GUIContent("Save", "Save the asset in the above location.")))
+                    {
+                        AssetDatabase.CreateAsset(angles, saveName);
+                        AssetDatabase.SaveAssets();
+                    }
+                }
+                GUI.enabled = true;
             }
 
-            GUI.enabled = true;
             serializedObject.ApplyModifiedProperties();
         }
     }
