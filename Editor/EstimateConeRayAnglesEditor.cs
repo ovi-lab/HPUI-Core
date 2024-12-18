@@ -15,6 +15,7 @@ namespace ubco.ovilab.HPUI.Editor
         private enum State { Wait, Started, Processing, Processed }
 
         private static readonly string[] excludedSerializedNames = new string[]{ "generatedConeRayAngles", "interactableToSegmentMapping" };
+        private const string DONT_ASK_EDITORPREF_KEY = "ubco.ovilab.HPUI.Components.ConeEsimation.DontAskWhenRestarting";
         private EstimateConeRayAngles t;
         private State state = State.Wait;
         private SerializedObject generatedConeRayAnglesObj;
@@ -22,7 +23,8 @@ namespace ubco.ovilab.HPUI.Editor
 
         private HPUIInteractorConeRayAngles angles;
         private string saveName = "Assets/NewHPUIInteractorConeRayAngles.asset";
-        private bool estimatedResultsFoldout = false;
+        private bool estimatedResultsFoldout = false,
+            dontAskBeforeDiscard;
         private List<HPUIInteractorConeRayAngleSegment> availableSegments = new(),
             allSegments;
 
@@ -31,6 +33,7 @@ namespace ubco.ovilab.HPUI.Editor
             t = target as EstimateConeRayAngles;
             mappingProp = serializedObject.FindProperty("interactableToSegmentMapping");
             allSegments = Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)).OfType<HPUIInteractorConeRayAngleSegment>().ToList();
+            dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
         }
 
         public override void OnInspectorGUI()
@@ -63,18 +66,36 @@ namespace ubco.ovilab.HPUI.Editor
             EditorGUILayout.Space();
             if (missingSegments.Count() == 0)
             {
-                EditorGUILayout.LabelField("Editor only functions (play mode)", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Editor inspector only functions (play mode)", EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox("If not saved, the data will be discarded when exiting playmode, regardless of the `Always Ask Before Restarting` toggle.", MessageType.Info);
+
+                using (EditorGUI.ChangeCheckScope check = new EditorGUI.ChangeCheckScope())
+                {
+                    // Doing the double negation because I am too lazy to maintain two flags just for this!
+                    dontAskBeforeDiscard = !EditorGUILayout.Toggle(new GUIContent("Always Ask Before Restarting",
+                                                                                  "Always ask before restarting data collection to avoid discarding data."),
+                                                                   !dontAskBeforeDiscard);
+                    if (check.changed)
+                    {
+                        EditorPrefs.SetBool(DONT_ASK_EDITORPREF_KEY, dontAskBeforeDiscard);
+                    }
+                }
 
                 GUI.enabled = EditorApplication.isPlaying;
                 if ((state == State.Wait || state == State.Processed) &&
                     GUILayout.Button(new GUIContent((state == State.Processed ? "Restart": "Start") + " data collection", "Sets up the intertactables to collect data necessary for estimation.")))
                 {
-                    if (state == State.Wait || EditorUtility.DisplayDialog("Restart data collection", "Restarting data collection will discard previous data. Continue?", "Yes", "No"))
+                    if (state == State.Wait || EditorUtility.DisplayDialog("Restart data collection",
+                                                                           "Restarting data collection will discard previous data. Continue?",
+                                                                           "Yes",
+                                                                           "No",
+                                                                           DialogOptOutDecisionType.ForThisMachine, DONT_ASK_EDITORPREF_KEY))
                     {
                         angles = null;
                         state = State.Started;
                         t.StartDataCollection();
                     }
+                    dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
                 }
 
                 if (state == State.Started && GUILayout.Button(new GUIContent("Finish data collection and estimate", "Finish data collection and start estimation of cones.")))
