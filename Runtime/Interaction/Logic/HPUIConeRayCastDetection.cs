@@ -44,7 +44,8 @@ namespace ubco.ovilab.HPUI.Interaction
         public Transform XROriginTransform { get => xrOriginTransform; set => xrOriginTransform = value; }
 
         protected bool receivedNewJointData;
-        protected List<HPUIInteractorRayAngle> activeFingerAngles;
+        // When it's not set by DetectedInteractables, use default value
+        protected List<HPUIInteractorRayAngle> activeFingerAngles = new();
         protected Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
         protected List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
