@@ -21,8 +21,7 @@ namespace ubco.ovilab.HPUI.Editor
         private SerializedObject generatedConeRayAnglesObj;
         private SerializedProperty mappingProp;
 
-        private HPUIInteractorConeRayAngles angles;
-        private string saveName = "Assets/NewHPUIInteractorConeRayAngles.asset";
+        private HPUIInteractorConeRayAngles generatedAsset, savedAsset;
         private bool estimatedResultsFoldout = false,
             dontAskBeforeDiscard;
         private List<HPUIInteractorConeRayAngleSegment> availableSegments = new(),
@@ -91,7 +90,8 @@ namespace ubco.ovilab.HPUI.Editor
                                                                            "No",
                                                                            DialogOptOutDecisionType.ForThisMachine, DONT_ASK_EDITORPREF_KEY))
                     {
-                        angles = null;
+                        savedAsset = null;
+                        generatedAsset = null;
                         state = State.Started;
                         t.StartDataCollection();
                     }
@@ -104,7 +104,7 @@ namespace ubco.ovilab.HPUI.Editor
                     t.FinishAndEstimate((angles) =>
                     {
                         state = State.Processed;
-                        this.angles = angles;
+                        this.generatedAsset = angles;
                     });
                 }
 
@@ -113,9 +113,9 @@ namespace ubco.ovilab.HPUI.Editor
                     EditorGUILayout.LabelField("Processing new cone ray angles...");
                 }
 
-                if (angles != null)
+                if (generatedAsset != null)
                 {
-                    generatedConeRayAnglesObj = new SerializedObject(angles);
+                    generatedConeRayAnglesObj = new SerializedObject(generatedAsset);
                     bool guiState = GUI.enabled;
                     GUI.enabled = false;
 
@@ -138,24 +138,20 @@ namespace ubco.ovilab.HPUI.Editor
                             EditorGUILayout.PropertyField(generatedConeRayAnglesObj.FindProperty("LittleProximalAngles"));
                         }
                     }
+
+                    if (savedAsset != null)
+                    {
+                        EditorGUILayout.ObjectField("Saved asset", savedAsset, typeof(HPUIInteractorConeRayAngles), false);
+                    }
+
                     GUI.enabled = guiState;
 
-                    if (!saveName.StartsWith("Assets/"))
+                    if (GUILayout.Button(new GUIContent("Save", "Save the asset.")))
                     {
-                        EditorGUILayout.HelpBox("Save name not in Assets folder", MessageType.Warning);
-                    }
-
-                    if (!saveName.EndsWith(".assets"))
-                    {
-                        EditorGUILayout.HelpBox("Asset name should end with `.asset`", MessageType.Warning);
-                    }
-
-                    saveName = EditorGUILayout.TextField("Save name", saveName);
-
-                    if (GUILayout.Button(new GUIContent("Save", "Save the asset in the above location.")))
-                    {
-                        AssetDatabase.CreateAsset(angles, saveName);
+                        string saveName = EditorUtility.SaveFilePanelInProject("Save new cone angles asset", "NewHPUIInteractorConeRayAngles.asset", "asset", "Save location for the generated cone angle asset.");
+                        AssetDatabase.CreateAsset(generatedAsset, saveName);
                         AssetDatabase.SaveAssets();
+                        savedAsset = generatedAsset;
                     }
                 }
                 GUI.enabled = true;
