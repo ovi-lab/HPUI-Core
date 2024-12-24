@@ -136,13 +136,16 @@ namespace ubco.ovilab.HPUI.Tracking
 
             if (mainPoseSuccess && (!jointFollowerDataValue.useSecondJointID || secondPoseSuccess))
             {
-                Vector3 position = xrOrigin.transform.position;
-                // position.y += xrOrigin.CameraYOffset;
-                Pose xrOriginPose = new Pose(position , xrOrigin.transform.rotation);
-                mainJointPose = mainJointPose.GetTransformedBy(xrOriginPose);
-                if (secondPoseSuccess)
+                if (xrOrigin != null)
                 {
-                    secondJointPose = secondJointPose.GetTransformedBy(xrOriginPose);
+                    Vector3 position = xrOrigin.transform.position;
+                    // position.y += xrOrigin.CameraYOffset;
+                    Pose xrOriginPose = new Pose(position, xrOrigin.transform.rotation);
+                    mainJointPose = mainJointPose.GetTransformedBy(xrOriginPose);
+                    if (secondPoseSuccess)
+                    {
+                        secondJointPose = secondJointPose.GetTransformedBy(xrOriginPose);
+                    }
                 }
 
                 SetPose(mainJointPose, secondJointPose, secondPoseSuccess);
