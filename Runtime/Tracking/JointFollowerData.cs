@@ -42,6 +42,18 @@ namespace ubco.ovilab.HPUI.Tracking
             this.longitudinalOffset = longitudinalOffset;
         }
 
+        public JointFollowerData(Handedness handedness, XRHandJointID firstJointID, XRHandJointID secondJointID, float offsetAngle, float offsetAsRationToRadius, float longitudinalOffset)
+        {
+            this.handedness = handedness;
+            this.jointID = firstJointID;
+            this.secondJointID = secondJointID;
+            this.useSecondJointID = true;
+            this.offsetAngle = offsetAngle;
+            this.offsetAsRatioToRadius = offsetAsRationToRadius;
+            this.longitudinalOffset = longitudinalOffset;
+        }
+
+
         public IEnumerable<XRHandJointID> JointsUsed()
         {
             List<XRHandJointID> usedJoints = new();
