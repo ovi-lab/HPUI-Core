@@ -203,8 +203,14 @@ namespace ubco.ovilab.HPUI.Interaction
                             gesture = HPUIGesture.Gesture;
                             break;
                     }
+                    // We update this only if it was a valid gesture/tap
+                    debounceStartTime = frameTime;
                 }
-                debounceStartTime = frameTime;
+                else if (interactorGestureState == HPUIGesture.Gesture)
+                {
+                    PopulateGestureEventArgs(interactor, HPUIGestureState.Cancelled, gestureArgsToPopulate);
+                    gesture = HPUIGesture.Gesture;
+                }
                 priorityInteractable = activePriorityInteractable;
                 Reset();
                 return;
@@ -242,7 +248,7 @@ namespace ubco.ovilab.HPUI.Interaction
             switch (interactorGestureState)
             {
                 case HPUIGesture.Tap:
-                    if (timeDelta > tapTimeThreshold || cumulativeDistance > tapDistanceThreshold)
+                    if ((timeDelta > tapTimeThreshold || cumulativeDistance > tapDistanceThreshold))
                     {
                         interactorGestureState = HPUIGesture.Gesture;
                         ComputeActivePriorityInteractable(interactor, false);
