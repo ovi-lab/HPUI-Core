@@ -256,7 +256,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             if (priorityInteractable != null)
                             {
-                                priorityInteractable?.OnTap(tapArgsToPopulate);
+                                priorityInteractable.OnTap(tapArgsToPopulate);
                             }
                         }
                         finally
@@ -271,7 +271,15 @@ namespace ubco.ovilab.HPUI.Interaction
                         {
                             if (priorityInteractable != null)
                             {
-                                priorityInteractable?.OnGesture(gestureArgsToPopulate);
+                                priorityInteractable.OnGesture(gestureArgsToPopulate);
+                                if (gestureArgsToPopulate.State == HPUIGestureState.Canceled)
+                                {
+                                    // Since the ProcessInteractor is called much later in the update loop
+                                    // this should not cause any issues. Instead of the manager firing the
+                                    // SelectionExit event in the next cycle, we force it here.
+                                    this.interactionManager.SelectExit(this, priorityInteractable);
+                                    priorityInteractable = null;
+                                }
                             }
                         }
                         finally
