@@ -206,9 +206,10 @@ namespace ubco.ovilab.HPUI.Interaction
                     // We update this only if it was a valid gesture/tap
                     debounceStartTime = frameTime;
                 }
+                // If a gesture had started within the debounce window, trigger a cancel event
                 else if (interactorGestureState == HPUIGesture.Gesture)
                 {
-                    PopulateGestureEventArgs(interactor, HPUIGestureState.Cancelled, gestureArgsToPopulate);
+                    PopulateGestureEventArgs(interactor, HPUIGestureState.Canceled, gestureArgsToPopulate);
                     gesture = HPUIGesture.Gesture;
                 }
                 priorityInteractable = activePriorityInteractable;
