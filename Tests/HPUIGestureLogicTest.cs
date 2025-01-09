@@ -11,6 +11,8 @@ namespace ubco.ovilab.HPUI.Tests
     {
         const float TapTimeThreshold = 0.4f;
         const float DebounceTimeWindow = 0.1f;
+        const float ZeroTapTimeThreshold = 0;
+        const float ZeroTapDistanceThreshold = 0;
         const int TapDistanceThreshold = 1;
         const float SelectionRadius = 0.01f;
         const float OutsideSelectionRadius = 0.02f;
@@ -168,6 +170,65 @@ namespace ubco.ovilab.HPUI.Tests
             logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), argsToUpdate);
             Assert.AreEqual(HPUIGesture.Gesture, gesture);
             Assert.AreEqual(HPUIGestureState.Stopped, argsToUpdate.State);
+        }
+
+        [UnityTest]
+        public IEnumerator HPUIGestureLogicTest_SimpleGesture_DebounceIgnore()
+        {
+            Reset();
+            TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, true, OnTapCallback, OnGestureCallback);
+            IHPUIInteractor interactor = new TestHPUIInteractor();
+            HPUIGestureLogic logic = new HPUIGestureLogic(ZeroTapTimeThreshold, ZeroTapDistanceThreshold, DebounceTimeWindow);
+            Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
+
+            // Trigger once to test debouce window
+            updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, true, Vector3.zero, null, 0, null);
+            logic.ComputeInteraction(interactor, updates, out HPUIGesture gesture, out IHPUIInteractable _, new HPUITapEventArgs(), new HPUIGestureEventArgs());
+            updates.Remove(i1);
+            HPUIGestureEventArgs argsToUpdate = new HPUIGestureEventArgs();
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), argsToUpdate);
+
+            // Tap and hold
+            updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, true, Vector3.zero, null, 0, null);
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), new HPUIGestureEventArgs());
+            Assert.AreEqual(HPUIGesture.None, gesture);
+
+            // since zero threshold, any movement should be counted as gesture
+            yield return new WaitForSeconds(InsideDebounceWindow);
+            argsToUpdate = new HPUIGestureEventArgs();
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), argsToUpdate);
+            Assert.AreEqual(HPUIGesture.Gesture, gesture);
+            Assert.AreEqual(HPUIGestureState.Started, argsToUpdate.State);
+
+            updates.Remove(i1);
+            argsToUpdate = new HPUIGestureEventArgs();
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), argsToUpdate);
+            Assert.AreEqual(HPUIGesture.Gesture, gesture);
+            Assert.AreEqual(HPUIGestureState.Canceled, argsToUpdate.State);
+
+            // Trigger once to test debouce window
+            updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, true, Vector3.zero, null, 0, null);
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), new HPUIGestureEventArgs());
+            updates.Remove(i1);
+            argsToUpdate = new HPUIGestureEventArgs();
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), argsToUpdate);
+
+            // Move
+            updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, true, Vector3.zero, null, 0, null);
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), new HPUIGestureEventArgs());
+            Assert.AreEqual(HPUIGesture.None, gesture);
+
+            i1.interactorPosition = Vector2.right * (TapDistanceThreshold * 1.01f);
+            argsToUpdate = new HPUIGestureEventArgs();
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), argsToUpdate);
+            Assert.AreEqual(HPUIGesture.Gesture, gesture);
+            Assert.AreEqual(HPUIGestureState.Started, argsToUpdate.State);
+
+            updates.Remove(i1);
+            argsToUpdate = new HPUIGestureEventArgs();
+            logic.ComputeInteraction(interactor, updates, out gesture, out IHPUIInteractable _, new HPUITapEventArgs(), argsToUpdate);
+            Assert.AreEqual(HPUIGesture.Gesture, gesture);
+            Assert.AreEqual(HPUIGestureState.Canceled, argsToUpdate.State);
         }
 
         // Testing the interaction radius
