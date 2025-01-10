@@ -116,10 +116,11 @@ namespace ubco.ovilab.HPUI.Interaction
                         // negaative distance indicates the interactor ie under the interactable.
                         float sign = Vector3.Dot(hitInfo.collider.transform.up, direction) < 0 ? 1 : -1;
                         float distance = hitInfo.distance * sign;
+                        bool isWithinThreshold = angle.WithinThreshold(distance);
 
                         if (raycastData != null)
                         {
-                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, angle.X, angle.Z, distance));
+                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, angle.X, angle.Z, distance, isWithinThreshold));
                         }
 
                         List<RaycastInteractionInfo> infoList;
@@ -130,7 +131,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         }
 
                         // Using distance as the temp/default value for heuristic
-                        infoList.Add(new RaycastInteractionInfo(distance, angle.WithinThreshold(distance), hitInfo.point, hitInfo.collider));
+                        infoList.Add(new RaycastInteractionInfo(distance, isWithinThreshold, hitInfo.point, hitInfo.collider));
                     }
                 }
 
@@ -248,13 +249,15 @@ namespace ubco.ovilab.HPUI.Interaction
             public float angleX;
             public float angleZ;
             public float distance;
+            public bool isWithinThreshold;
 
-            public RaycastDataRecord(IHPUIInteractable interactable, float x, float z, float distance) : this()
+            public RaycastDataRecord(IHPUIInteractable interactable, float x, float z, float distance, bool isWithinThreshold) : this()
             {
                 this.interactable = interactable;
                 this.angleX = x;
                 this.angleZ = z;
                 this.distance = distance;
+                this.isWithinThreshold = isWithinThreshold;
             }
         }
     }

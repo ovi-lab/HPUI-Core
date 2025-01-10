@@ -308,7 +308,7 @@ namespace ubco.ovilab.HPUI.Components
 
             // KLUDGE: Does AsParallel help?
             List<HPUIInteractorRayAngle> coneAnglesForSegment = filteredInteractionRecords.AsParallel()
-                .Where(record => validInteractables.Contains(record.interactable))
+                .Where(record => validInteractables.Contains(record.interactable) && record.isWithinThreshold)
                 .Select(record => new { angle = new HPUIInteractorRayAngle(record.angleX, record.angleZ, 0), distance = record.distance })
                 // Since the same detection ray angle asset is used, we assume the x, z pairs are going to match.
                 .GroupBy(record => record.angle, (angle, records) => new HPUIInteractorRayAngle(angle.X, angle.Z, records.Select(r => r.distance).Sum() / records.Count()))
