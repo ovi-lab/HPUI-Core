@@ -23,7 +23,7 @@ namespace ubco.ovilab.HPUI.Components
 
         [SerializeField]
         [Tooltip("Interactable segment pairs.")]
-        private List<ConeRayAnglesEstimationPair> interactableToSegmentMapping;
+        private List<ConeRayAnglesEstimationPair> interactableToSegmentMapping = new();
 
         /// <summary>
         /// List of interactable to segment mappaing pairs. The list is expected to have all segments.
