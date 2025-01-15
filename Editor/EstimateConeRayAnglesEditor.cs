@@ -13,19 +13,24 @@ namespace ubco.ovilab.HPUI.Editor
     public class EstimateConeRayAnglesEditor: UnityEditor.Editor
     {
         private enum State { Wait, Started, Processing, Processed }
+        private class StateInformation
+        {
+            public State state = State.Wait;
+            public HPUIInteractorConeRayAngles generatedAsset, savedAsset;
+        }
 
         private static readonly string[] excludedSerializedNames = new string[]{ "generatedConeRayAngles", "interactableToSegmentMapping" };
         private const string DONT_ASK_EDITORPREF_KEY = "ubco.ovilab.HPUI.Components.ConeEsimation.DontAskWhenRestarting";
+        private static Dictionary<EstimateConeRayAngles, StateInformation> stateInfoStore = new();
         private EstimateConeRayAngles t;
-        private State state = State.Wait;
         private SerializedObject generatedConeRayAnglesObj;
         private SerializedProperty mappingProp;
 
-        private HPUIInteractorConeRayAngles generatedAsset, savedAsset;
         private bool estimatedResultsFoldout = false,
             dontAskBeforeDiscard;
         private List<HPUIInteractorConeRayAngleSegment> availableSegments = new(),
             allSegments;
+        private StateInformation stateInfo;
 
         protected void OnEnable()
         {
@@ -33,6 +38,11 @@ namespace ubco.ovilab.HPUI.Editor
             mappingProp = serializedObject.FindProperty("interactableToSegmentMapping");
             allSegments = Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)).OfType<HPUIInteractorConeRayAngleSegment>().ToList();
             dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
+            if (!stateInfoStore.TryGetValue(t, out stateInfo))
+            {
+                stateInfo = new StateInformation();
+                stateInfoStore.Add(t, stateInfo);
+            }
         }
 
         public override void OnInspectorGUI()
@@ -81,41 +91,42 @@ namespace ubco.ovilab.HPUI.Editor
                 }
 
                 GUI.enabled = EditorApplication.isPlaying;
-                if ((state == State.Wait || state == State.Processed) &&
-                    GUILayout.Button(new GUIContent((state == State.Processed ? "Restart": "Start") + " data collection", "Sets up the intertactables to collect data necessary for estimation.")))
+                if ((stateInfo.state == State.Wait || stateInfo.state == State.Processed) &&
+                    GUILayout.Button(new GUIContent((stateInfo.state == State.Processed ? "Restart": "Start") + " data collection", "Sets up the intertactables to collect data necessary for estimation.")))
                 {
-                    if (state == State.Wait || EditorUtility.DisplayDialog("Restart data collection",
+                    if (stateInfo.state == State.Wait || EditorUtility.DisplayDialog("Restart data collection",
                                                                            "Restarting data collection will discard previous data. Continue?",
                                                                            "Yes",
                                                                            "No",
                                                                            DialogOptOutDecisionType.ForThisMachine, DONT_ASK_EDITORPREF_KEY))
                     {
-                        savedAsset = null;
-                        generatedAsset = null;
-                        state = State.Started;
+                        stateInfo.savedAsset = null;
+                        stateInfo.generatedAsset = null;
+                        stateInfo.state = State.Started;
                         t.StartDataCollection();
                     }
                     dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
                 }
 
-                if (state == State.Started && GUILayout.Button(new GUIContent("Finish data collection and estimate", "Finish data collection and start estimation of cones.")))
+                if (stateInfo.state == State.Started && GUILayout.Button(new GUIContent("Finish data collection and estimate", "Finish data collection and start estimation of cones.")))
                 {
-                    state = State.Processing;
+                    stateInfo.state = State.Processing;
                     t.FinishAndEstimate((angles) =>
                     {
-                        state = State.Processed;
-                        this.generatedAsset = angles;
+                        stateInfo.state = State.Processed;
+                        this.stateInfo.generatedAsset = angles;
                     });
                 }
 
-                if (state == State.Processing)
+                if (stateInfo.state == State.Processing)
                 {
                     EditorGUILayout.LabelField("Processing new cone ray angles...");
                 }
+                GUI.enabled = true;
 
-                if (generatedAsset != null)
+                if (stateInfo.generatedAsset != null)
                 {
-                    generatedConeRayAnglesObj = new SerializedObject(generatedAsset);
+                    generatedConeRayAnglesObj = new SerializedObject(stateInfo.generatedAsset);
                     bool guiState = GUI.enabled;
                     GUI.enabled = false;
 
@@ -139,26 +150,26 @@ namespace ubco.ovilab.HPUI.Editor
                         }
                     }
 
-                    if (savedAsset != null)
+                    if (stateInfo.savedAsset != null)
                     {
-                        EditorGUILayout.ObjectField("Saved asset", savedAsset, typeof(HPUIInteractorConeRayAngles), false);
+                        EditorGUILayout.ObjectField("Saved asset", stateInfo.savedAsset, typeof(HPUIInteractorConeRayAngles), false);
                     }
 
                     GUI.enabled = guiState;
 
-                    if (GUILayout.Button(new GUIContent("Save", "Save the asset.")))
+                    if (stateInfo.savedAsset != null && GUILayout.Button(new GUIContent("Save", "Save the asset.")))
                     {
                         string saveName = EditorUtility.SaveFilePanelInProject("Save new cone angles asset", "NewHPUIInteractorConeRayAngles.asset", "asset", "Save location for the generated cone angle asset.");
-                        AssetDatabase.CreateAsset(generatedAsset, saveName);
+                        AssetDatabase.CreateAsset(stateInfo.generatedAsset, saveName);
                         AssetDatabase.SaveAssets();
-                        savedAsset = generatedAsset;
+                        stateInfo.savedAsset = stateInfo.generatedAsset;
                     }
                 }
-                GUI.enabled = true;
             }
 
             serializedObject.ApplyModifiedProperties();
         }
+
     }
 
     [CustomPropertyDrawer(typeof(ConeRayAnglesEstimationPair), true)]
