@@ -1,10 +1,12 @@
 using UnityEngine;
+using Unity.Mathematics;
+using Unity.Burst;
 using System;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
     // TODO docuement all of this
-    [Serializable]
+    [Serializable, BurstCompile]
     public struct HPUIInteractorRayAngle
     {
         [SerializeField] private float x;
@@ -58,32 +60,38 @@ namespace ubco.ovilab.HPUI.Interaction
         //     return Quaternion.LookRotation(newUp, newforward);
         //     // return Quaternion.LookRotation(Vector3.up, newUp);
         // }
-
         /// <summary>
         /// The direction relatetive to the unity up, forward and right vectors.
         /// X is the angle from the up vector around the right vector.
         /// Z is the angle from the up vector around the forward vector.
         /// </summary>
-        public static Vector3 GetDirection(float x, float z, Vector3 right, Vector3 forward, Vector3 up, bool flipZAngles)
+        [BurstCompile]
+        public static void GetDirection(float x, float z, in float3 right, in float3 forward, in float3 up, bool flipZAngles, out float3 direction)
         {
             float x_ = x,
                   z_ = flipZAngles ? -z : z;
 
-            float yDist = Mathf.Sqrt(1 / (1 + Mathf.Pow(Mathf.Tan(x_ * Mathf.Deg2Rad), 2) + Mathf.Pow(Mathf.Tan(z_ * Mathf.Deg2Rad), 2)));
-            if (Mathf.Abs(x) > 90 || Mathf.Abs(z) > 90)
+            x_ = math.radians(x_);
+            z_ = math.radians(z_);
+            float tanx = math.tan(x_);
+            float tanz = math.tan(z_);
+
+            float yDist = math.sqrt(1 / (1 + math.pow(tanx, 2) + math.pow(tanz, 2)));
+            if (math.abs(x) > 90 || math.abs(z) > 90)
             {
                 yDist = -yDist;
             }
 
-            float xDist = Mathf.Tan(z_ * Mathf.Deg2Rad) * yDist;
-            float zDist = Mathf.Tan(x_ * Mathf.Deg2Rad) * yDist;
+            float xDist = tanz * yDist;
+            float zDist = tanx * yDist;
 
-            return yDist * up + zDist * forward + xDist * right;
+            direction = yDist * up + zDist * forward + xDist * right;
         }
 
         public Vector3 GetDirection(Transform attachTransform, bool flipZAngles)
         {
-            return GetDirection(x, z, attachTransform.right, attachTransform.forward, attachTransform.up, flipZAngles);
+            GetDirection(x, z, attachTransform.right, attachTransform.forward, attachTransform.up, flipZAngles, out float3 direction);
+            return direction;
         }
 
         #region Equality overrides

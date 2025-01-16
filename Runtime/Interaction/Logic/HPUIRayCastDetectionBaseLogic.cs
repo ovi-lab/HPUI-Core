@@ -92,18 +92,26 @@ namespace ubco.ovilab.HPUI.Interaction
             hoverEndPoint = interactionPoint;
             bool flipZAngles = interactor.handedness == InteractorHandedness.Left;
 
-            UnityEngine.Profiling.Profiler.BeginSample("raycast");
+            UnityEngine.Profiling.Profiler.BeginSample("Process angles");
             foreach(HPUIInteractorRayAngle angle in activeFingerAngles)
             {
                 bool validInteractable = false;
+                UnityEngine.Profiling.Profiler.BeginSample("Compute direction");
+                // TODO: Batch compute this.
                 Vector3 direction = angle.GetDirection(attachTransform, flipZAngles);
+                UnityEngine.Profiling.Profiler.EndSample();
+
+                UnityEngine.Profiling.Profiler.BeginSample("raycast");
+                // TODO: Use RaycastCommand
                 int hits = Physics.RaycastNonAlloc(interactionPoint,
                                                    direction,
                                                    rayCastHits,
                                                    InteractionHoverRadius,
                                                    physicsLayer,
                                                    physicsTriggerInteraction);
+                UnityEngine.Profiling.Profiler.EndSample();
 
+                UnityEngine.Profiling.Profiler.BeginSample("Compute RaycastInteractionInfo");
                 for (int hitI = 0; hitI < hits; hitI++)
                 {
                     RaycastHit hitInfo = rayCastHits[hitI];
@@ -134,6 +142,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         infoList.Add(new RaycastInteractionInfo(distance, isWithinThreshold, hitInfo.point, hitInfo.collider));
                     }
                 }
+                UnityEngine.Profiling.Profiler.EndSample();
 
                 if (ShowDebugRayVisual)
                 {
@@ -141,9 +150,6 @@ namespace ubco.ovilab.HPUI.Interaction
                     Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, rayColor);
                 }
             }
-            UnityEngine.Profiling.Profiler.EndSample();
-
-            UnityEngine.Profiling.Profiler.BeginSample("raycast centroid");
             UnityEngine.Profiling.Profiler.EndSample();
 
             if (ComputeHPUIInteractionInfo(tempValidTargets, validTargets, out Vector3 newHoverEndPoint))

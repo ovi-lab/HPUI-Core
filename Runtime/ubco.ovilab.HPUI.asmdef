@@ -5,7 +5,9 @@
         "Unity.XR.Hands",
         "Unity.XR.CoreUtils",
         "Unity.XR.Interaction.Toolkit",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.Burst",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
