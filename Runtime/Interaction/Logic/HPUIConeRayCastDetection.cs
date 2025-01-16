@@ -151,7 +151,8 @@ namespace ubco.ovilab.HPUI.Interaction
                     Vector3 baseVector = jointLocations[kvp.Key];
                     Vector3 segmentVector = jointLocations[kvp.Value] - baseVector;
                     Vector3 toTipVector = thumbTipPos - baseVector;
-                    Vector3 closestPoint = Vector3.Dot(toTipVector, segmentVector.normalized) * segmentVector.normalized + baseVector;
+                    float distanceOnSegmentVector = Mathf.Clamp(Vector3.Dot(toTipVector, segmentVector.normalized), 0, segmentVector.magnitude);
+                    Vector3 closestPoint = distanceOnSegmentVector * segmentVector.normalized + baseVector;
                     float distance = (thumbTipPos - closestPoint).sqrMagnitude;
                     if (distance < shortestDistance)
                     {
