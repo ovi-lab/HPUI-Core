@@ -55,7 +55,7 @@ namespace ubco.ovilab.HPUI.Tracking
         {
             if (xrOrigin == null)
             {
-                xrOrigin = FindObjectOfType<XROrigin>();
+                xrOrigin = FindFirstObjectByType<XROrigin>();
             }
 
             SubscribeHandSubsystem();

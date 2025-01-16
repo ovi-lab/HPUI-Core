@@ -195,7 +195,7 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             if (XROriginTransform == null)
             {
-                XROriginTransform = GameObject.FindObjectOfType<XROrigin>()?.transform;
+                XROriginTransform = GameObject.FindFirstObjectByType<XROrigin>()?.transform;
                 if (XROriginTransform == null)
                 {
                     Debug.LogError($"XR Origin not found! Manually set value for XROriginTransform");
