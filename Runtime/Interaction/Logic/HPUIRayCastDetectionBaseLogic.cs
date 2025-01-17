@@ -124,7 +124,9 @@ namespace ubco.ovilab.HPUI.Interaction
                         // negaative distance indicates the interactor ie under the interactable.
                         float sign = Vector3.Dot(hitInfo.collider.transform.up, direction) < 0 ? 1 : -1;
                         float distance = hitInfo.distance * sign;
-                        bool isWithinThreshold = angle.WithinThreshold(distance);
+                        // But we use the absolute distance to make sure rays way outside
+                        // the threshold is not selected. i.e. avoid situations like -1 < 0.01
+                        bool isWithinThreshold = angle.WithinThreshold(hitInfo.distance);
 
                         if (raycastData != null)
                         {
