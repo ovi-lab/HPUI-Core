@@ -157,7 +157,7 @@ namespace ubco.ovilab.HPUI.Editor
 
                     GUI.enabled = guiState;
 
-                    if (stateInfo.savedAsset != null && GUILayout.Button(new GUIContent("Save", "Save the asset.")))
+                    if (stateInfo.generatedAsset != null && GUILayout.Button(new GUIContent("Save", "Save the asset.")))
                     {
                         string saveName = EditorUtility.SaveFilePanelInProject("Save new cone angles asset", "NewHPUIInteractorConeRayAngles.asset", "asset", "Save location for the generated cone angle asset.");
                         AssetDatabase.CreateAsset(stateInfo.generatedAsset, saveName);
