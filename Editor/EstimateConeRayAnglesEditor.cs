@@ -5,6 +5,7 @@ using ubco.ovilab.HPUI.Components;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI.Editor
 {
@@ -19,15 +20,16 @@ namespace ubco.ovilab.HPUI.Editor
             public HPUIInteractorConeRayAngles generatedAsset, savedAsset;
         }
 
-        private static readonly string[] excludedSerializedNames = new string[]{ "generatedConeRayAngles", "interactableToSegmentMapping" };
+        private static readonly string[] excludedSerializedNames = new string[]{ "generatedConeRayAngles", "interactableToSegmentMapping", "xrHandTrackingEventsForConeDetection" };
         private const string DONT_ASK_EDITORPREF_KEY = "ubco.ovilab.HPUI.Components.ConeEsimation.DontAskWhenRestarting";
         private static Dictionary<EstimateConeRayAngles, StateInformation> stateInfoStore = new();
         private EstimateConeRayAngles t;
         private SerializedObject generatedConeRayAnglesObj;
-        private SerializedProperty mappingProp;
+        private SerializedProperty mappingProp, xrHandTrackingEventsForConeDetectionProp;
 
         private bool estimatedResultsFoldout = false,
-            dontAskBeforeDiscard;
+            dontAskBeforeDiscard,
+            showXRHandtrackingEventsMissingMessage;
         private List<HPUIInteractorConeRayAngleSegment> availableSegments = new(),
             allSegments;
         private StateInformation stateInfo;
@@ -36,6 +38,7 @@ namespace ubco.ovilab.HPUI.Editor
         {
             t = target as EstimateConeRayAngles;
             mappingProp = serializedObject.FindProperty("interactableToSegmentMapping");
+            xrHandTrackingEventsForConeDetectionProp =  serializedObject.FindProperty("xrHandTrackingEventsForConeDetection");
             allSegments = Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)).OfType<HPUIInteractorConeRayAngleSegment>().ToList();
             dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
             if (!stateInfoStore.TryGetValue(t, out stateInfo))
@@ -43,12 +46,19 @@ namespace ubco.ovilab.HPUI.Editor
                 stateInfo = new StateInformation();
                 stateInfoStore.Add(t, stateInfo);
             }
+            CheckIfShowXRHandtrackingEventsMissingMessage();
+        }
+
+        protected void CheckIfShowXRHandtrackingEventsMissingMessage()
+        {
+            showXRHandtrackingEventsMissingMessage = t.SetDetectionLogicOnEstimation && t.XRHandTrackingEventsForConeDetection == null && t.Interactor.GetComponent<XRHandTrackingEvents>() == null;
         }
 
         public override void OnInspectorGUI()
         {
             SerializedProperty iterator = serializedObject.GetIterator();
             bool enterChildren = true;
+            EditorGUI.BeginChangeCheck();
             while (iterator.NextVisible(enterChildren))
             {
                 enterChildren = false;
@@ -59,6 +69,18 @@ namespace ubco.ovilab.HPUI.Editor
                         EditorGUILayout.PropertyField(iterator, true);
                     }
                 }
+            }
+
+            EditorGUILayout.PropertyField(xrHandTrackingEventsForConeDetectionProp, new GUIContent("XRHandTrackingEvents For Cone Detection"));
+            if (EditorGUI.EndChangeCheck())
+            {
+                serializedObject.ApplyModifiedProperties();
+                CheckIfShowXRHandtrackingEventsMissingMessage();
+            }
+
+            if (showXRHandtrackingEventsMissingMessage)
+            {
+                EditorGUILayout.HelpBox("While SetDetectionLogicOnEstimation is set, XRHandTrackingEventsForConeDetection is null and Interactor doesn't have an XRHandTrackingEvents component.", MessageType.Error);
             }
 
             EditorGUILayout.Space();

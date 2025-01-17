@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using UnityEngine.XR.Hands;
 using ubco.ovilab.HPUI.Interaction;
+using UnityEngine.Assertions;
 
 namespace ubco.ovilab.HPUI.Components
 {
@@ -20,6 +21,26 @@ namespace ubco.ovilab.HPUI.Components
         /// The interactor used for the esimation.
         /// </summary>
         public HPUIInteractor Interactor { get => interactor; set => interactor = value; }
+
+        [SerializeField]
+        [Tooltip("If true, will set the detection logic of interactor to HPUIConeRayCastDetectionLogic with generated asset.")]
+        private bool setDetectionLogicOnEstimation = false;
+
+        /// <summary>
+        /// If true, will set the detection logic of interactor to HPUIConeRayCastDetectionLogic with generated asset.
+        /// </summary>
+        public bool SetDetectionLogicOnEstimation { get => setDetectionLogicOnEstimation; set => setDetectionLogicOnEstimation = value; }
+
+        [SerializeField]
+        [Tooltip("(optional) The hand tracking event to use with HPUIConeRayCastDetectionLogic if SetDetectionLogicOnEstimation is true." +
+                 "If this is not set, then will look for XRHandTrackingEvents in the Interactor.")]
+        private XRHandTrackingEvents xrHandTrackingEventsForConeDetection;
+
+        /// <summary>
+        /// The hand tracking event to use with HPUIConeRayCastDetectionLogic if SetDetectionLogicOnEstimation is true.
+        /// If this is not set, then will look for XRHandTrackingEvents in the Interactor.
+        /// </summary>
+        public XRHandTrackingEvents XRHandTrackingEventsForConeDetection { get => xrHandTrackingEventsForConeDetection; set => xrHandTrackingEventsForConeDetection = value; }
 
         [SerializeField]
         [Tooltip("Interactable segment pairs.")]
@@ -41,6 +62,12 @@ namespace ubco.ovilab.HPUI.Components
         /// </summary>
         public void StartDataCollection()
         {
+            if (SetDetectionLogicOnEstimation)
+            {
+                Assert.IsTrue(XRHandTrackingEventsForConeDetection != null || Interactor.GetComponent<XRHandTrackingEvents>() != null,
+                              "XRHandTrackingEventsForConeDetection is null and Interactor doesn't have an XRHandTrackingEvents component.");
+            }
+
             if (!(Interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic))
             {
                 if (fullrangeRaycastDetectionLogicReference == null)
@@ -66,8 +93,14 @@ namespace ubco.ovilab.HPUI.Components
         {
             estimator.EstimateConeRayAngles((angles) =>
             {
-                Interactor.DetectionLogic = new HPUIConeRayCastDetectionLogic(Interactor.DetectionLogic.InteractionHoverRadius, angles, Interactor.GetComponent<XRHandTrackingEvents>());
                 callback.Invoke(angles);
+                if (SetDetectionLogicOnEstimation)
+                {
+                    Interactor.DetectionLogic = new HPUIConeRayCastDetectionLogic(
+                        Interactor.DetectionLogic.InteractionHoverRadius,
+                        angles,
+                        XRHandTrackingEventsForConeDetection != null ? XRHandTrackingEventsForConeDetection : Interactor.GetComponent<XRHandTrackingEvents>());
+                }
             });
         }
     }
