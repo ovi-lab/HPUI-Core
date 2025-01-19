@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -16,7 +17,8 @@ namespace ubco.ovilab.HPUI.Interaction
         [SerializeField]
         [Tooltip("The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique")]
         private HPUIInteractorFullRangeAngles fullRangeRayAngles;
-
+        private List<Vector3> processedAngles = new();
+        private bool isProcessedAnglesPopulated = false;
         /// <summary>
         /// The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique
         /// </summary>
@@ -27,6 +29,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
         public HPUIFullRangeRayCastDetectionLogic(float hoverRadius, HPUIInteractorFullRangeAngles fullRangeAngles)
         {
+            processedAngles = new();
             this.InteractionHoverRadius = hoverRadius;
             this.fullRangeRayAngles = fullRangeAngles;
         }
@@ -41,7 +44,18 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
-            Process(interactor, interactionManager, FullRangeRayAngles.angles, validTargets, out hoverEndPoint);
+            if (!isProcessedAnglesPopulated)
+            {
+                bool flipZAngles = interactor.handedness == InteractorHandedness.Left;
+                foreach (HPUIInteractorRayAngle angleData in FullRangeRayAngles.angles)
+                {
+                    processedAngles.Add(angleData.GetDirection(angleData.X, angleData.Z, flipZAngles));
+                }
+
+                isProcessedAnglesPopulated = true;
+            }
+
+            Process(interactor, interactionManager, FullRangeRayAngles.angles, validTargets, out hoverEndPoint, processedAngles);
         }
     }
 }

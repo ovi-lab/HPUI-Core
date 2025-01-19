@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using ubco.ovilab.HPUI.Components;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -47,6 +49,8 @@ namespace ubco.ovilab.HPUI.Interaction
         // When it's not set by DetectedInteractables, use default value
         protected List<HPUIInteractorRayAngle> activeFingerAngles = new();
         protected Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
+        private Dictionary<XRHandJointID, List<Vector3>> processedAngles = new();
+        private bool isProcessedAnglesPopulated = false;
         protected List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
             XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip,
@@ -121,6 +125,7 @@ namespace ubco.ovilab.HPUI.Interaction
         public override void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
             bool failed = false;
+            XRHandJointID closestJoint = XRHandJointID.BeginMarker;
             if (ConeRayAngles == null)
             {
                 Debug.LogError($"The `ConeRayAngle` asset is not set!");
@@ -139,11 +144,46 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
+            if (!isProcessedAnglesPopulated)
+            {
+                bool flipZAngles = interactor.handedness == InteractorHandedness.Left;
+                foreach (KeyValuePair<XRHandJointID, XRHandJointID> jointPairs in trackedJointsToSegment)
+                {
+                    List<Vector3> processedDirections = new();
+                    List<HPUIInteractorRayAngle> jointAngles = jointPairs.Key switch
+                    {
+                        XRHandJointID.IndexProximal      => ConeRayAngles.IndexProximalAngles,
+                        XRHandJointID.IndexIntermediate  => ConeRayAngles.IndexIntermediateAngles,
+                        XRHandJointID.IndexDistal        => ConeRayAngles.IndexDistalAngles,
+                        XRHandJointID.MiddleProximal     => ConeRayAngles.MiddleProximalAngles,
+                        XRHandJointID.MiddleIntermediate => ConeRayAngles.MiddleIntermediateAngles,
+                        XRHandJointID.MiddleDistal       => ConeRayAngles.MiddleDistalAngles,
+                        XRHandJointID.RingProximal       => ConeRayAngles.RingProximalAngles,
+                        XRHandJointID.RingIntermediate   => ConeRayAngles.RingIntermediateAngles,
+                        XRHandJointID.RingDistal         => ConeRayAngles.RingDistalAngles,
+                        XRHandJointID.LittleProximal     => ConeRayAngles.LittleProximalAngles,
+                        XRHandJointID.LittleIntermediate => ConeRayAngles.LittleIntermediateAngles,
+                        XRHandJointID.LittleDistal       => ConeRayAngles.LittleDistalAngles,
+                        _ => throw new System.InvalidOperationException($"Unknown joint,")
+                    };
+                
+                    foreach (HPUIInteractorRayAngle angleData in jointAngles)
+                    {
+                        processedDirections.Add(angleData.GetDirection(angleData.X, angleData.Z, flipZAngles));
+                    }
+
+                    processedAngles.Add(jointPairs.Key, processedDirections);
+                }
+
+                isProcessedAnglesPopulated = true;
+            }
+            
+
             if (receivedNewJointData)
             {
                 receivedNewJointData = false;
                 Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip];
-                XRHandJointID closestJoint = XRHandJointID.BeginMarker;
+                
                 float shortestDistance = float.MaxValue;
 
                 foreach(KeyValuePair<XRHandJointID, XRHandJointID> kvp in trackedJointsToSegment)
@@ -181,8 +221,10 @@ namespace ubco.ovilab.HPUI.Interaction
                         };
                 }
             }
-            Process(interactor, interactionManager, activeFingerAngles, validTargets, out hoverEndPoint);
+            Process(interactor, interactionManager, activeFingerAngles, validTargets, out hoverEndPoint, processedAngles[closestJoint]);
         }
+        
+        
 
         /// <inheritdoc />
         public override void Dispose()

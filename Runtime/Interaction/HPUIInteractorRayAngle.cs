@@ -87,6 +87,29 @@ namespace ubco.ovilab.HPUI.Interaction
 
             direction = yDist * up + zDist * forward + xDist * right;
         }
+        
+        [BurstCompile]
+        public Vector3 GetDirection(float x, float z, bool flipZAngles)
+        {
+            float x_ = x,
+                z_ = flipZAngles ? -z : z;
+
+            x_ = math.radians(x_);
+            z_ = math.radians(z_);
+            float tanx = math.tan(x_);
+            float tanz = math.tan(z_);
+
+            float yDist = math.sqrt(1 / (1 + math.pow(tanx, 2) + math.pow(tanz, 2)));
+            if (math.abs(x) > 90 || math.abs(z) > 90)
+            {
+                yDist = -yDist;
+            }
+
+            float xDist = tanz * yDist;
+            float zDist = tanx * yDist;
+
+            return new Vector3(xDist, yDist, zDist);
+        }
 
         public Vector3 GetDirection(Transform attachTransform, bool flipZAngles)
         {
