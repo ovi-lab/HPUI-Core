@@ -49,7 +49,8 @@ namespace ubco.ovilab.HPUI.Interaction
         // When it's not set by DetectedInteractables, use default value
         protected List<HPUIInteractorRayAngle> activeFingerAngles = new();
         protected Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
-        private Dictionary<XRHandJointID, List<Vector3>> processedAngles = new();
+        private Dictionary<XRHandJointID, List<Vector3>> rightHandAngles = new();
+        private Dictionary<XRHandJointID, List<Vector3>> leftHandAngles = new();
         private bool isProcessedAnglesPopulated = false;
         protected List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
@@ -149,7 +150,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 bool flipZAngles = interactor.handedness == InteractorHandedness.Left;
                 foreach (KeyValuePair<XRHandJointID, XRHandJointID> jointPairs in trackedJointsToSegment)
                 {
-                    List<Vector3> processedDirections = new();
+                    List<Vector3> processedDirectionsRight = new();
+                    List<Vector3> processedDirectionsLeft = new();
                     List<HPUIInteractorRayAngle> jointAngles = jointPairs.Key switch
                     {
                         XRHandJointID.IndexProximal      => ConeRayAngles.IndexProximalAngles,
@@ -169,10 +171,12 @@ namespace ubco.ovilab.HPUI.Interaction
                 
                     foreach (HPUIInteractorRayAngle angleData in jointAngles)
                     {
-                        processedDirections.Add(angleData.GetDirection(angleData.X, angleData.Z, flipZAngles));
+                        processedDirectionsRight.Add(HPUIInteractorRayAngle.GetDirection(angleData.X, angleData.Z, false));
+                        processedDirectionsLeft.Add(HPUIInteractorRayAngle.GetDirection(angleData.X, angleData.Z, true));
                     }
 
-                    processedAngles.Add(jointPairs.Key, processedDirections);
+                    rightHandAngles.Add(jointPairs.Key, processedDirectionsRight);
+                    leftHandAngles.Add(jointPairs.Key, processedDirectionsLeft);
                 }
 
                 isProcessedAnglesPopulated = true;
@@ -221,6 +225,7 @@ namespace ubco.ovilab.HPUI.Interaction
                         };
                 }
             }
+            Dictionary<XRHandJointID, List<Vector3>> processedAngles = interactor.handedness == InteractorHandedness.Right ? rightHandAngles : leftHandAngles;
             Process(interactor, interactionManager, activeFingerAngles, validTargets, out hoverEndPoint, processedAngles[closestJoint]);
         }
         
