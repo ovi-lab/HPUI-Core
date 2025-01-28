@@ -63,6 +63,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private RaycastHit[] rayCastHits = new RaycastHit[200];
         private List<RaycastDataRecord> raycastDataRecords = new();
+
         public void SetInteractor(IHPUIInteractor interactor)
         {
             this.interactor = interactor;
@@ -82,7 +83,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Given the list of <see cref="HPUIInteractorRayAngle"/>, detect the interactables and populate the <see cref="validTargets"/> dictionary.
         /// </summary>
-        protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, List<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint, List<Vector3> directionCache)
+        protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, List<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
             validTargets.Clear();
 
@@ -90,12 +91,13 @@ namespace ubco.ovilab.HPUI.Interaction
             Vector3 interactionPoint = attachTransform.position;
             hoverEndPoint = interactionPoint;
             UnityEngine.Profiling.Profiler.BeginSample("Process angles");
-            for (int i = 0; i < activeFingerAngles.Count; i++)
+            bool isLeftHand = interactor.handedness == InteractorHandedness.Left;
+            foreach(HPUIInteractorRayAngle angle in activeFingerAngles)
             {
                 bool validInteractable = false;
                 UnityEngine.Profiling.Profiler.BeginSample("Compute direction");
                 // TODO: Batch compute this.
-                Vector3 direction  = attachTransform.TransformDirection(directionCache[i]);
+                Vector3 direction  = attachTransform.TransformDirection(angle.GetDirection(isLeftHand));
                 UnityEngine.Profiling.Profiler.EndSample();
 
                 UnityEngine.Profiling.Profiler.BeginSample("raycast");
@@ -123,11 +125,11 @@ namespace ubco.ovilab.HPUI.Interaction
                         float distance = hitInfo.distance * sign;
                         // But we use the absolute distance to make sure rays way outside
                         // the threshold is not selected. i.e. avoid situations like -1 < 0.01
-                        bool isWithinThreshold = activeFingerAngles[i].WithinThreshold(hitInfo.distance);
+                        bool isWithinThreshold = angle.WithinThreshold(hitInfo.distance);
 
                         if (raycastData != null)
                         {
-                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, activeFingerAngles[i].X, activeFingerAngles[i].Z, distance, isWithinThreshold));
+                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, angle.X, angle.Z, distance, isWithinThreshold));
                         }
 
                         List<RaycastInteractionInfo> infoList;
@@ -146,7 +148,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 if (ShowDebugRayVisual)
                 {
                     Color rayColor = validInteractable ? Color.green : Color.red;
-                    Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * activeFingerAngles[i].RaySelectionThreshold, rayColor);
+                    Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, rayColor);
                 }
             }
             UnityEngine.Profiling.Profiler.EndSample();

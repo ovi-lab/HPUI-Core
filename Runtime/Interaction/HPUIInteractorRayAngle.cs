@@ -7,45 +7,69 @@ namespace ubco.ovilab.HPUI.Interaction
 {
     // TODO docuement all of this
     [Serializable, BurstCompile]
-    public struct HPUIInteractorRayAngle
+    public class HPUIInteractorRayAngle
     {
         [SerializeField] private float x;
         [SerializeField] private float z;
         [SerializeField] private float raySelectionThreshold;
-
+        private Vector3 leftRayDirection;
+        private Vector3 rightRayDirection;
+        private bool isCached;
         public float X { get => x; }
         public float Z { get => z; }
         public float RaySelectionThreshold { get => raySelectionThreshold; set => raySelectionThreshold = value; }
-
         public HPUIInteractorRayAngle(float x, float z, float angleThreshold)
         {
             this.x = x;
             this.z = z;
             this.raySelectionThreshold = angleThreshold;
+            isCached = false;
+            GetDirection(x, z, false, out float3 _rightRay);
+            GetDirection(x, z, true, out float3 _leftRay);
+            this.rightRayDirection = _rightRay;
+            this.leftRayDirection = _leftRay;
         }
 
         public HPUIInteractorRayAngle(float x, float z)
         {
             this.x = x;
             this.z = z;
-            this.raySelectionThreshold = 1f;
+            isCached = false;
+            GetDirection(x, z, false, out float3 _rightRay);
+            GetDirection(x, z, true, out float3 _leftRay);
+            this.rightRayDirection = _rightRay;
+            this.leftRayDirection = _leftRay;
         }
 
         public bool WithinThreshold(float dist)
         {
             return dist < raySelectionThreshold;
         }
-        
+
+
+        public float3 GetDirection(bool isLeftHand)
+        {
+            if (!isCached)
+            {
+                isCached = true;
+                GetDirection(x, z, false, out float3 _rightRay);
+                GetDirection(x, z, true, out float3 _leftRay);
+                this.rightRayDirection = _rightRay;
+                this.leftRayDirection = _leftRay;
+            }
+
+            return isLeftHand ? leftRayDirection : rightRayDirection;
+        }
+
         /// <summary>
         /// The direction relative to the unity up, forward and right vectors.
         /// X is the angle from the up vector around the right vector.
         /// Z is the angle from the up vector around the forward vector.
         /// </summary>
-        
         [BurstCompile]
-        public static float3 GetDirection(float x, float z, bool flipZAngles)
+        public static void GetDirection(float x, float z, bool flipZAngles, out float3 direction)
         {
-            float x_ = x, 
+            float x_ = x,
                 z_ = flipZAngles ? -z : z;
 
             x_ = math.radians(x_);
@@ -61,11 +85,8 @@ namespace ubco.ovilab.HPUI.Interaction
 
             float xDist = tanz * yDist;
             float zDist = tanx * yDist;
-
-            return new float3(xDist, yDist, zDist);
+            direction = new float3(xDist, yDist, zDist);
         }
-
-        
 
         #region Equality overrides
         public override bool Equals(object obj)
@@ -90,4 +111,3 @@ namespace ubco.ovilab.HPUI.Interaction
         #endregion
     }
 }
- 
