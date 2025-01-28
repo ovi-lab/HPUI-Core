@@ -89,7 +89,6 @@ namespace ubco.ovilab.HPUI.Interaction
             Transform attachTransform = interactor.GetAttachTransform(null);
             Vector3 interactionPoint = attachTransform.position;
             hoverEndPoint = interactionPoint;
-            bool flipZAngles = interactor.handedness == InteractorHandedness.Left;
             UnityEngine.Profiling.Profiler.BeginSample("Process angles");
             for (int i = 0; i < activeFingerAngles.Count; i++)
             {

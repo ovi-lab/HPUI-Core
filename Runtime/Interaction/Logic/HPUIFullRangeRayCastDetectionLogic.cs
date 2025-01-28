@@ -17,8 +17,6 @@ namespace ubco.ovilab.HPUI.Interaction
         [SerializeField]
         [Tooltip("The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique")]
         private HPUIInteractorFullRangeAngles fullRangeRayAngles;
-        private List<Vector3> rightProcessedAngles = new();
-        private List<Vector3> leftProcessedAngles = new();
         private bool isProcessedAnglesPopulated = false;
         /// <summary>
         /// The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique
@@ -30,7 +28,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
         public HPUIFullRangeRayCastDetectionLogic(float hoverRadius, HPUIInteractorFullRangeAngles fullRangeAngles)
         {
-            rightProcessedAngles = new();
             this.InteractionHoverRadius = hoverRadius;
             this.fullRangeRayAngles = fullRangeAngles;
         }
@@ -44,18 +41,8 @@ namespace ubco.ovilab.HPUI.Interaction
                 hoverEndPoint = interactor.GetAttachTransform(null).position;
                 return;
             }
-
-            if (!isProcessedAnglesPopulated)
-            {
-                foreach (HPUIInteractorRayAngle angleData in FullRangeRayAngles.angles)
-                {
-                    rightProcessedAngles.Add(HPUIInteractorRayAngle.GetDirection(angleData.X, angleData.Z, false));
-                    leftProcessedAngles.Add(HPUIInteractorRayAngle.GetDirection(angleData.X, angleData.Z, true));
-                }
-                isProcessedAnglesPopulated = true;
-            }
             
-            List<Vector3> processedAngles = interactor.handedness == InteractorHandedness.Right ? rightProcessedAngles : leftProcessedAngles;
+            List<Vector3> processedAngles = interactor.handedness == InteractorHandedness.Right ? FullRangeRayAngles.RightHandAngles : FullRangeRayAngles.LeftHandAngles;
             Process(interactor, interactionManager, FullRangeRayAngles.angles, validTargets, out hoverEndPoint, processedAngles);
         }
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,8 +10,41 @@ namespace ubco.ovilab.HPUI.Interaction
     [CreateAssetMenu(fileName = "HPUIInteractorFullRangeAngles", menuName = "HPUI/HPUI Interactor Full Ray Angles", order = 1)]
     public class HPUIInteractorFullRangeAngles: ScriptableObject
     {
+        public List<Vector3> RightHandAngles
+        {
+            get
+            {
+                if (rightHandAngles.Count == angles.Count)
+                {
+                    return rightHandAngles;
+                }
+                else
+                {
+                    CacheAngles();
+                    return rightHandAngles;
+                }
+            }
+        } 
+        
+        public List<Vector3> LeftHandAngles
+        {
+            get
+            {
+                if (leftHandAngles.Count == angles.Count)
+                {
+                    return rightHandAngles;
+                }
+                else
+                {
+                    CacheAngles();
+                    return rightHandAngles;
+                }
+            }
+        }
+        
         public List<HPUIInteractorRayAngle> angles;
-
+        [SerializeField] private List<Vector3> rightHandAngles = new List<Vector3>();
+        [SerializeField] private List<Vector3> leftHandAngles = new List<Vector3>();
         // FIXME: Compute this on the fly and store it
 
         public static List<HPUIInteractorRayAngle> ComputeAngles(int maxAngle, int angleStep, float raySelectionThreshold)
@@ -47,6 +81,23 @@ namespace ubco.ovilab.HPUI.Interaction
             }
             return allAngles;
         }
+
+
+        private void Awake()
+        {
+            CacheAngles();
+        }
+
+        private void CacheAngles()
+        {
+            foreach (HPUIInteractorRayAngle angleData in angles)
+            {
+                rightHandAngles.Add(HPUIInteractorRayAngle.GetDirection(angleData.X, angleData.Z, false));
+                leftHandAngles.Add(HPUIInteractorRayAngle.GetDirection(angleData.X, angleData.Z, true));
+            }
+        }
+        
     }
+    
 }
  
