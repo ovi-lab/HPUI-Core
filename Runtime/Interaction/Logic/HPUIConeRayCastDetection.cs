@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using ubco.ovilab.HPUI.Components;
 using Unity.XR.CoreUtils;
+using Unity.XR.CoreUtils.Collections;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -49,8 +50,7 @@ namespace ubco.ovilab.HPUI.Interaction
         // When it's not set by DetectedInteractables, use default value
         protected List<HPUIInteractorRayAngle> activeFingerAngles = new();
         protected Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
-        private Dictionary<XRHandJointID, List<Vector3>> rightHandAngles = new();
-        private Dictionary<XRHandJointID, List<Vector3>> leftHandAngles = new();
+        private SerializableDictionary<XRHandJointID, List<Vector3>> processedAngles;
         private bool isProcessedAnglesPopulated = false;
         protected List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
@@ -144,45 +144,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 hoverEndPoint = interactor.GetAttachTransform(null).position;
                 return;
             }
-
-            if (!isProcessedAnglesPopulated)
-            {
-                bool flipZAngles = interactor.handedness == InteractorHandedness.Left;
-                foreach (KeyValuePair<XRHandJointID, XRHandJointID> jointPairs in trackedJointsToSegment)
-                {
-                    List<Vector3> processedDirectionsRight = new();
-                    List<Vector3> processedDirectionsLeft = new();
-                    List<HPUIInteractorRayAngle> jointAngles = jointPairs.Key switch
-                    {
-                        XRHandJointID.IndexProximal      => ConeRayAngles.IndexProximalAngles,
-                        XRHandJointID.IndexIntermediate  => ConeRayAngles.IndexIntermediateAngles,
-                        XRHandJointID.IndexDistal        => ConeRayAngles.IndexDistalAngles,
-                        XRHandJointID.MiddleProximal     => ConeRayAngles.MiddleProximalAngles,
-                        XRHandJointID.MiddleIntermediate => ConeRayAngles.MiddleIntermediateAngles,
-                        XRHandJointID.MiddleDistal       => ConeRayAngles.MiddleDistalAngles,
-                        XRHandJointID.RingProximal       => ConeRayAngles.RingProximalAngles,
-                        XRHandJointID.RingIntermediate   => ConeRayAngles.RingIntermediateAngles,
-                        XRHandJointID.RingDistal         => ConeRayAngles.RingDistalAngles,
-                        XRHandJointID.LittleProximal     => ConeRayAngles.LittleProximalAngles,
-                        XRHandJointID.LittleIntermediate => ConeRayAngles.LittleIntermediateAngles,
-                        XRHandJointID.LittleDistal       => ConeRayAngles.LittleDistalAngles,
-                        _ => throw new System.InvalidOperationException($"Unknown joint,")
-                    };
-                
-                    foreach (HPUIInteractorRayAngle angleData in jointAngles)
-                    {
-                        processedDirectionsRight.Add(HPUIInteractorRayAngle.GetDirection(angleData.X, angleData.Z, false));
-                        processedDirectionsLeft.Add(HPUIInteractorRayAngle.GetDirection(angleData.X, angleData.Z, true));
-                    }
-
-                    rightHandAngles.Add(jointPairs.Key, processedDirectionsRight);
-                    leftHandAngles.Add(jointPairs.Key, processedDirectionsLeft);
-                }
-
-                isProcessedAnglesPopulated = true;
-            }
             
-
             if (receivedNewJointData)
             {
                 receivedNewJointData = false;
@@ -204,29 +166,17 @@ namespace ubco.ovilab.HPUI.Interaction
                         closestJoint = kvp.Key;
                     }
                 }
-
-                if (closestJoint != XRHandJointID.BeginMarker)
-                {
-                    activeFingerAngles = closestJoint switch
-                        {
-                            XRHandJointID.IndexProximal      => ConeRayAngles.IndexProximalAngles,
-                            XRHandJointID.IndexIntermediate  => ConeRayAngles.IndexIntermediateAngles,
-                            XRHandJointID.IndexDistal        => ConeRayAngles.IndexDistalAngles,
-                            XRHandJointID.MiddleProximal     => ConeRayAngles.MiddleProximalAngles,
-                            XRHandJointID.MiddleIntermediate => ConeRayAngles.MiddleIntermediateAngles,
-                            XRHandJointID.MiddleDistal       => ConeRayAngles.MiddleDistalAngles,
-                            XRHandJointID.RingProximal       => ConeRayAngles.RingProximalAngles,
-                            XRHandJointID.RingIntermediate   => ConeRayAngles.RingIntermediateAngles,
-                            XRHandJointID.RingDistal         => ConeRayAngles.RingDistalAngles,
-                            XRHandJointID.LittleProximal     => ConeRayAngles.LittleProximalAngles,
-                            XRHandJointID.LittleIntermediate => ConeRayAngles.LittleIntermediateAngles,
-                            XRHandJointID.LittleDistal       => ConeRayAngles.LittleDistalAngles,
-                            _ => throw new System.InvalidOperationException($"Unknown joint seen. Got {closestJoint},")
-                        };
-                }
+                
             }
-            Dictionary<XRHandJointID, List<Vector3>> processedAngles = interactor.handedness == InteractorHandedness.Right ? rightHandAngles : leftHandAngles;
+
+            if (closestJoint != XRHandJointID.BeginMarker)
+            {
+                activeFingerAngles = ConeRayAngles.ActiveFingerAngles[closestJoint];
+                processedAngles = interactor.handedness == InteractorHandedness.Right ? 
+                    ConeRayAngles.RightHandAngles : ConeRayAngles.LeftHandAngles;
+            }
             Process(interactor, interactionManager, activeFingerAngles, validTargets, out hoverEndPoint, processedAngles[closestJoint]);
+
         }
         
         
