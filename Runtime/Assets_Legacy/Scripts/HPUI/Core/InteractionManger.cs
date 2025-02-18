@@ -16,7 +16,7 @@ namespace ubco.ovilab.HPUI.Legacy
 	    get
 	    {
 		if (_instance == null)
-		    _instance = FindObjectOfType<InteractionManger>();
+		    _instance = FindAnyObjectByType<InteractionManger>();
 		return _instance;
 	    }
 	    private set {}
@@ -102,7 +102,7 @@ namespace ubco.ovilab.HPUI.Legacy
         /// </summary>
 	void ProcessGetButtons()
 	{
-	    buttons = FindObjectsOfType<ButtonController>();
+	    buttons = FindObjectsByType<ButtonController>(FindObjectsSortMode.None);
 
 	    btns.Clear();
 	    foreach (ButtonController btn in buttons)
