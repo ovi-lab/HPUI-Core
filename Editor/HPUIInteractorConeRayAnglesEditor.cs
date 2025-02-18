@@ -21,26 +21,31 @@ namespace ubco.ovilab.HPUI.Editor
 
         // storing all baseline thresholds
         private Dictionary<XRHandJointID, List<float>> baselineThresholds = new Dictionary<XRHandJointID, List<float>>();
+        private Dictionary<string, XRHandJointID> validJoints;
 
         private const string DONT_ASK_FOR_OVERRIDE_EDITOR_PREF_KEY = "ubco.ovilab.HPUI.Interaction.ConeThresholdsEditor.DontAskForOverride";
         private bool userSelection;
         private string newAssetFileSaveName;
-
+        private int selectedJointIndex;
         private bool advancedSettingsFoldout;
+        private string[] jointStrings;
 
-        private const string OFFSET_TOOLTIP = "The uniform offset to apply to the ray thresholds for a given phalange or all phalanges. Note that it always applies it from the base values, which are derived upon the first time the asset is selected in this Unity session. So setting it to 2 and then 1 won't increment it by 3, the second operation will only increment it by 1 from the base amount. Consequently, setting it to 0 will reset it to whatever the original values were.";
+        private const string OFFSET_TOOLTIP = "The uniform offset to apply to the ray thresholds. Offsets are always computed from original threshold values.";
 
         protected void OnEnable()
         {
             t = target as HPUIInteractorConeRayAngles;
             if (!t) return;
+            validJoints = new Dictionary<string, XRHandJointID>();
             foreach ((XRHandJointID phalange, List<HPUIInteractorRayAngle> rays) in t.ActiveFingerAngles)
             {
+                validJoints.Add(phalange.ToString(), phalange);
                 if (!baselineThresholds.ContainsKey(phalange) && rays.Count > 0)
                 {
                     baselineThresholds[phalange] = rays.Select(ray => ray.RaySelectionThreshold).ToList();
                 }
             }
+            jointStrings = validJoints.Keys.ToArray();
         }
 
         public override void OnInspectorGUI()
@@ -58,7 +63,9 @@ namespace ubco.ovilab.HPUI.Editor
                 overwriteThisAsset = EditorGUILayout.Toggle("Overwrite This Asset", overwriteThisAsset);
 
                 EditorGUI.BeginDisabledGroup(applyToAll);
-                selectedPhalange = (XRHandJointID)EditorGUILayout.EnumPopup("Phalange", selectedPhalange);
+                selectedJointIndex = EditorGUILayout.Popup(selectedJointIndex, jointStrings);
+                string selectedJointString = jointStrings[selectedJointIndex];
+                selectedPhalange = validJoints[selectedJointString];
                 EditorGUI.EndDisabledGroup();
 
                 if (overwriteThisAsset)
@@ -78,7 +85,7 @@ namespace ubco.ovilab.HPUI.Editor
                             DONT_ASK_FOR_OVERRIDE_EDITOR_PREF_KEY); // https://www.youtube.com/watch?v=xrg-RgF5F8o Warning
                         if (userSelection)
                         {
-                            ApplyModifications();
+                            ApplyModificationsInPlace();
                         }
                     }
                     else
@@ -88,14 +95,14 @@ namespace ubco.ovilab.HPUI.Editor
                             "Save location for the modified cone angle asset.");
                         if (!string.IsNullOrWhiteSpace(newAssetFileSaveName))
                         {
-                            ApplyModifications(newAssetFileSaveName);
+                            ApplyModificationsToNewAsset(newAssetFileSaveName);
                         }
                     }
                 }
             }
         }
 
-        private void ApplyModifications()
+        private void ApplyModificationsInPlace()
         {
             Undo.RecordObject(t, "Apply RaySelectionThreshold Offset");
             if (applyToAll)
@@ -104,25 +111,18 @@ namespace ubco.ovilab.HPUI.Editor
                 {
                     ApplyOffsetToAsset(phalange, rayAngle);
                 }
-
             }
             else // apply to selected phalange
             {
-                if (t.ActiveFingerAngles.TryGetValue(selectedPhalange, out List<HPUIInteractorRayAngle> rayAngles))
-                {
-                    ApplyOffsetToAsset(selectedPhalange, rayAngles);
-                }
-                else
-                {
-                    throw new Exception("Selected phalange not found in ActiveFingerAngles.");
-                }
+                List<HPUIInteractorRayAngle> rayAngles = t.ActiveFingerAngles[selectedPhalange];
+                ApplyOffsetToAsset(selectedPhalange, rayAngles);
             }
             EditorUtility.SetDirty(t);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
-        private void ApplyModifications(string newAssetSavePath)
+        private void ApplyModificationsToNewAsset(string newAssetSavePath)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(newAssetSavePath), "Invalid Save Path!");
             HPUIInteractorConeRayAngles newAsset = Instantiate(t);
@@ -135,7 +135,7 @@ namespace ubco.ovilab.HPUI.Editor
             }
             else // apply to selected phalange
             {
-                newAsset.ActiveFingerAngles.TryGetValue(selectedPhalange, out List<HPUIInteractorRayAngle> newRayAngles);
+                List<HPUIInteractorRayAngle> newRayAngles = newAsset.ActiveFingerAngles[selectedPhalange];
                 Debug.Assert(newRayAngles != null, "New asset copy doesn't have the same data as the old asset??");
                 ApplyOffsetToAsset(selectedPhalange, newRayAngles);
             }
