@@ -150,13 +150,10 @@ namespace ubco.ovilab.HPUI.Editor
         /// </summary>
         private void ApplyOffsetToAsset(XRHandJointID phalange, List<HPUIInteractorRayAngle> rayAngles)
         {
-            List<float> baselineThresholdsForPhalange = baselineThresholds.GetValueOrDefault(phalange, null);
-
+            List<float> baselineThresholdsForPhalange = baselineThresholds[phalange];
             for (int i = 0; i < rayAngles.Count; i++)
             {
-                HPUIInteractorRayAngle rayAngle = rayAngles[i];
-                float baseThreshold = baselineThresholdsForPhalange[i];
-                rayAngle.RaySelectionThreshold = baseThreshold + offsetValue;
+                rayAngles[i].RaySelectionThreshold = baselineThresholdsForPhalange[i] + offsetValue;
             }
         }
     }
