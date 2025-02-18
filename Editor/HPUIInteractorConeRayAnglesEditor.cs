@@ -19,11 +19,8 @@ namespace ubco.ovilab.HPUI.Editor
         private bool overwriteThisAsset;
         private XRHandJointID selectedPhalange = XRHandJointID.IndexDistal;
 
-        // storing all baseline thresholds for first ray per phalange
-        // assuming that offsets are applied uniformly per phalange
-        private Dictionary<XRHandJointID, float> baselineThresholds = new Dictionary<XRHandJointID, float>();
-        // storing previous applied offset
-        private Dictionary<XRHandJointID, float> cachedOffsets = new Dictionary<XRHandJointID, float>();
+        // storing all baseline thresholds
+        private Dictionary<XRHandJointID, List<float>> baselineThresholds = new Dictionary<XRHandJointID, List<float>>();
 
         private const string DONT_ASK_FOR_OVERRIDE_EDITOR_PREF_KEY = "ubco.ovilab.HPUI.Components.ConeThresholdsEditor.DontAskForOverride";
 
@@ -35,21 +32,9 @@ namespace ubco.ovilab.HPUI.Editor
             {
                 if (!baselineThresholds.ContainsKey(phalange) && rays.Count > 0)
                 {
-                    baselineThresholds[phalange] = rays.Select(ray => ray.RaySelectionThreshold).ToList()[0];
+                    baselineThresholds[phalange] = rays.Select(ray => ray.RaySelectionThreshold).ToList();
                 }
-
-                if (cachedOffsets.ContainsKey(phalange)) continue;
-                float initialOffset =
-                    rays.Count > 0 ? rays[0].RaySelectionThreshold - baselineThresholds[phalange] : 0f;
-                cachedOffsets[phalange] = initialOffset;
             }
-
-            Undo.undoRedoPerformed += OnUndoRedoEvent;
-        }
-
-        protected void OnDisable()
-        {
-            Undo.undoRedoPerformed -= OnUndoRedoEvent;
         }
 
         public override void OnInspectorGUI()
@@ -140,31 +125,14 @@ namespace ubco.ovilab.HPUI.Editor
         /// </summary>
         private void ApplyOffsetToAsset(XRHandJointID phalange, List<HPUIInteractorRayAngle> rayAngles)
         {
-            float previousOffset = cachedOffsets.GetValueOrDefault(phalange, 0f);
+            List<float> baselineThresholdsForPhalange = baselineThresholds.GetValueOrDefault(phalange, null);
 
-            foreach (HPUIInteractorRayAngle rayAngle in rayAngles)
+            for (int i = 0; i < rayAngles.Count; i++)
             {
-                rayAngle.RaySelectionThreshold = rayAngle.RaySelectionThreshold - previousOffset + offsetValue;
+                HPUIInteractorRayAngle rayAngle = rayAngles[i];
+                float baseThreshold = baselineThresholdsForPhalange[i];
+                rayAngle.RaySelectionThreshold = baseThreshold + offsetValue;
             }
-
-            cachedOffsets[phalange] = offsetValue;
-        }
-
-        /// <summary>
-        /// Called on Undo/Redo. For each phalange, recompute the post undo/redo applied offset from the current thresholds.
-        /// </summary>
-        private void OnUndoRedoEvent()
-        {
-            foreach ((XRHandJointID phalange, List<HPUIInteractorRayAngle> rayAngles) in t.ActiveFingerAngles)
-            {
-                if (rayAngles.Count > 0 && baselineThresholds.TryGetValue(phalange, out float threshold))
-                {
-                    // Assuming all ray angles were modified uniformly, update the cached offset based on the first element.
-                    float newOffset = rayAngles[0].RaySelectionThreshold - threshold;
-                    cachedOffsets[phalange] = newOffset;
-                }
-            }
-            Repaint();
         }
     }
 }
