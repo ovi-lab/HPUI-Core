@@ -64,6 +64,18 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        [Tooltip("The ratio at which the current tracking interactable should be recomputed. The higher the value, the easier it is to switch")]
+        [Range(0f, 1f), SerializeField] private float switchCurrentTrackingInteractableThreshold = 0.15f;
+
+        public float SwitchCurrentTrackingInteractableThreshold
+        {
+            get => switchCurrentTrackingInteractableThreshold;
+            set
+            {
+                switchCurrentTrackingInteractableThreshold = value;
+            }
+        }
+
         private float startTime, cumulativeDistance, timeDelta, currentTrackingInteractableHeuristic, debounceStartTime;
         private Vector2 delta, currentPosition, previousPosition, cumulativeDirection;
         private int activeInteractables = 0;
@@ -114,36 +126,38 @@ namespace ubco.ovilab.HPUI.Interaction
                 bool isTracked = trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state);
                 bool isInFrame = distances.TryGetValue(interactable, out HPUIInteractionInfo interactionData);
 
-                // Target entered hover state
-                if (!isTracked || !state.Active)
+                // seeing a new interactable
+                if (!isTracked)
                 {
-                    if (isTracked)
-                    {
-                        state.SetActive();
-                    }
-                    else
-                    {
-                        state = new HPUIInteractionState();
-                        trackingInteractables.Add(interactable, state);
-                    }
-
-                    activeInteractables++;
-                    updateTrackingInteractable = true;
+                    state = new HPUIInteractionState();
+                    trackingInteractables.Add(interactable, state);
                 }
 
                 if (isInFrame)
                 {
+                    // Target entered hover state
+                    if (!state.Active)
+                    {
+                        state.SetActive();
+                        activeInteractables++;
+
+                        if (currentTrackingInteractable != null)
+                        {
+                            updateTrackingInteractable = true;
+                        }
+                    }
+
                     if (interactionData.heuristic < state.LowestHeuristicValue)
                     {
                         state.LowestHeuristicValue = interactionData.heuristic;
                     }
 
-                    state.CurrentHeuristicValue = interactionData.heuristic;
-
-                    if (!updateTrackingInteractable && currentTrackingInteractable != interactable && interactionData.heuristic < currentTrackingInteractableHeuristic)
+                    if (currentTrackingInteractable == interactable)
                     {
-                        updateTrackingInteractable = true;
+                        currentTrackingInteractableHeuristic = interactionData.heuristic;
                     }
+
+                    state.CurrentHeuristicValue = interactionData.heuristic;
 
                     if (interactionData.isSelection)
                     {
@@ -173,9 +187,15 @@ namespace ubco.ovilab.HPUI.Interaction
                 // Target exited hover state
                 else
                 {
-                    state.SetNotActive(frameTime);
-                    activeInteractables--;
-                    updateTrackingInteractable = true;
+                    if (state.Active)
+                    {
+                        state.SetNotActive(frameTime);
+                        activeInteractables--;
+                        if (interactable == currentTrackingInteractable)
+                        {
+                            updateTrackingInteractable = true;
+                        }
+                    }
                 }
             }
 
@@ -219,19 +239,39 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
-            if (updateTrackingInteractable)
-            {
-                KeyValuePair<IHPUIInteractable, HPUIInteractionState> interactableDataToTrack = trackingInteractables
-                    .Where(kvp => kvp.Value.Active)
-                    .OrderBy(kvp => kvp.Value.CurrentHeuristicValue)
-                    .First();
+            KeyValuePair<IHPUIInteractable, HPUIInteractionState> interactableDataToTrack = trackingInteractables
+                .Where(kvp => kvp.Value.Active)
+                .OrderBy(kvp => kvp.Value.CurrentHeuristicValue)
+                .First();
 
-                if (interactableDataToTrack.Key != currentTrackingInteractable)
+            float heuristicRatio =0;
+            if (currentTrackingInteractable != null)
+            {
+                heuristicRatio = (interactableDataToTrack.Value.CurrentHeuristicValue /
+                                  currentTrackingInteractableHeuristic);
+            }
+
+            if (interactableDataToTrack.Key != currentTrackingInteractable)
+            {
+                if (!updateTrackingInteractable)
                 {
-                    currentTrackingInteractableHeuristic = interactableDataToTrack.Value.CurrentHeuristicValue;
-                    currentTrackingInteractable = interactableDataToTrack.Key;
-                    success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
-                    Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
+                    if (heuristicRatio < switchCurrentTrackingInteractableThreshold)
+                    {
+                        updateTrackingInteractable = true;
+                    }
+                }
+
+                if (updateTrackingInteractable)
+                {
+                    if (interactableDataToTrack.Key != currentTrackingInteractable)
+                    {
+                        currentTrackingInteractableHeuristic = interactableDataToTrack.Value.CurrentHeuristicValue;
+                        currentTrackingInteractable = interactableDataToTrack.Key;
+                        success = currentTrackingInteractable.ComputeInteractorPosition(interactor
+                            , out previousPosition);
+                        Debug.Assert(success
+                            , $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
+                    }
                 }
             }
 
