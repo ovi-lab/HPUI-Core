@@ -22,7 +22,7 @@ namespace ubco.ovilab.HPUI.Editor
         // storing all baseline thresholds
         private Dictionary<XRHandJointID, List<float>> baselineThresholds = new Dictionary<XRHandJointID, List<float>>();
 
-        private const string DONT_ASK_FOR_OVERRIDE_EDITOR_PREF_KEY = "ubco.ovilab.HPUI.Components.ConeThresholdsEditor.DontAskForOverride";
+        private const string DONT_ASK_FOR_OVERRIDE_EDITOR_PREF_KEY = "ubco.ovilab.HPUI.Interaction.Components.ConeThresholdsEditor.DontAskForOverride";
 
         protected void OnEnable()
         {
