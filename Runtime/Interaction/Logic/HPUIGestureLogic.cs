@@ -264,13 +264,10 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (updateTrackingInteractable)
                 {
-                    if (interactableDataToTrack.Key != currentTrackingInteractable)
-                    {
-                        currentTrackingInteractableHeuristic = interactableDataToTrack.Value.CurrentHeuristicValue;
-                        currentTrackingInteractable = interactableDataToTrack.Key;
-                        success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
-                        Debug.Assert(success, $"Current tracking interactable was not hovered by interactor  {interactor.transform.name}");
-                    }
+                    currentTrackingInteractableHeuristic = interactableDataToTrack.Value.CurrentHeuristicValue;
+                    currentTrackingInteractable = interactableDataToTrack.Key;
+                    success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
+                    Debug.Assert(success, $"Current tracking interactable was not hovered by interactor  {interactor.transform.name}");
                 }
             }
 
