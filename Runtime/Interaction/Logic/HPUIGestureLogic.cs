@@ -67,6 +67,10 @@ namespace ubco.ovilab.HPUI.Interaction
         [Tooltip("The ratio at which the current tracking interactable should be recomputed. The higher the value, the easier it is to switch")]
         [Range(0f, 1f), SerializeField] private float switchCurrentTrackingInteractableThreshold = 0.15f;
 
+        /// <summary>
+        /// The ratio at which the current tracking interactable should be recomputed.
+        /// The higher the value, the easier it is to switch
+        /// </summary>
         public float SwitchCurrentTrackingInteractableThreshold
         {
             get => switchCurrentTrackingInteractableThreshold;
@@ -180,7 +184,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             state.StartTime = frameTime;
                             success = interactable.ComputeInteractorPosition(interactor, out Vector2 startPosition);
                             state.StartPosition = startPosition;
-                            Debug.Assert(success, $"Current tracking interactable ({interactable.transform?.name}) was not hoverd by interactor  {interactor.transform?.name}");
+                            Debug.Assert(success, $"Current tracking interactable ({interactable.transform?.name}) was not hovered by interactor  {interactor.transform?.name}");
                         }
                     }
                 }
@@ -244,21 +248,18 @@ namespace ubco.ovilab.HPUI.Interaction
                 .OrderBy(kvp => kvp.Value.CurrentHeuristicValue)
                 .First();
 
-            float heuristicRatio =0;
-            if (currentTrackingInteractable != null)
-            {
-                heuristicRatio = (interactableDataToTrack.Value.CurrentHeuristicValue /
-                                  currentTrackingInteractableHeuristic);
-            }
 
             if (interactableDataToTrack.Key != currentTrackingInteractable)
             {
-                if (!updateTrackingInteractable)
+                float heuristicRatio = Mathf.Infinity;
+                if (currentTrackingInteractable != null)
                 {
-                    if (heuristicRatio < switchCurrentTrackingInteractableThreshold)
-                    {
-                        updateTrackingInteractable = true;
-                    }
+                    heuristicRatio = (interactableDataToTrack.Value.CurrentHeuristicValue /
+                                      currentTrackingInteractableHeuristic);
+                }
+                if (!updateTrackingInteractable && heuristicRatio < switchCurrentTrackingInteractableThreshold)
+                {
+                    updateTrackingInteractable = true;
                 }
 
                 if (updateTrackingInteractable)
@@ -267,16 +268,14 @@ namespace ubco.ovilab.HPUI.Interaction
                     {
                         currentTrackingInteractableHeuristic = interactableDataToTrack.Value.CurrentHeuristicValue;
                         currentTrackingInteractable = interactableDataToTrack.Key;
-                        success = currentTrackingInteractable.ComputeInteractorPosition(interactor
-                            , out previousPosition);
-                        Debug.Assert(success
-                            , $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
+                        success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
+                        Debug.Assert(success, $"Current tracking interactable was not hovered by interactor  {interactor.transform.name}");
                     }
                 }
             }
 
             success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out currentPosition);
-            Debug.Assert(success, $"Current tracking interactable was not hoverd by interactor  {interactor.transform.name}");
+            Debug.Assert(success, $"Current tracking interactable was not hovered by interactor  {interactor.transform.name}");
             delta = currentPosition - previousPosition;
             timeDelta = frameTime - startTime;
             cumulativeDistance += delta.magnitude;
