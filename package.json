@@ -27,5 +27,6 @@
         "description": "Sample scene with HPUI setup. Depends on the following samples in the <a href=\"https://docs.unity3d.com/Packages/com.unity.xr.interaction.toolkit@3.0/manual/index.html\">XR Interaction Toolkit</a>:\n • <a href=\"https://docs.unity3d.com/Packages/com.unity.xr.interaction.toolkit@3.0/manual/samples-hands-interaction-demo.html\">Hands Interaction Demo</a>\n • <a href=\"https://docs.unity3d.com/Packages/com.unity.xr.interaction.toolkit@3.0/manual/samples-xr-device-simulator.html\">XR Device Simulator</a>",
         "path": "Samples~/SampleHPUIScene/"
       }
-    ]
+    ],
+    "hideInEditor": false
 }
