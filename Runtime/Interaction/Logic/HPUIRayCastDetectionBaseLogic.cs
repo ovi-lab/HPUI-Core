@@ -120,12 +120,23 @@ namespace ubco.ovilab.HPUI.Interaction
                     {
                         validInteractable = true;
                         // Opposite directions mean the interactor is above the interactable.
-                        // negaative distance indicates the interactor ie under the interactable.
-                        float sign = Vector3.Dot(hitInfo.collider.transform.up, direction) < 0 ? 1 : -1;
+                        // negative distance indicates the interactor is under the interactable.
+                        float dotProduct = Vector3.Dot(hitInfo.collider.transform.up.normalized, direction.normalized);
+                        float sign = dotProduct < 0 ? 1 : -1;
                         float distance = hitInfo.distance * sign;
-                        // But we use the absolute distance to make sure rays way outside
-                        // the threshold is not selected. i.e. avoid situations like -1 < 0.01
-                        bool isWithinThreshold = angle.WithinThreshold(hitInfo.distance);
+                        // We ignore the rays that make angle between 45-90 between the collider.up and direction
+                        // The assumption here is, rays in that window are not hitting from the back, but from and angle
+                        bool isWithinThreshold;
+                        if (dotProduct > 0 && dotProduct < 0.707) // cos(45deg)
+                        {
+                            isWithinThreshold = false;
+                        }
+                        else
+                        {
+                            // But we use the absolute distance to make sure rays way outside
+                            // the threshold is not selected. i.e. avoid situations like -1 < 0.01
+                            isWithinThreshold = angle.WithinThreshold(hitInfo.distance);
+                        }
 
                         if (raycastData != null)
                         {
