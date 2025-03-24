@@ -95,7 +95,7 @@ namespace ubco.ovilab.HPUI.Interaction
             foreach(HPUIInteractorRayAngle angle in activeFingerAngles)
             {
                 bool validInteractable = false,
-                    isWithinThreshold = false;
+                    isSelection = false;
                 UnityEngine.Profiling.Profiler.BeginSample("Compute direction");
                 // TODO: Batch compute this.
                 Vector3 direction  = attachTransform.TransformDirection(angle.GetDirection(isLeftHand));
@@ -131,19 +131,19 @@ namespace ubco.ovilab.HPUI.Interaction
                         // e.g., when seperate surfaces are used for volar and radial targets.
                         if (dotProduct > 0 && dotProduct < 0.707) // cos(45deg)
                         {
-                            isWithinThreshold = false;
+                            isSelection = false;
                         }
                         else
                         {
                             // FIXME: with the above condition, is this necessary?
                             // But we use the absolute distance to make sure rays way outside
                             // the threshold is not selected. i.e. avoid situations like -1 < 0.01
-                            isWithinThreshold = angle.WithinThreshold(hitInfo.distance);
+                            isSelection = angle.WithinThreshold(hitInfo.distance);
                         }
 
                         if (raycastData != null)
                         {
-                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, angle.X, angle.Z, distance, isWithinThreshold));
+                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, angle.X, angle.Z, distance, isSelection));
                         }
 
                         List<RaycastInteractionInfo> infoList;
@@ -154,14 +154,14 @@ namespace ubco.ovilab.HPUI.Interaction
                         }
 
                         // Using distance as the temp/default value for heuristic
-                        infoList.Add(new RaycastInteractionInfo(distance, isWithinThreshold, hitInfo.point, hitInfo.collider));
+                        infoList.Add(new RaycastInteractionInfo(distance, isSelection, hitInfo.point, hitInfo.collider));
                     }
                 }
                 UnityEngine.Profiling.Profiler.EndSample();
 
                 if (ShowDebugRayVisual)
                 {
-                    Color rayColor = validInteractable && isWithinThreshold ? Color.green : Color.red;
+                    Color rayColor = validInteractable && isSelection ? Color.green : Color.red;
                     Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, rayColor);
                 }
             }
@@ -270,15 +270,15 @@ namespace ubco.ovilab.HPUI.Interaction
             public float angleX;
             public float angleZ;
             public float distance;
-            public bool isWithinThreshold;
+            public bool isSelection;
 
-            public RaycastDataRecord(IHPUIInteractable interactable, float x, float z, float distance, bool isWithinThreshold) : this()
+            public RaycastDataRecord(IHPUIInteractable interactable, float x, float z, float distance, bool isSelection) : this()
             {
                 this.interactable = interactable;
                 this.angleX = x;
                 this.angleZ = z;
                 this.distance = distance;
-                this.isWithinThreshold = isWithinThreshold;
+                this.isSelection = isSelection;
             }
         }
     }
