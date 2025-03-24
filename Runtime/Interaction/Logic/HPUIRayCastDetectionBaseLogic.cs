@@ -42,11 +42,11 @@ namespace ubco.ovilab.HPUI.Interaction
         private QueryTriggerInteraction physicsTriggerInteraction = QueryTriggerInteraction.Ignore;
 
         [SerializeField]
-        [Tooltip("Show sphere rays used for interaction selections.")]
+        [Tooltip("Show rays used for interaction selections. A ray turns green when it detects a selection and remains red otherwise.")]
         private bool showDebugRayVisual = true;
 
         /// <summary>
-        /// Show sphere rays used for interaction selections.
+        /// Show rays used for interaction selections. A ray turns green when it detects a selection and remains red otherwise.
         /// </summary>
         public bool ShowDebugRayVisual { get => showDebugRayVisual; set => showDebugRayVisual = value; }
 
@@ -94,7 +94,8 @@ namespace ubco.ovilab.HPUI.Interaction
             bool isLeftHand = interactor.handedness == InteractorHandedness.Left;
             foreach(HPUIInteractorRayAngle angle in activeFingerAngles)
             {
-                bool validInteractable = false;
+                bool validInteractable = false,
+                    isWithinThreshold = false;
                 UnityEngine.Profiling.Profiler.BeginSample("Compute direction");
                 // TODO: Batch compute this.
                 Vector3 direction  = attachTransform.TransformDirection(angle.GetDirection(isLeftHand));
@@ -124,15 +125,17 @@ namespace ubco.ovilab.HPUI.Interaction
                         float dotProduct = Vector3.Dot(hitInfo.collider.transform.up.normalized, direction.normalized);
                         float sign = dotProduct < 0 ? 1 : -1;
                         float distance = hitInfo.distance * sign;
-                        // We ignore the rays that make angle between 45-90 between the collider.up and direction
-                        // The assumption here is, rays in that window are not hitting from the back, but from and angle
-                        bool isWithinThreshold;
+                        // When the ray origin is behind the interactable (dotProduct > 0) we ignore the rays
+                        // that make angle between 45-90 between the collider.up and direction. The assumption
+                        // here is, rays in that window are not hitting from the back, but from and angle.
+                        // e.g., when seperate surfaces are used for volar and radial targets.
                         if (dotProduct > 0 && dotProduct < 0.707) // cos(45deg)
                         {
                             isWithinThreshold = false;
                         }
                         else
                         {
+                            // FIXME: with the above condition, is this necessary?
                             // But we use the absolute distance to make sure rays way outside
                             // the threshold is not selected. i.e. avoid situations like -1 < 0.01
                             isWithinThreshold = angle.WithinThreshold(hitInfo.distance);
@@ -158,7 +161,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (ShowDebugRayVisual)
                 {
-                    Color rayColor = validInteractable ? Color.green : Color.red;
+                    Color rayColor = validInteractable && isWithinThreshold ? Color.green : Color.red;
                     Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, rayColor);
                 }
             }
