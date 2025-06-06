@@ -7,11 +7,12 @@ using UnityEngine.Assertions;
 
 namespace ubco.ovilab.HPUI.Components
 {
+
     /// <summary>
     /// Convinent wrapper component for <see cref="ConeRayAnglesEstimator"/>.
     /// See <see cref="ConeRayAnglesEstimator"/> for more details.
     /// </summary>
-    public class EstimateConeRayAngles: MonoBehaviour
+    public class ConeRayAnglesEstimationRoutine : MonoBehaviour
     {
         [SerializeField]
         [Tooltip("Corresponding Interactor")]
@@ -105,4 +106,3 @@ namespace ubco.ovilab.HPUI.Components
         }
     }
 }
- 

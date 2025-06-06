@@ -10,8 +10,8 @@ using UnityEngine.XR.Hands;
 namespace ubco.ovilab.HPUI.Editor
 {
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(EstimateConeRayAngles), true)]
-    public class EstimateConeRayAnglesEditor: UnityEditor.Editor
+    [CustomEditor(typeof(ConeRayAnglesEstimationRoutine), true)]
+    public class EstimateConeRayAnglesEditor : UnityEditor.Editor
     {
         private enum State { Wait, Started, Processing, Processed }
         private class StateInformation
@@ -20,10 +20,10 @@ namespace ubco.ovilab.HPUI.Editor
             public HPUIInteractorConeRayAngles generatedAsset, savedAsset;
         }
 
-        private static readonly string[] excludedSerializedNames = new string[]{ "generatedConeRayAngles", "interactableToSegmentMapping", "xrHandTrackingEventsForConeDetection" };
+        private static readonly string[] excludedSerializedNames = new string[] { "generatedConeRayAngles", "interactableToSegmentMapping", "xrHandTrackingEventsForConeDetection" };
         private const string DONT_ASK_EDITORPREF_KEY = "ubco.ovilab.HPUI.Components.ConeEsimation.DontAskWhenRestarting";
-        private static Dictionary<EstimateConeRayAngles, StateInformation> stateInfoStore = new();
-        private EstimateConeRayAngles t;
+        private static Dictionary<ConeRayAnglesEstimationRoutine, StateInformation> stateInfoStore = new();
+        private ConeRayAnglesEstimationRoutine t;
         private SerializedObject generatedConeRayAnglesObj;
         private SerializedProperty mappingProp, xrHandTrackingEventsForConeDetectionProp;
 
@@ -36,9 +36,9 @@ namespace ubco.ovilab.HPUI.Editor
 
         protected void OnEnable()
         {
-            t = target as EstimateConeRayAngles;
+            t = target as ConeRayAnglesEstimationRoutine;
             mappingProp = serializedObject.FindProperty("interactableToSegmentMapping");
-            xrHandTrackingEventsForConeDetectionProp =  serializedObject.FindProperty("xrHandTrackingEventsForConeDetection");
+            xrHandTrackingEventsForConeDetectionProp = serializedObject.FindProperty("xrHandTrackingEventsForConeDetection");
             allSegments = Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)).OfType<HPUIInteractorConeRayAngleSegment>().ToList();
             dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
             if (!stateInfoStore.TryGetValue(t, out stateInfo))
@@ -114,7 +114,7 @@ namespace ubco.ovilab.HPUI.Editor
 
                 GUI.enabled = EditorApplication.isPlaying;
                 if ((stateInfo.state == State.Wait || stateInfo.state == State.Processed) &&
-                    GUILayout.Button(new GUIContent((stateInfo.state == State.Processed ? "Restart": "Start") + " data collection", "Sets up the intertactables to collect data necessary for estimation.")))
+                    GUILayout.Button(new GUIContent((stateInfo.state == State.Processed ? "Restart" : "Start") + " data collection", "Sets up the intertactables to collect data necessary for estimation.")))
                 {
                     if (stateInfo.state == State.Wait || EditorUtility.DisplayDialog("Restart data collection",
                                                                            "Restarting data collection will discard previous data. Continue?",
@@ -195,7 +195,7 @@ namespace ubco.ovilab.HPUI.Editor
     }
 
     [CustomPropertyDrawer(typeof(ConeRayAnglesEstimationPair), true)]
-    public class ConeRayAnglesEstimationPairPropertyDrawer: PropertyDrawer
+    public class ConeRayAnglesEstimationPairPropertyDrawer : PropertyDrawer
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
