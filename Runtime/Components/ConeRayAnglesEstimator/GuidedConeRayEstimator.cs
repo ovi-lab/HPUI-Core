@@ -12,12 +12,12 @@ namespace ubco.ovilab.HPUI.Components
     /// <summary>
     /// Calibrates a new set of cone ray cone ray angles
     /// to be used for <see cref="HPUIInteractor.DetectionLogic"/>
-    /// Works similar to <see cref="ConeRayAnglesEstimator"/> except it
+    /// Works similar to <see cref="OnGestureConeRayEstimator"/> except it
     /// uses multiple frames to estimate an average length
     /// of interaction per ray. Makes use of <see cref="HPUIInteractorConeRayAngleSegment"/>
-    /// from <see cref="ConeRayAnglesEstimator"/> for the list of phalanges.
+    /// from <see cref="OnGestureConeRayEstimator"/> for the list of phalanges.
     /// </summary>
-    public class ConeRayAnglesCalibrator
+    public class GuidedConeRayEstimator
     {
         private bool isCalibrationActive = false;
 
@@ -29,7 +29,7 @@ namespace ubco.ovilab.HPUI.Components
         private List<InteractionDataRecord> interactionRecords = new();
         private List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> currentInteractionData = new();
 
-        public ConeRayAnglesCalibrator(HPUIInteractor interactor)
+        public GuidedConeRayEstimator(HPUIInteractor interactor)
         {
 
             if (!(interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic fullRayDetectionLogic))
@@ -49,8 +49,15 @@ namespace ubco.ovilab.HPUI.Components
         protected void RaycastDataCallback(List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecords)
         {
             // ensuring the provided interactor is the same as the one providing the callbacks.
-            if (!isCalibrationActive) return;
-            Assert.AreEqual(fullRangeAngles, ((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles, $"Interactor {fullRangeAngles.name} is not the same as {((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles.name}");
+            if (!isCalibrationActive)
+            {
+                return;
+            }
+
+            Assert.AreEqual(fullRangeAngles,
+                            ((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles,
+                            $"Interactor {fullRangeAngles.name} is not the same as {((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles.name}");
+
             if (raycastDataRecords.Count > 0)
             {
                 currentInteractionData.Add(raycastDataRecords);

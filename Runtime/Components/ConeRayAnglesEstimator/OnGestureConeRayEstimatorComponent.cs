@@ -9,10 +9,10 @@ namespace ubco.ovilab.HPUI.Components
 {
 
     /// <summary>
-    /// Convinent wrapper component for <see cref="ConeRayAnglesEstimator"/>.
-    /// See <see cref="ConeRayAnglesEstimator"/> for more details.
+    /// Convinent wrapper component for <see cref="OnGestureConeRayEstimator"/>.
+    /// See <see cref="OnGestureConeRayEstimator"/> for more details.
     /// </summary>
-    public class ConeRayAnglesEstimationRoutine : MonoBehaviour
+    public class OnGestureConeRayEstimatorComponent : MonoBehaviour
     {
         [SerializeField]
         [Tooltip("Corresponding Interactor")]
@@ -52,7 +52,7 @@ namespace ubco.ovilab.HPUI.Components
         /// </summary>
         public List<ConeRayAnglesEstimationPair> InteractableToSegmentMapping { get => interactableToSegmentMapping; set => interactableToSegmentMapping = value; }
 
-        private ConeRayAnglesEstimator estimator;
+        private OnGestureConeRayEstimator estimator;
         private HPUIFullRangeRayCastDetectionLogic fullrangeRaycastDetectionLogicReference;
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace ubco.ovilab.HPUI.Components
             {
                 fullrangeRaycastDetectionLogicReference = Interactor.DetectionLogic as HPUIFullRangeRayCastDetectionLogic;
             }
-            estimator = new ConeRayAnglesEstimator(Interactor, InteractableToSegmentMapping);
+            estimator = new OnGestureConeRayEstimator(Interactor, InteractableToSegmentMapping);
         }
 
         /// <summary>
