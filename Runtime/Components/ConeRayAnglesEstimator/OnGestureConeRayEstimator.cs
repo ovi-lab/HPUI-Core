@@ -58,7 +58,7 @@ namespace ubco.ovilab.HPUI.Components
     /// <see cref="HPUIFullRangeRayCastDetectionLogic.raycastData"/>
     /// </remarks>
     /// <seealso cref="EstimateConeRayAngles"/>
-    public class ConeRayAnglesEstimator
+    public class OnGestureConeRayEstimator
     {
         private HPUIInteractor interactor;
         private List<ConeRayAnglesEstimationPair> interactableSegmentPairs;
@@ -83,7 +83,7 @@ namespace ubco.ovilab.HPUI.Components
         ///   If not true, interactableSegmentPairs should have atleast one entry for each
         ///   <see cref="HPUIInteractorConeRayAngleSegment"/>.
         /// </param>
-        public ConeRayAnglesEstimator(HPUIInteractor interactor, List<ConeRayAnglesEstimationPair> interactableSegmentPairs, bool ignoreMissingSegments=false)
+        public OnGestureConeRayEstimator(HPUIInteractor interactor, List<ConeRayAnglesEstimationPair> interactableSegmentPairs, bool ignoreMissingSegments=false)
         {
             if (!(interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic fullRayDetectionLogic))
             {

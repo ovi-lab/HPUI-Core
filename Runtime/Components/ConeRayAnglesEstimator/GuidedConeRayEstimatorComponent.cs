@@ -7,7 +7,7 @@ using UnityEngine.Assertions;
 
 namespace ubco.ovilab.HPUI.Components
 {
-    public class ConeRayAnglesCalibrationRoutine : MonoBehaviour
+    public class GuidedConeRayEstimatorComponent : MonoBehaviour
     {
         [SerializeField]
         [Tooltip("Corresponding Interactor")]
@@ -47,13 +47,17 @@ namespace ubco.ovilab.HPUI.Components
         /// </summary>
         public XRHandTrackingEvents XRHandTrackingEventsForConeDetection { get => xrHandTrackingEventsForConeDetection; set => xrHandTrackingEventsForConeDetection = value; }
 
-        private ConeRayAnglesCalibrator calibrator;
+        private GuidedConeRayEstimator calibrator;
         private HPUIFullRangeRayCastDetectionLogic fullrangeRaycastDetectionLogicReference;
         private bool initComplete = false;
 
         private void BeginDataCollectionProcedure()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
             if (SetDetectionLogicOnEstimation)
             {
                 Assert.IsTrue(XRHandTrackingEventsForConeDetection != null || Interactor.GetComponent<XRHandTrackingEvents>() != null,
@@ -74,13 +78,16 @@ namespace ubco.ovilab.HPUI.Components
                 fullrangeRaycastDetectionLogicReference = Interactor.DetectionLogic as HPUIFullRangeRayCastDetectionLogic;
             }
 
-            calibrator = new ConeRayAnglesCalibrator(interactor);
+            calibrator = new GuidedConeRayEstimator(interactor);
             initComplete = true;
         }
 
         public void StartDataCollectionForPhalange()
         {
-            if (!initComplete) BeginDataCollectionProcedure();
+            if (!initComplete)
+            {
+                BeginDataCollectionProcedure();
+            }
             calibrator.IsCalibrationActive = true;
         }
 

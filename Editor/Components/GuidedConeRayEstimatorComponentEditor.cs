@@ -2,16 +2,14 @@ using UnityEngine;
 using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
 using ubco.ovilab.HPUI.Components;
-using System.Collections.Generic;
 using System;
-using System.Linq;
 using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI.Editor
 {
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(ConeRayAnglesCalibrationRoutine), true)]
-    public class ConeRayAnglesCalibrationRoutineEditor : UnityEditor.Editor
+    [CustomEditor(typeof(GuidedConeRayEstimatorComponent), true)]
+    public class GuidedConeRayEstimatorComponentEditor : UnityEditor.Editor
     {
         private enum State { Wait, Started, Processing, Processed }
         private class StateInformation
@@ -29,13 +27,13 @@ namespace ubco.ovilab.HPUI.Editor
         private SerializedObject generatedConeRayAnglesObj;
         private string collectDataButtonString = "Start Data Collection";
         private bool isCollectingData = false, showXRHandtrackingEventsMissingMessage;
-        private ConeRayAnglesCalibrationRoutine t;
+        private GuidedConeRayEstimatorComponent t;
         private bool hasSomeDataBeenCollected = false;
         private StateInformation stateInfo;
 
         protected void OnEnable()
         {
-            t = target as ConeRayAnglesCalibrationRoutine;
+            t = target as GuidedConeRayEstimatorComponent;
             stateInfo = new StateInformation();
         }
 
