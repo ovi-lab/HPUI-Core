@@ -3,63 +3,140 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ubco.ovilab.HPUI.Components;
 using ubco.ovilab.HPUI.Interaction;
+using ubco.ovilab.HPUI.utils;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI
 {
-    public abstract class ConeRayEstimator
+    public class ConeRayEstimator : MonoBehaviour
     {
-        protected HPUIInteractorFullRangeAngles fullRangeAngles;
-        protected HPUIInteractor interactor;
-        protected HPUIFullRangeRayCastDetectionLogic fullRayDetectionLogic;
-        protected List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> currentInteractionData = new();
-        protected List<InteractionDataRecord> interactionRecords = new();
-
         /// <summary>
-        /// Instantiates the estimator. This will subscribe to <see cref="HPUIInteractor.DetectionLogic"/>interactor.DetectionLogic</see>
-        /// and the <see cref="IHPUIInteractable.GestureEvent">GestureEvent</see> of each
-        /// interactable in interactableSegmentPairs.
+        /// TODO:
         /// </summary>
-        /// <param name="interactor">
-        ///   <see cref="HPUIFullRangeRayCastDetectionLogic"/> for <see cref="HPUIInteractor.DetectionLogic"/>.
-        ///   If not configured as such, a ArgumentException will be thrown.
-        /// </param>
-        /// <param name="interactableSegmentPairs">
-        ///   List of <see cref="ConeRayAnglesEstimationPair"/>.
-        /// </param>
-        /// <param name="ignoreMissingSegments">
-        ///   If not true, interactableSegmentPairs should have atleast one entry for each
-        ///   <see cref="HPUIInteractorConeRayAngleSegment"/>.
-        /// </param>
-        public ConeRayEstimator(HPUIInteractor interactor)
-        {
-            if (!(interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic fullRayDetectionLogic))
-            {
-                throw new ArgumentException("Interactor is expected to have `HPUIFullRangeRayCastDetectionLogic` as the DetectionLogic.");
-            }
+        public enum State {
+            /// <summary>
+            /// TODO:
+            /// </summary>
+            Ready,
 
-            this.interactor = interactor;
-            this.fullRayDetectionLogic = fullRayDetectionLogic;
-            this.fullRangeAngles = fullRayDetectionLogic.FullRangeRayAngles;
+            /// <summary>
+            /// TODO:
+            /// </summary>
+            CollectingData,
 
-            fullRayDetectionLogic.raycastData += RaycastDataCallback;
+            /// <summary>
+            /// TODO:
+            /// </summary>
+            EstimatingConeRays
         }
 
-        /// <summary>
-        /// The callback used to get the data from the <see cref="HPUIFullRangeRayCastDetectionLogic.raycastData"/>.
-        /// </summary>
-        protected void RaycastDataCallback(List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecords)
-        {
-            Assert.AreEqual(fullRangeAngles,
-                            ((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles,
-                            $"Interactor {fullRangeAngles.name} is not the same as {((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles.name}");
+        [SerializeField, Tooltip("TODO")]
+        private ConeRayDataCollectorBase dataCollector;
 
-            if (raycastDataRecords.Count > 0)
+        /// <summary>
+        /// TODO: docs
+        /// </summary>
+        public ConeRayDataCollectorBase DataCollector { get => dataCollector; set => dataCollector = value; }
+
+        [SerializeReference, SubclassSelector]
+        [Tooltip("TODO")]
+        private IConeRaySegmentComputation coneRaySegmentComputation;
+
+        /// <summary>
+        /// TODO: docs
+        /// </summary>
+        public IConeRaySegmentComputation ConeRaySegmentComputation { get => coneRaySegmentComputation; set => coneRaySegmentComputation = value; }
+
+        [SerializeField, Tooltip("TODO")]
+        private HPUIInteractorConeRayAngles generatedAsset;
+        /// <summary>
+        /// TODO: docs
+        /// </summary>
+        public HPUIInteractorConeRayAngles GeneratedAsset { get => generatedAsset; protected set => generatedAsset = value; }
+
+        private HPUIFullRangeRayCastDetectionLogic fullrangeRaycastDetectionLogicReference;
+
+        [Space()]
+        [SerializeField, Tooltip("If true, will set the detection logic of interactor to HPUIConeRayCastDetectionLogic with generated asset.")]
+        private bool setDetectionLogicOnEstimation = false;
+
+        /// <summary>
+        /// If true, will set the detection logic of interactor to HPUIConeRayCastDetectionLogic with generated asset.
+        /// </summary>
+        public bool SetDetectionLogicOnEstimation { get => setDetectionLogicOnEstimation; set => setDetectionLogicOnEstimation = value; }
+
+        [SerializeField]
+        [Tooltip("(optional) The hand tracking event to use with HPUIConeRayCastDetectionLogic if SetDetectionLogicOnEstimation is true." +
+                 "If this is not set, then will look for XRHandTrackingEvents in the Interactor.")]
+        private XRHandTrackingEvents xrHandTrackingEventsForConeDetection;
+
+        /// <summary>
+        /// The hand tracking event to use with HPUIConeRayCastDetectionLogic if SetDetectionLogicOnEstimation is true.
+        /// If this is not set, then will look for XRHandTrackingEvents in the Interactor.
+        /// </summary>
+        public XRHandTrackingEvents XRHandTrackingEventsForConeDetection { get => xrHandTrackingEventsForConeDetection; set => xrHandTrackingEventsForConeDetection = value; }
+
+        /// <summary>
+        /// TODO:
+        /// </summary>
+        public State CurrentState { get ; private set; }
+
+        /// <summary>
+        /// Intiate data collection. If this component was used to generate an asset, and
+        /// the detection logic is not a <see cref="HPUIFullRangeRayCastDetectionLogic"/>, the
+        /// HPUIInteractorFullRangeAngles before the asset was generated will be set as the
+        /// detection logic of the interactor.
+        /// </summary>
+        public void StartDataCollection()
+        {
+            Assert.IsTrue(Application.isPlaying, "This doesn't work in editor mode!");
+
+            if (CurrentState != State.Ready)
             {
-                currentInteractionData.Add(raycastDataRecords);
+                Debug.LogWarning($"Current state of estimator is {CurrentState}, Cannot start new procedure.");
+                return;
+            }
+
+            if (SetDetectionLogicOnEstimation)
+            {
+                Assert.IsTrue(XRHandTrackingEventsForConeDetection != null || dataCollector.Interactor.GetComponent<XRHandTrackingEvents>() != null,
+                              "XRHandTrackingEventsForConeDetection is null and Interactor doesn't have an XRHandTrackingEvents component.");
+            }
+
+            if (dataCollector == null)
+            {
+                throw new ArgumentException("DataCollector not configured.");
+            }
+
+            if (coneRaySegmentComputation == null)
+            {
+                throw new ArgumentException("ConeRaySegmentComputation not configured.");
+            }
+
+            if (!(dataCollector.Interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic))
+            {
+                if (fullrangeRaycastDetectionLogicReference == null)
+                {
+                    throw new ArgumentException("Expected interactor to be configured with HPUIInteractorFullRangeAngles.");
+                }
+
+                dataCollector.Interactor.DetectionLogic = fullrangeRaycastDetectionLogicReference as IHPUIDetectionLogic;
+            }
+            else
+            {
+                fullrangeRaycastDetectionLogicReference = dataCollector.Interactor.DetectionLogic as HPUIFullRangeRayCastDetectionLogic;
+            }
+
+            if (dataCollector.StartDataCollection())
+            {
+                CurrentState = State.CollectingData;
+            }
+            else
+            {
+                throw new InvalidOperationException("DataCollector failed to start collecting data");
             }
         }
 
@@ -71,19 +148,31 @@ namespace ubco.ovilab.HPUI
         /// and the <see cref="IHPUIInteractable.GestureEvent">GestureEvent</see> of each
         /// interactable it is tracking.
         /// </remarks>
-        public virtual void EstimateConeRayAngles(Action<HPUIInteractorConeRayAngles> callback)
+        public virtual void EndAndEstimate()
         {
+            Assert.IsTrue(Application.isPlaying, "This doesn't work in editor mode!");
+
+            if (CurrentState != State.CollectingData)
+            {
+                Debug.LogWarning($"Current state of estimator is {CurrentState}, was expecting `CollectingData`. Cannot end and estimate.");
+                return;
+            }
+
+            if (!dataCollector.StopDataCollection())
+            {
+                throw new InvalidOperationException("DataCollector failed to stop collecting data");
+            }
+            IEnumerable<ConeRayComputationDataRecord> dataRecords = dataCollector.DataRecords;
             HPUIInteractorConeRayAngles estimatedConeRayAngles = ScriptableObject.CreateInstance<HPUIInteractorConeRayAngles>();
 
-            fullRayDetectionLogic.raycastData -= RaycastDataCallback;
-
-            interactor.StartCoroutine(EstimationCoroutine(callback, estimatedConeRayAngles));
+            StartCoroutine(EstimationCoroutine(estimatedConeRayAngles, dataRecords));
+            CurrentState = State.EstimatingConeRays;
         }
 
         /// <summary>
         /// Coroutine that does the actual work of <see cref="EstimateConeRayAngles"/>.
         /// </summary>
-        protected virtual IEnumerator EstimationCoroutine(Action<HPUIInteractorConeRayAngles> callback, HPUIInteractorConeRayAngles estimatedConeRayAngles)
+        protected virtual IEnumerator EstimationCoroutine(HPUIInteractorConeRayAngles estimatedConeRayAngles, IEnumerable<ConeRayComputationDataRecord> dataRecords)
         {
             yield return null;
             HPUIInteractorConeRayAngleSegment[] segments = (HPUIInteractorConeRayAngleSegment[])Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment));
@@ -93,7 +182,8 @@ namespace ubco.ovilab.HPUI
             int i = 0;
             foreach (HPUIInteractorConeRayAngleSegment segment in segments)
             {
-                tasks[i++] = Task.Run(() => EstimateConeAnglesForSegment(segment));
+                IEnumerable<ConeRayComputationDataRecord> filteredDataRecords = dataRecords.Where(r => r.segment == segment);
+                tasks[i++] = Task.Run(() => coneRaySegmentComputation.EstimateConeAnglesForSegment(segment, filteredDataRecords));
             }
 
             while (tasks.Any(t => !t.IsCompleted))
@@ -156,38 +246,17 @@ namespace ubco.ovilab.HPUI
                 }
             }
 
-            try
-            {
-                callback.Invoke(estimatedConeRayAngles);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"{e}");
-            }
-        }
+            GeneratedAsset = estimatedConeRayAngles;
 
-        /// <summary>
-        /// For a given segment, computes the List of <see cref="HPUIInteractorRayAngle">.
-        /// </summary>
-        /// <param name="segment">
-        ///   The <see cref="HPUIInteractorConeRayAngleSegment"/> for which cone
-        ///   angles are being computed.
-        /// </param>
-        protected abstract List<HPUIInteractorRayAngle> EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment);
-
-        /// <summary>
-        /// Holds all the data collected for a single gesture event.
-        /// </summary>
-        protected struct InteractionDataRecord
-        {
-            public List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> records;
-            public HPUIInteractorConeRayAngleSegment segment;
-
-            public InteractionDataRecord(List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> records, HPUIInteractorConeRayAngleSegment segment) : this()
+            if (SetDetectionLogicOnEstimation)
             {
-                this.records = records;
-                this.segment = segment;
+                dataCollector.Interactor.DetectionLogic = new HPUIConeRayCastDetectionLogic(
+                    dataCollector.Interactor.DetectionLogic.InteractionHoverRadius,
+                    estimatedConeRayAngles,
+                    XRHandTrackingEventsForConeDetection != null ? XRHandTrackingEventsForConeDetection : dataCollector.Interactor.GetComponent<XRHandTrackingEvents>());
             }
+
+            CurrentState = State.Ready;
         }
     }
 }
