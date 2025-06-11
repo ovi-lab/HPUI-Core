@@ -7,7 +7,7 @@ using UnityEngine.Assertions;
 namespace ubco.ovilab.HPUI
 {
     /// <summary>
-    /// TODO: docs
+    /// Computes the cone rays from the frames that have the minimum ray distance in a given <see cref="ConeRayComputationDataRecord"/>.
     /// </summary>
     [Serializable]
     public class PeakConeRaySegmentComputation : IConeRaySegmentComputation

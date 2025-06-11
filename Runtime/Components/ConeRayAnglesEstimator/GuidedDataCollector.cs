@@ -3,7 +3,7 @@ using UnityEngine;
 namespace ubco.ovilab.HPUI
 {
     /// <summary>
-    /// TODO
+    /// Data is collected by specifying which segment all data should be assigned to.
     /// </summary>
     public class GuidedDataCollector : ConeRayDataCollectorBase
     {
@@ -17,7 +17,8 @@ namespace ubco.ovilab.HPUI
         public HPUIInteractorConeRayAngleSegment TargetSegment { get => targetSegment; set => targetSegment = value; }
 
         /// <summary>
-        /// The callback used with the interactable gesture event to track the events.
+        /// This will create a <see cref="ConeRayComputationDataRecord"/> for the
+        /// segment passed as a parameter.
         /// </summary>
         public void EndCalibrationForSegment(HPUIInteractorConeRayAngleSegment segment)
         {
@@ -27,7 +28,8 @@ namespace ubco.ovilab.HPUI
         }
 
         /// <summary>
-        /// TODO
+        /// This will create a <see cref="ConeRayComputationDataRecord"/> for the
+        /// current <see cref="TargetSegment"/>.
         /// </summary>
         public void EndDataCollectionForTargetSegment()
         {

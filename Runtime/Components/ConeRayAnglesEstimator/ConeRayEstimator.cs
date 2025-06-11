@@ -14,46 +14,46 @@ namespace ubco.ovilab.HPUI
     public class ConeRayEstimator : MonoBehaviour
     {
         /// <summary>
-        /// TODO:
+        /// Represents the different states of the cone processing operation.
         /// </summary>
         public enum State {
             /// <summary>
-            /// TODO:
+            /// The system is ready to start processing.
             /// </summary>
             Ready,
 
             /// <summary>
-            /// TODO:
+            /// The system is currently collecting input data.
             /// </summary>
             CollectingData,
 
             /// <summary>
-            /// TODO:
+            /// The system is currently estimating rays relative to the cone.
             /// </summary>
             EstimatingConeRays
         }
 
-        [SerializeField, Tooltip("TODO")]
+        [SerializeField, Tooltip("The data collector responsible for gathering cone ray data.")]
         private ConeRayDataCollectorBase dataCollector;
 
         /// <summary>
-        /// TODO: docs
+        /// The data collector responsible for gathering cone ray data.
         /// </summary>
         public ConeRayDataCollectorBase DataCollector { get => dataCollector; set => dataCollector = value; }
 
         [SerializeReference, SubclassSelector]
-        [Tooltip("TODO")]
+        [Tooltip("Handles the computation logic for cone ray segments.")]
         private IConeRaySegmentComputation coneRaySegmentComputation;
 
         /// <summary>
-        /// TODO: docs
+        /// Handles the computation logic for cone ray segments.
         /// </summary>
         public IConeRaySegmentComputation ConeRaySegmentComputation { get => coneRaySegmentComputation; set => coneRaySegmentComputation = value; }
 
-        [SerializeField, Tooltip("TODO")]
+        [SerializeField, Tooltip("Asset containing the configuration for cone ray angles generated from estimation.")]
         private HPUIInteractorConeRayAngles generatedAsset;
         /// <summary>
-        /// TODO: docs
+        /// Asset containing the configuration for cone ray angles generated from estimation.
         /// </summary>
         public HPUIInteractorConeRayAngles GeneratedAsset { get => generatedAsset; protected set => generatedAsset = value; }
 
@@ -64,7 +64,7 @@ namespace ubco.ovilab.HPUI
         private bool setDetectionLogicOnEstimation = false;
 
         /// <summary>
-        /// If true, will set the detection logic of interactor to HPUIConeRayCastDetectionLogic with generated asset.
+        /// If true, sets the detection logic of the interactor to HPUIConeRayCastDetectionLogic using the generated asset after estimation.
         /// </summary>
         public bool SetDetectionLogicOnEstimation { get => setDetectionLogicOnEstimation; set => setDetectionLogicOnEstimation = value; }
 
@@ -74,13 +74,13 @@ namespace ubco.ovilab.HPUI
         private XRHandTrackingEvents xrHandTrackingEventsForConeDetection;
 
         /// <summary>
-        /// The hand tracking event to use with HPUIConeRayCastDetectionLogic if SetDetectionLogicOnEstimation is true.
-        /// If this is not set, then will look for XRHandTrackingEvents in the Interactor.
+        /// (Optional) The hand tracking event to use with HPUIConeRayCastDetectionLogic if SetDetectionLogicOnEstimation is true.
+        /// If not set, the system will attempt to find XRHandTrackingEvents on the Interactor.
         /// </summary>
         public XRHandTrackingEvents XRHandTrackingEventsForConeDetection { get => xrHandTrackingEventsForConeDetection; set => xrHandTrackingEventsForConeDetection = value; }
 
         /// <summary>
-        /// TODO:
+        /// Represents the current state of the cone ray estimation process.
         /// </summary>
         public State CurrentState { get ; private set; }
 
