@@ -80,6 +80,11 @@ namespace ubco.ovilab.HPUI.Editor
                             indentedRect.y += foldoutDifference;
                             customDrawer.OnGUI(indentedRect, property, label);
                         }
+                        else if (!property.hasVisibleChildren)
+                        {
+                            childPosition.y += (height + EditorGUIUtility.standardVerticalSpacing);
+                            EditorGUI.LabelField(childPosition, "No configurations");
+                        }
                         else
                         {
                             childPosition.y += (height + EditorGUIUtility.standardVerticalSpacing);
