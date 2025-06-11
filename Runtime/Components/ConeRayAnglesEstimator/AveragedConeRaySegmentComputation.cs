@@ -43,7 +43,7 @@ namespace ubco.ovilab.HPUI
                             rayDistances[(ray.angleX, ray.angleZ)].Add(ray.distance);
                         }
                     }
-                    int frameCountForMinRayInteractionsThreshold = (int)(minRayInteractionsThreshold * minRayInteractionsThreshold);
+                    int frameCountForMinRayInteractionsThreshold = (int)(minRayInteractionsThreshold * interactionRecord.records.Count);
                     foreach (var ray in rayDistances)
                     {
                         if (ray.Value.Count > frameCountForMinRayInteractionsThreshold)
