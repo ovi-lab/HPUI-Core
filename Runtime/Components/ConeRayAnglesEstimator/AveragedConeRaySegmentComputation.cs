@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ubco.ovilab.HPUI.Interaction;
+using UnityEngine;
 
 namespace ubco.ovilab.HPUI
 {
@@ -11,6 +12,10 @@ namespace ubco.ovilab.HPUI
     [Serializable]
     public class AveragedConeRaySegmentComputation : IConeRaySegmentComputation
     {
+        [SerializeField, Range(0.01f, 1f)]
+        [Tooltip("The percentage of frames in the gesture that a ray should have been used to qualify for the final cone")]
+        private float minRayInteractionsThreshold = 0.2f;
+
         List<HPUIInteractorRayAngle> IConeRaySegmentComputation.EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment, IEnumerable<ConeRayComputationDataRecord> interactionRecords)
         {
             Dictionary<(float, float), float> averageRayDistance = new();
@@ -38,10 +43,10 @@ namespace ubco.ovilab.HPUI
                             rayDistances[(ray.angleX, ray.angleZ)].Add(ray.distance);
                         }
                     }
-
+                    int frameCountForMinRayInteractionsThreshold = (int)(minRayInteractionsThreshold * minRayInteractionsThreshold);
                     foreach (var ray in rayDistances)
                     {
-                        if (ray.Value.Count > 10) //TODO: Remove magic number!
+                        if (ray.Value.Count > frameCountForMinRayInteractionsThreshold)
                         {
                             averageRayDistance[(ray.Key.Item1, ray.Key.Item2)] = ray.Value.Average();
                         }
