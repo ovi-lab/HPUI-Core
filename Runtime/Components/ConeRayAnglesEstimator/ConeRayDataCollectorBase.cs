@@ -6,13 +6,22 @@ using UnityEngine.Assertions;
 
 namespace ubco.ovilab.HPUI
 {
+    /// <summary>
+    /// Base class for collecting data. Implementing classes are exepcted to appropriately
+    /// populate <see cref="DataRecords"/>.
+    /// </summary>
+    /// <remarks>
+    /// The interactor used is expected to be configured with a <see cref="HPUIFullRangeRayCastDetectionLogic"/>
+    /// for <see cref="HPUIInteractor.DetectionLogic"/>. The data is collected by subscribing to
+    /// <see cref="HPUIFullRangeRayCastDetectionLogic.raycastData"/>
+    /// </remarks>
     public abstract class ConeRayDataCollectorBase : MonoBehaviour
     {
-        [SerializeField, Tooltip("")]
+        [SerializeField, Tooltip("The interactor used to collect RaycastDataRecord data.")]
         private HPUIInteractor interactor;
 
         /// <summary>
-        /// TODO
+        /// The interactor used to collect <see cref="HPUIRayCastDetectionBaseLogic.RaycastDataRecord"/> data.
         /// </summary>
         public HPUIInteractor Interactor { get => interactor; set => interactor = value; }
 
@@ -25,7 +34,10 @@ namespace ubco.ovilab.HPUI
         public List<ConeRayComputationDataRecord> DataRecords { get; protected set; }
 
         /// <summary>
-        /// TODO:
+        /// This initiates the data collection process.
+        /// This will subscribe to <see cref="HPUIInteractor.DetectionLogic"/>interactor.DetectionLogic</see>
+        /// and the <see cref="IHPUIInteractable.GestureEvent">GestureEvent</see> of each
+        /// interactable in interactableSegmentPairs.
         /// </summary>
         public virtual bool StartDataCollection()
         {
@@ -68,7 +80,7 @@ namespace ubco.ovilab.HPUI
         }
 
         /// <summary>
-        /// TODO:
+        /// This terminates the data collection process and unsubscribe relevant callbacks.
         /// </summary>
         public virtual bool StopDataCollection()
         {

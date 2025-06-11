@@ -7,8 +7,10 @@ using UnityEngine;
 namespace ubco.ovilab.HPUI
 {
     /// <summary>
-    /// TODO
+    /// Collect data for each gesture.  Determins the segment for a given interaction based on the
+    /// mapping provided in <see cref="InteractableToSegmentMapping"/>.
     /// </summary>
+    /// <seealso cref="IHPUIInteractable.GestureEvent"/>
     public class OnGestureDataCollector : ConeRayDataCollectorBase
     {
         [Serializable]
