@@ -6,7 +6,7 @@ using ubco.ovilab.HPUI.Interaction;
 namespace ubco.ovilab.HPUI
 {
     /// <summary>
-    /// Computes the cone ray angles by averaging accorss frames.
+    /// Computes the cone ray angles by averaging accords frames.
     /// </summary>
     [Serializable]
     public class AveragedConeRaySegmentComputation : IConeRaySegmentComputation

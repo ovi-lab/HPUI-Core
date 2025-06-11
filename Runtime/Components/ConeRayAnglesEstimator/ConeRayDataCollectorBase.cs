@@ -7,7 +7,7 @@ using UnityEngine.Assertions;
 namespace ubco.ovilab.HPUI
 {
     /// <summary>
-    /// Base class for collecting data. Implementing classes are exepcted to appropriately
+    /// Base class for collecting data. Implementing classes are expected to appropriately
     /// populate <see cref="DataRecords"/>.
     /// </summary>
     /// <remarks>
