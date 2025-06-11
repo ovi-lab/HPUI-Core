@@ -16,7 +16,8 @@ namespace ubco.ovilab.HPUI
         /// <summary>
         /// Represents the different states of the cone processing operation.
         /// </summary>
-        public enum State {
+        public enum State
+        {
             /// <summary>
             /// The system is ready to start processing.
             /// </summary>
@@ -82,7 +83,7 @@ namespace ubco.ovilab.HPUI
         /// <summary>
         /// Represents the current state of the cone ray estimation process.
         /// </summary>
-        public State CurrentState { get ; private set; }
+        public State CurrentState { get; private set; }
 
         /// <summary>
         /// Intiate data collection. If this component was used to generate an asset, and
@@ -141,7 +142,7 @@ namespace ubco.ovilab.HPUI
         }
 
         /// <summary>
-        /// Stops the data collection and initates the estimation. Once done, callback will be invoked with the estimated asset.
+        /// Stops the data collection and initiates the estimation. Once done, callback will be invoked with the estimated asset.
         /// </summary>
         /// <remarks>
         /// This will unsubscribe to <see cref="HPUIInteractor.DetectionLogic"/>interactor.DetectionLogic</see>

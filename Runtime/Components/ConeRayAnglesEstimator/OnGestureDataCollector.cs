@@ -7,7 +7,7 @@ using UnityEngine;
 namespace ubco.ovilab.HPUI
 {
     /// <summary>
-    /// Collect data for each gesture.  Determins the segment for a given interaction based on the
+    /// Collect data for each gesture. Determines the segment for a given interaction based on the
     /// mapping provided in <see cref="InteractableToSegmentMapping"/>.
     /// </summary>
     /// <seealso cref="IHPUIInteractable.GestureEvent"/>
@@ -28,7 +28,7 @@ namespace ubco.ovilab.HPUI
         private List<ConeRayAnglesEstimationPair> interactableToSegmentMapping = new();
 
         /// <summary>
-        /// List of interactable to segment mappaing pairs. The list is expected to have all segments.
+        /// List of interactable to segment mapping pairs. The list is expected to have all segments.
         /// </summary>
         public List<ConeRayAnglesEstimationPair> InteractableToSegmentMapping { get => interactableToSegmentMapping; set => interactableToSegmentMapping = value; }
 
@@ -36,7 +36,7 @@ namespace ubco.ovilab.HPUI
         private bool ignoreMissingSegments = false;
 
         /// <summary>
-        /// If not true, interactableSegmentPairs should have atleast one entry for each
+        /// If not true, interactableSegmentPairs should have at least one entry for each
         /// </summary>
         public bool IgnoreMissingSegments { get => ignoreMissingSegments; set => ignoreMissingSegments = value; }
 
@@ -74,7 +74,7 @@ namespace ubco.ovilab.HPUI
         {
             if (args.State == HPUIGestureState.Stopped)
             {
-                foreach(ConeRayAnglesEstimationPair pair in InteractableToSegmentMapping)
+                foreach (ConeRayAnglesEstimationPair pair in InteractableToSegmentMapping)
                 {
                     if ((IHPUIInteractable)pair.interactable == args.interactableObject)
                     {
