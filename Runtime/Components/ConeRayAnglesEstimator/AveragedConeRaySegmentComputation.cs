@@ -1,42 +1,21 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ubco.ovilab.HPUI.Interaction;
 
-namespace ubco.ovilab.HPUI.Components
+namespace ubco.ovilab.HPUI
 {
     /// <summary>
-    /// Calibrates a new set of cone ray cone ray angles
-    /// to be used for <see cref="HPUIInteractor.DetectionLogic"/>
-    /// Works similar to <see cref="OnGestureConeRayEstimator"/> except it
-    /// uses multiple frames to estimate an average length
-    /// of interaction per ray. Makes use of <see cref="HPUIInteractorConeRayAngleSegment"/>
-    /// from <see cref="OnGestureConeRayEstimator"/> for the list of phalanges.
+    /// TODO: docs
     /// </summary>
-    public class GuidedConeRayEstimator: ConeRayEstimator
+    [Serializable]
+    public class AveragedConeRaySegmentComputation : IConeRaySegmentComputation
     {
-        private bool isCalibrationActive = false;
-
-        public bool IsCalibrationActive { get => isCalibrationActive; set => isCalibrationActive = value; }
-
-        public GuidedConeRayEstimator(HPUIInteractor interactor) : base(interactor)
-        { }
-
-        /// <summary>
-        /// The callback used with the interactable gesture event to track the events.
-        /// </summary>
-        public void EndCalibrationForSegment(HPUIInteractorConeRayAngleSegment segment)
-        {
-            interactionRecords.Add(new InteractionDataRecord(currentInteractionData, segment));
-
-            currentInteractionData = new();
-        }
-
-        /// <inheritdoc />
-        protected override List<HPUIInteractorRayAngle> EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment)
+        List<HPUIInteractorRayAngle> IConeRaySegmentComputation.EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment, IEnumerable<ConeRayComputationDataRecord> interactionRecords)
         {
             Dictionary<(float, float), float> averageRayDistance = new();
             // For each interaction, get the frame with the shortest distance
-            foreach (InteractionDataRecord interactionRecord in interactionRecords)
+            foreach (ConeRayComputationDataRecord interactionRecord in interactionRecords)
             {
                 if (interactionRecord.segment == segment)
                 {
