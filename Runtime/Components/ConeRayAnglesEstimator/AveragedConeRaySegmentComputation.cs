@@ -19,7 +19,7 @@ namespace ubco.ovilab.HPUI
             {
                 if (interactionRecord.segment == segment)
                 {
-                    // Collect all the distances for a given ray
+                    // Collect all the distances for a given ray, defined by the x and z angles
                     Dictionary<(float, float), List<float>> rayDistances = new();
                     // for each frame in all the frames collected in a gesture
                     foreach (var frame in interactionRecord.records)
