@@ -7,6 +7,7 @@ using ubco.ovilab.HPUI.Interaction;
 using ubco.ovilab.HPUI.utils;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Events;
 using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI
@@ -53,6 +54,7 @@ namespace ubco.ovilab.HPUI
 
         [SerializeField, Tooltip("Asset containing the configuration for cone ray angles generated from estimation.")]
         private HPUIInteractorConeRayAngles generatedAsset;
+
         /// <summary>
         /// Asset containing the configuration for cone ray angles generated from estimation.
         /// </summary>
@@ -86,8 +88,9 @@ namespace ubco.ovilab.HPUI
         public State CurrentState { get; private set; }
 
         public UnityEvent OnConeAssetGenerated;
+
         /// <summary>
-        /// Intiate data collection. If this component was used to generate an asset, and
+        /// Initiate data collection. If this component was used to generate an asset, and
         /// the detection logic is not a <see cref="HPUIFullRangeRayCastDetectionLogic"/>, the
         /// HPUIInteractorFullRangeAngles before the asset was generated will be set as the
         /// detection logic of the interactor.
