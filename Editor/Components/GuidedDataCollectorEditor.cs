@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using ubco.ovilab.HPUI.Interaction;
 using System;
+using System.Collections.Generic;
 
 namespace ubco.ovilab.HPUI.Editor
 {
@@ -61,6 +62,30 @@ namespace ubco.ovilab.HPUI.Editor
                 {
 
                     t.StartDataCollectionForNextTargetSegment();
+                }
+            }
+
+            if (Application.isPlaying && t.CollectingData)
+            {
+                var presentSegments = new HashSet<HPUIInteractorConeRayAngleSegment>();
+                foreach (var record in t.DataRecords)
+                {
+                    presentSegments.Add(record.segment);
+                }
+
+                var missingSegments = "";
+                Array allSegments = Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment));
+                foreach (HPUIInteractorConeRayAngleSegment segment in allSegments)
+                {
+                    if (!presentSegments.Contains(segment))
+                    {
+                        missingSegments += $"{segment.ToString()}, ";
+                    }
+                }
+                missingSegments = missingSegments.Trim(new[] { ' ', ',' });
+                if (missingSegments.Length != 0)
+                {
+                    EditorGUILayout.HelpBox($"Missing Data for Segments: {missingSegments}", MessageType.Warning);
                 }
             }
 
