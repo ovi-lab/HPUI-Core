@@ -36,12 +36,12 @@ namespace ubco.ovilab.HPUI
         }
 
         [SerializeField, Tooltip("The data collector responsible for gathering cone ray data.")]
-        private ConeRayDataCollectorBase dataCollector;
+        private RaycastDataCollectorBase dataCollector;
 
         /// <summary>
         /// The data collector responsible for gathering cone ray data.
         /// </summary>
-        public ConeRayDataCollectorBase DataCollector { get => dataCollector; set => dataCollector = value; }
+        public RaycastDataCollectorBase DataCollector { get => dataCollector; set => dataCollector = value; }
 
         [SerializeReference, SubclassSelector]
         [Tooltip("Handles the computation logic for cone ray segments.")]

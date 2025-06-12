@@ -11,7 +11,7 @@ namespace ubco.ovilab.HPUI
     /// mapping provided in <see cref="InteractableToSegmentMapping"/>.
     /// </summary>
     /// <seealso cref="IHPUIInteractable.GestureEvent"/>
-    public class OnGestureDataCollector : ConeRayDataCollectorBase
+    public class OnGestureDataCollector : RaycastDataCollectorBase
     {
         [Serializable]
         /// <summary>

@@ -5,7 +5,7 @@ namespace ubco.ovilab.HPUI
     /// <summary>
     /// Data is collected by specifying which segment all data should be assigned to.
     /// </summary>
-    public class GuidedDataCollector : ConeRayDataCollectorBase
+    public class GuidedDataCollector : RaycastDataCollectorBase
     {
         [SerializeField]
         [Tooltip("Phalange that the interactor is currently being calibrated for")]

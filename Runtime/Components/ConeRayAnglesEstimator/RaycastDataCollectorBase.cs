@@ -15,7 +15,7 @@ namespace ubco.ovilab.HPUI
     /// for <see cref="HPUIInteractor.DetectionLogic"/>. The data is collected by subscribing to
     /// <see cref="HPUIFullRangeRayCastDetectionLogic.raycastData"/>
     /// </remarks>
-    public abstract class ConeRayDataCollectorBase : MonoBehaviour
+    public abstract class RaycastDataCollectorBase : MonoBehaviour
     {
         [SerializeField, Tooltip("The interactor used to collect RaycastDataRecord data.")]
         private HPUIInteractor interactor;
