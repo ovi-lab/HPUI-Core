@@ -25,7 +25,16 @@ namespace ubco.ovilab.HPUI
         /// </summary>
         public HPUIInteractor Interactor { get => interactor; set => interactor = value; }
 
+        /// <summary>
+        /// The flag indicating if data collection is active.
+        /// </summary>
         public bool CollectingData { get; protected set; }
+
+        /// <summary>
+        /// The flag indicating if data collection is paused.
+        /// This will inhibit <see cref="RaycastDataCallback"/>
+        /// </summary>
+        public bool PauseDataCollection { get; set; }
 
         private HPUIFullRangeRayCastDetectionLogic fullRayDetectionLogic;
         private HPUIInteractorFullRangeAngles fullRangeAngles;
@@ -69,6 +78,11 @@ namespace ubco.ovilab.HPUI
         /// </summary>
         protected void RaycastDataCallback(List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecords)
         {
+            if (PauseDataCollection)
+            {
+                return;
+            }
+
             Assert.AreEqual(fullRangeAngles,
                             ((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles,
                             $"Interactor {fullRangeAngles.name} is not the same as {((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles.name}");
