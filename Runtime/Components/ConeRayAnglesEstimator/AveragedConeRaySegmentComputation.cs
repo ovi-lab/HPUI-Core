@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ubco.ovilab.HPUI.Interaction;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace ubco.ovilab.HPUI
 {
@@ -54,10 +55,7 @@ namespace ubco.ovilab.HPUI
                 }
             }
 
-            if (averageRayDistance.Count() == 0)
-            {
-                return new List<HPUIInteractorRayAngle>();
-            }
+            Assert.IsTrue(averageRayDistance.Count() == 0, $"Data collection has gone wrong, no rays have been utilized enough for ray interaction threshold of {minRayInteractionsThreshold}");
             List<HPUIInteractorRayAngle> coneAnglesForSegment = new();
 
             foreach (var ray in averageRayDistance)
