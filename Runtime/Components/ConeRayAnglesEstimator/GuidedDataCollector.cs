@@ -54,6 +54,12 @@ namespace ubco.ovilab.HPUI
         public void EndDataCollectionForTargetSegment()
         {
             EndCalibrationForSegment(TargetSegment);
+            PauseDataCollection = true;
+        }
+
+        public void StartDataCollectionForNextTargetSegment()
+        {
+            PauseDataCollection = false;
         }
     }
 }

@@ -36,20 +36,31 @@ namespace ubco.ovilab.HPUI.Editor
 
             GUI.enabled = Application.isPlaying && t.CollectingData;
 
-            if (GUILayout.Button("Collect data for next segment"))
+            if (!t.PauseDataCollection)
             {
-                t.EndDataCollectionForTargetSegment();
-                // cycling strategy to automatically move to the next phalange.
-                // saves some headache when running a calibration protocol.
-                int phalangeCount = Enum.GetNames(typeof(HPUIInteractorConeRayAngleSegment)).Length;
-                int currentPhalangeIndex = Array.IndexOf(Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)), t.TargetSegment);
-                if (currentPhalangeIndex < phalangeCount - 1)
+                if (GUILayout.Button("Pause Data Collection"))
                 {
-                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)currentPhalangeIndex + 1;
+                    t.EndDataCollectionForTargetSegment();
+                    // cycling strategy to automatically move to the next phalange.
+                    // saves some headache when running a calibration protocol.
+                    int phalangeCount = Enum.GetNames(typeof(HPUIInteractorConeRayAngleSegment)).Length;
+                    int currentPhalangeIndex = Array.IndexOf(Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)), t.TargetSegment);
+                    if (currentPhalangeIndex < phalangeCount - 1)
+                    {
+                        t.TargetSegment = (HPUIInteractorConeRayAngleSegment)currentPhalangeIndex + 1;
+                    }
+                    else
+                    {
+                        t.TargetSegment = (HPUIInteractorConeRayAngleSegment)0;
+                    }
                 }
-                else
+            }
+            else
+            {
+                if (GUILayout.Button("Collect data for next segment"))
                 {
-                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)0;
+
+                    t.StartDataCollectionForNextTargetSegment();
                 }
             }
 
