@@ -87,6 +87,9 @@ namespace ubco.ovilab.HPUI
         /// </summary>
         public State CurrentState { get; private set; }
 
+        /// <summary>
+        /// This event gets called after the asset has been generated and assigned to <see cref="GeneratedAsset"/>
+        /// </summary>
         public UnityEvent OnConeAssetGenerated;
 
         /// <summary>

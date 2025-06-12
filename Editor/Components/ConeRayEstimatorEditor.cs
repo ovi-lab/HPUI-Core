@@ -14,6 +14,7 @@ namespace ubco.ovilab.HPUI.Editor
     {
         private static readonly string[] excludedSerializedNames = new string[] {
             "xrHandTrackingEventsForConeDetection",
+            "OnConeAssetGenerated",
             "generatedAsset" // This is handled in DrawGenerationAndSaveOptions
         };
         private const string DONT_ASK_EDITORPREF_KEY = "ubco.ovilab.HPUI.Components.ConeEsimation.DontAskWhenRestarting";
@@ -21,16 +22,19 @@ namespace ubco.ovilab.HPUI.Editor
         private ConeRayEstimator t;
         private SerializedObject generatedConeRayAnglesObj;
         private SerializedProperty xrHandTrackingEventsForConeDetectionProp,
-            generatedAssetProp;
+            generatedAssetProp,
+            onConeAssetGeneratedProp;
 
         private bool estimatedResultsFoldout = false,
             dontAskBeforeDiscard,
-            showXRHandtrackingEventsMissingMessage;
+            showXRHandtrackingEventsMissingMessage,
+            eventsFoldout;
 
         protected void OnEnable()
         {
             t = target as ConeRayEstimator;
             xrHandTrackingEventsForConeDetectionProp = serializedObject.FindProperty("xrHandTrackingEventsForConeDetection");
+            onConeAssetGeneratedProp = serializedObject.FindProperty("OnConeAssetGenerated");
             generatedAssetProp = serializedObject.FindProperty("generatedAsset");
             dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
             CheckIfShowXRHandtrackingEventsMissingMessage();
@@ -50,9 +54,37 @@ namespace ubco.ovilab.HPUI.Editor
         {
             DrawRemainingInspector();
             EditorGUILayout.Space();
+            DrawEventsFoldout();
+            EditorGUILayout.Space();
             DrawGenerationAndSaveOptions();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        /// <summary>
+        /// This method draws any events.
+        /// Extending classes can override this to include any other event related fields.
+        /// This method is called in <see cref="DrawEventsFoldout"/>.
+        /// </summary>
+        protected virtual void DrawEvents()
+        {
+            EditorGUILayout.PropertyField(onConeAssetGeneratedProp, true);
+        }
+
+        /// <summary>
+        /// This method draws any events inside a foldout.
+        /// This method is to be called in <see cref="OnInspectorGUI"/>.
+        /// </summary>
+        protected virtual void DrawEventsFoldout()
+        {
+            eventsFoldout = EditorGUILayout.Foldout(eventsFoldout, "Events", true);
+            if (eventsFoldout)
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    DrawEvents();
+                }
+            }
         }
 
         /// <summary>
