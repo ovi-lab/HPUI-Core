@@ -14,7 +14,7 @@ namespace ubco.ovilab.HPUI.Editor
     {
         private static readonly string[] excludedSerializedNames = new string[] {
             "xrHandTrackingEventsForConeDetection",
-            "generatedAsset"
+            "generatedAsset" // This is handled in DrawGenerationAndSaveOptions
         };
         private const string DONT_ASK_EDITORPREF_KEY = "ubco.ovilab.HPUI.Components.ConeEsimation.DontAskWhenRestarting";
         private static Dictionary<ConeRayEstimator, HPUIInteractorConeRayAngles> savedAssets = new();
@@ -45,7 +45,22 @@ namespace ubco.ovilab.HPUI.Editor
                                                        t.DataCollector.Interactor.GetComponent<XRHandTrackingEvents>() == null));
         }
 
+        /// <inheritdoc />
         public override void OnInspectorGUI()
+        {
+            DrawRemainingInspector();
+            EditorGUILayout.Space();
+            DrawGenerationAndSaveOptions();
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        /// <summary>
+        /// Draw fields not in <see cref="excludedSerializedNames"/> and the
+        /// XRHandTrackingEvents property field.
+        /// This method is to be called in <see cref="OnInspectorGUI"/>.
+        /// </summary>
+        protected void DrawRemainingInspector()
         {
             SerializedProperty iterator = serializedObject.GetIterator();
             bool enterChildren = true;
@@ -73,9 +88,14 @@ namespace ubco.ovilab.HPUI.Editor
             {
                 EditorGUILayout.HelpBox("While SetDetectionLogicOnEstimation is set, XRHandTrackingEventsForConeDetection is null and Interactor doesn't have an XRHandTrackingEvents component.", MessageType.Error);
             }
+        }
 
-            EditorGUILayout.Space();
-
+        /// <summary>
+        /// Draw UI related to generating and saving assets in editor.
+        /// This method is to be called in <see cref="OnInspectorGUI"/>.
+        /// </summary>
+        protected void DrawGenerationAndSaveOptions()
+        {
             EditorGUILayout.LabelField("Editor inspector only functions (play mode)", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox("If not saved, the data will be discarded when exiting playmode, regardless of the `Always Ask Before Restarting` toggle.", MessageType.Info);
 
@@ -103,6 +123,7 @@ namespace ubco.ovilab.HPUI.Editor
             else if (t.DataCollector.Interactor == null)
             {
                 EditorGUILayout.HelpBox("Interactor in DataCollector not configured", MessageType.Error);
+
             }
 
             GUI.enabled = EditorApplication.isPlaying &&
@@ -196,8 +217,6 @@ namespace ubco.ovilab.HPUI.Editor
                     }
                 }
             }
-
-            serializedObject.ApplyModifiedProperties();
         }
     }
 }
