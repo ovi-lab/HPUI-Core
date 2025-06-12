@@ -85,6 +85,7 @@ namespace ubco.ovilab.HPUI
         /// </summary>
         public State CurrentState { get; private set; }
 
+        public UnityEvent OnConeAssetGenerated;
         /// <summary>
         /// Intiate data collection. If this component was used to generate an asset, and
         /// the detection logic is not a <see cref="HPUIFullRangeRayCastDetectionLogic"/>, the
@@ -258,6 +259,7 @@ namespace ubco.ovilab.HPUI
             }
 
             CurrentState = State.Ready;
+            OnConeAssetGenerated?.Invoke();
         }
     }
 }
