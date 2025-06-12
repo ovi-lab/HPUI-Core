@@ -10,7 +10,7 @@ namespace ubco.ovilab.HPUI
     /// Computes the cone rays from the frames that have the minimum ray distance in a given <see cref="ConeRayComputationDataRecord"/>.
     /// </summary>
     [Serializable]
-    public class PeakConeRaySegmentComputation : IConeRaySegmentComputation
+    public class MinConeRaySegmentComputation : IConeRaySegmentComputation
     {
         List<HPUIInteractorRayAngle> IConeRaySegmentComputation.EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment, IEnumerable<ConeRayComputationDataRecord> interactionRecords)
         {
