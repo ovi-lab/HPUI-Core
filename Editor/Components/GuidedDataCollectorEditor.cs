@@ -23,9 +23,7 @@ namespace ubco.ovilab.HPUI.Editor
         }
 
         private SerializedObject generatedConeRayAnglesObj;
-        private bool isCollectingData = false;
         private GuidedDataCollector t;
-        private bool hasSomeDataBeenCollected = false;
 
         protected void OnEnable()
         {
