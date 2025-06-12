@@ -190,8 +190,7 @@ namespace ubco.ovilab.HPUI
             int i = 0;
             foreach (HPUIInteractorConeRayAngleSegment segment in segments)
             {
-                IEnumerable<ConeRayComputationDataRecord> filteredDataRecords = dataRecords.Where(r => r.segment == segment);
-                tasks[i++] = Task.Run(() => coneRaySegmentComputation.EstimateConeAnglesForSegment(segment, filteredDataRecords));
+                tasks[i++] = Task.Run(() => coneRaySegmentComputation.EstimateConeAnglesForSegment(segment, dataRecords));
             }
 
             while (tasks.Any(t => !t.IsCompleted))
