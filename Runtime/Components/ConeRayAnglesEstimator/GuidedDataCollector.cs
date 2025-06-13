@@ -38,6 +38,7 @@ namespace ubco.ovilab.HPUI
                     if (dataRecord.segment == segment)
                     {
                         DataRecords.Remove(dataRecord);
+                        break;
                     }
                 }
             }
