@@ -60,7 +60,10 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 foreach (HPUIInteractorConeRayAngleSides angleSide in kvp.Value)
                 {
-                    ActiveFingerAngles.Add((kvp.Key, angleSide.side), angleSide.rayAngles);
+                    if (!ActiveFingerAngles.ContainsKey((kvp.Key, angleSide.side)))
+                    {
+                        ActiveFingerAngles.Add((kvp.Key, angleSide.side), angleSide.rayAngles);
+                    }
                 }
             }
         }
