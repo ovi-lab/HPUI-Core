@@ -10,13 +10,13 @@ namespace ubco.ovilab.HPUI.Interaction
     public class HPUIPillDetectionLogic : HPUIRayCastDetectionBaseLogic
     {
         [SerializeField]
-        [Tooltip("The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique")]
+        [Tooltip("The HPUIInteractorPill asset to use for pill technique")]
         private HPUIInteractorPill pill;
 
         /// <summary>
-        /// The HPUIInteractorFullRangeAngles asset to use for FullRange ray technique
+        /// The <see cref="HPUIInteractorPill"/> asset to use for pill technique
         /// </summary>
-        public HPUIInteractorPill FullRangeRayAngles { get => pill; set => pill = value; }
+        public HPUIInteractorPill Pill { get => pill; set => pill = value; }
 
         public HPUIPillDetectionLogic()
         { }
@@ -30,14 +30,14 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <inheritdoc />
         public override void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
-            if (FullRangeRayAngles == null)
+            if (Pill == null)
             {
-                Debug.LogError($"The `FullRangeRayAngles` asset is not set!");
+                Debug.LogError($"The `Pill` asset is not set!");
                 hoverEndPoint = interactor.GetAttachTransform(null).position;
                 return;
             }
 
-            Process(interactor, interactionManager, FullRangeRayAngles.angles, validTargets, out hoverEndPoint);
+            Process(interactor, interactionManager, Pill.angles, validTargets, out hoverEndPoint);
         }
     }
 }
