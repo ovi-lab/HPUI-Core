@@ -4,10 +4,8 @@ using UnityEngine;
 namespace ubco.ovilab.HPUI.Interaction
 {
     [CreateAssetMenu(fileName = "HPUIInteractorPill", menuName = "HPUI/HPUI Interactor Pill", order = 3)]
-    public class HPUIInteractorPill : ScriptableObject
+    public class HPUIInteractorPill : HPUIInteractorFullRangeAngles
     {
-        public List<HPUIInteractorRayAngle> angles;
-
         public static List<HPUIInteractorRayAngle> ComputeAngles(int maxAngle, int angleStep, float a, float b, float c)
         {
             List<HPUIInteractorRayAngle> allAngles = new();
