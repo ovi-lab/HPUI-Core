@@ -212,44 +212,84 @@ namespace ubco.ovilab.HPUI
                 List<HPUIInteractorRayAngle> coneAnglesForSegment = tasks[i].Result;
                 switch (segment)
                 {
-                    case HPUIInteractorConeRayAngleSegment.IndexDistalSegment:
-                        estimatedConeRayAngles.IndexDistalAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.IndexDistalVolarSegment:
+                        estimatedConeRayAngles.IndexDistalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
                         break;
-                    case HPUIInteractorConeRayAngleSegment.IndexIntermediateSegment:
-                        estimatedConeRayAngles.IndexIntermediateAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.IndexIntermediateVolarSegment:
+                        estimatedConeRayAngles.IndexIntermediateAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
                         break;
-                    case HPUIInteractorConeRayAngleSegment.IndexProximalSegment:
-                        estimatedConeRayAngles.IndexProximalAngles = coneAnglesForSegment;
-                        break;
-
-                    case HPUIInteractorConeRayAngleSegment.MiddleDistalSegment:
-                        estimatedConeRayAngles.MiddleDistalAngles = coneAnglesForSegment;
-                        break;
-                    case HPUIInteractorConeRayAngleSegment.MiddleIntermediateSegment:
-                        estimatedConeRayAngles.MiddleIntermediateAngles = coneAnglesForSegment;
-                        break;
-                    case HPUIInteractorConeRayAngleSegment.MiddleProximalSegment:
-                        estimatedConeRayAngles.MiddleProximalAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.IndexProximalVolarSegment:
+                        estimatedConeRayAngles.IndexProximalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
                         break;
 
-                    case HPUIInteractorConeRayAngleSegment.RingDistalSegment:
-                        estimatedConeRayAngles.RingDistalAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.MiddleDistalVolarSegment:
+                        estimatedConeRayAngles.MiddleDistalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
                         break;
-                    case HPUIInteractorConeRayAngleSegment.RingIntermediateSegment:
-                        estimatedConeRayAngles.RingIntermediateAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.MiddleIntermediateVolarSegment:
+                        estimatedConeRayAngles.MiddleIntermediateAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
                         break;
-                    case HPUIInteractorConeRayAngleSegment.RingProximalSegment:
-                        estimatedConeRayAngles.RingProximalAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.MiddleProximalVolarSegment:
+                        estimatedConeRayAngles.MiddleProximalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
                         break;
 
-                    case HPUIInteractorConeRayAngleSegment.LittleDistalSegment:
-                        estimatedConeRayAngles.LittleDistalAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.RingDistalVolarSegment:
+                        estimatedConeRayAngles.RingDistalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
                         break;
-                    case HPUIInteractorConeRayAngleSegment.LittleIntermediateSegment:
-                        estimatedConeRayAngles.LittleIntermediateAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.RingIntermediateVolarSegment:
+                        estimatedConeRayAngles.RingIntermediateAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
                         break;
-                    case HPUIInteractorConeRayAngleSegment.LittleProximalSegment:
-                        estimatedConeRayAngles.LittleProximalAngles = coneAnglesForSegment;
+                    case HPUIInteractorConeRayAngleSegment.RingProximalVolarSegment:
+                        estimatedConeRayAngles.RingProximalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
+                        break;
+
+                    case HPUIInteractorConeRayAngleSegment.LittleDistalVolarSegment:
+                        estimatedConeRayAngles.LittleDistalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.LittleIntermediateVolarSegment:
+                        estimatedConeRayAngles.LittleIntermediateAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.LittleProximalVolarSegment:
+                        estimatedConeRayAngles.LittleProximalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.volar, coneAnglesForSegment));
+                        break;
+
+                    case HPUIInteractorConeRayAngleSegment.IndexDistalRadialSegment:
+                        estimatedConeRayAngles.IndexDistalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.IndexIntermediateRadialSegment:
+                        estimatedConeRayAngles.IndexIntermediateAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.IndexProximalRadialSegment:
+                        estimatedConeRayAngles.IndexProximalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+
+                    case HPUIInteractorConeRayAngleSegment.MiddleDistalRadialSegment:
+                        estimatedConeRayAngles.MiddleDistalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.MiddleIntermediateRadialSegment:
+                        estimatedConeRayAngles.MiddleIntermediateAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.MiddleProximalRadialSegment:
+                        estimatedConeRayAngles.MiddleProximalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+
+                    case HPUIInteractorConeRayAngleSegment.RingDistalRadialSegment:
+                        estimatedConeRayAngles.RingDistalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.RingIntermediateRadialSegment:
+                        estimatedConeRayAngles.RingIntermediateAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.RingProximalRadialSegment:
+                        estimatedConeRayAngles.RingProximalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+
+                    case HPUIInteractorConeRayAngleSegment.LittleDistalRadialSegment:
+                        estimatedConeRayAngles.LittleDistalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.LittleIntermediateRadialSegment:
+                        estimatedConeRayAngles.LittleIntermediateAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
+                        break;
+                    case HPUIInteractorConeRayAngleSegment.LittleProximalRadialSegment:
+                        estimatedConeRayAngles.LittleProximalAngles.Add(new HPUIInteractorConeRayAngleSides(FingerSide.radial, coneAnglesForSegment));
                         break;
                 }
             }

@@ -20,18 +20,31 @@ namespace ubco.ovilab.HPUI
     /// </summary>
     public enum HPUIInteractorConeRayAngleSegment
     {
-        IndexDistalSegment = 0,
-        IndexIntermediateSegment = 1,
-        IndexProximalSegment = 2,
-        MiddleDistalSegment = 3,
-        MiddleIntermediateSegment = 4,
-        MiddleProximalSegment = 5,
-        RingDistalSegment = 6,
-        RingIntermediateSegment = 7,
-        RingProximalSegment = 8,
-        LittleDistalSegment = 9,
-        LittleIntermediateSegment = 10,
-        LittleProximalSegment = 11,
+        IndexDistalVolarSegment = 0,
+        IndexIntermediateVolarSegment = 1,
+        IndexProximalVolarSegment = 2,
+        MiddleDistalVolarSegment = 3,
+        MiddleIntermediateVolarSegment = 4,
+        MiddleProximalVolarSegment = 5,
+        RingDistalVolarSegment = 6,
+        RingIntermediateVolarSegment = 7,
+        RingProximalVolarSegment = 8,
+        LittleDistalVolarSegment = 9,
+        LittleIntermediateVolarSegment = 10,
+        LittleProximalVolarSegment = 11,
+
+        IndexDistalRadialSegment = 12,
+        IndexIntermediateRadialSegment = 13,
+        IndexProximalRadialSegment = 14,
+        MiddleDistalRadialSegment = 15,
+        MiddleIntermediateRadialSegment = 16,
+        MiddleProximalRadialSegment = 17,
+        RingDistalRadialSegment = 18,
+        RingIntermediateRadialSegment = 19,
+        RingProximalRadialSegment = 20,
+        LittleDistalRadialSegment = 21,
+        LittleIntermediateRadialSegment = 22,
+        LittleProximalRadialSegment = 23,
     }
 
     /// <summary>
