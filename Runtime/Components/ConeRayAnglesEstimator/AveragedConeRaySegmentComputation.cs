@@ -55,7 +55,11 @@ namespace ubco.ovilab.HPUI
                 }
             }
 
-            Assert.IsTrue(averageRayDistance.Count() == 0, $"Data collection has gone wrong, no rays have been utilized enough for ray interaction threshold of {minRayInteractionsThreshold}");
+            if (averageRayDistance.Count() == 0)
+            {
+                Debug.LogWarning($"Data collection has gone wrong for Phalange {segment.ToString()}, no rays have been utilized enough for ray interaction threshold of {minRayInteractionsThreshold}");
+            }
+
             List<HPUIInteractorRayAngle> coneAnglesForSegment = new();
 
             foreach (var ray in averageRayDistance)
