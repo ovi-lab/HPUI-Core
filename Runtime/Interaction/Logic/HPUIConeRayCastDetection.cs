@@ -70,6 +70,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {XRHandJointID.LittleDistal,       XRHandJointID.LittleTip},
         };
         protected readonly IReadOnlyList<HPUIInteractorRayAngle> defaultActiveFingerAngles;
+        protected const float volarRadialThreshold = 0.70710678119f; // cost(45deg)
 
         public HPUIConeRayCastDetectionLogic()
         {
@@ -113,7 +114,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 if ( args.hand.GetJoint(id).TryGetPose(out Pose pose) )
                 {
-                    jointLocations[id] = pose;
+                    jointLocations[id] = pose.GetTransformedBy(XROriginTransform);
                     receivedNewJointData = true;
                 }
             }
@@ -145,6 +146,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 receivedNewJointData = false;
                 Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip].position;
+                Vector3 toClosestPoint = jointLocations[XRHandJointID.ThumbTip].forward;
                 XRHandJointID closestJoint = XRHandJointID.BeginMarker;
                 float shortestDistance = float.MaxValue;
 
@@ -155,9 +157,11 @@ namespace ubco.ovilab.HPUI.Interaction
                     Vector3 toTipVector = thumbTipPos - baseVector;
                     float distanceOnSegmentVector = Mathf.Clamp(Vector3.Dot(toTipVector, segmentVector.normalized), 0, segmentVector.magnitude);
                     Vector3 closestPoint = distanceOnSegmentVector * segmentVector.normalized + baseVector;
-                    float distance = (thumbTipPos - closestPoint).sqrMagnitude;
+                    Vector3 currentToClosestPoint = (closestPoint - thumbTipPos);
+                    float distance = currentToClosestPoint.sqrMagnitude;
                     if (distance < shortestDistance)
                     {
+                        toClosestPoint = currentToClosestPoint;
                         shortestDistance = distance;
                         closestJoint = kvp.Key;
                     }
@@ -165,7 +169,17 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (closestJoint != XRHandJointID.BeginMarker)
                 {
-                    activeFingerAngles = ConeRayAngles.GetAngles(closestJoint, FingerSide.volar);
+                    FingerSide side;
+                    if (Vector3.Dot(jointLocations[closestJoint].up, toClosestPoint.normalized) > volarRadialThreshold)
+                    {
+                        side = FingerSide.volar;
+                    }
+                    else
+                    {
+                        side = FingerSide.radial;
+                    }
+
+                    activeFingerAngles = ConeRayAngles.GetAngles(closestJoint, side);
                     if (activeFingerAngles == null)
                     {
                         activeFingerAngles = defaultActiveFingerAngles;
