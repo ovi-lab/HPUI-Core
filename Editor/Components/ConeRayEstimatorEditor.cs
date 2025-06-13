@@ -175,7 +175,6 @@ namespace ubco.ovilab.HPUI.Editor
                         {
                             savedAssets.Remove(t);
                         }
-                        generatedAssetProp.objectReferenceValue = null;
                         t.StartDataCollection();
                     }
                     dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);

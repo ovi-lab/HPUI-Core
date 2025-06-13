@@ -60,7 +60,7 @@ namespace ubco.ovilab.HPUI
         /// </summary>
         public HPUIInteractorConeRayAngles GeneratedAsset { get => generatedAsset; protected set => generatedAsset = value; }
 
-        private HPUIFullRangeRayCastDetectionLogic fullrangeRaycastDetectionLogicReference;
+        private HPUIRayCastDetectionBaseLogic previousDetectionLogicReference;
 
         [Space()]
         [SerializeField, Tooltip("If true, will set the detection logic of interactor to HPUIConeRayCastDetectionLogic with generated asset.")]
@@ -124,19 +124,22 @@ namespace ubco.ovilab.HPUI
                 throw new ArgumentException("ConeRaySegmentComputation not configured.");
             }
 
-            if (!(dataCollector.Interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic))
+            if (dataCollector.Interactor.DetectionLogic is not HPUIRayCastDetectionBaseLogic rayCastDetectionLogic)
             {
-                if (fullrangeRaycastDetectionLogicReference == null)
-                {
-                    throw new ArgumentException("Expected interactor to be configured with HPUIInteractorFullRangeAngles.");
-                }
+                throw new ArgumentException("Expected interactor to be configured with a component inheriting HPUIRayCastDetectionBaseLogic");
+            }
 
-                dataCollector.Interactor.DetectionLogic = fullrangeRaycastDetectionLogicReference as IHPUIDetectionLogic;
+            if (rayCastDetectionLogic is HPUIConeRayCastDetectionLogic coneRayCastDetectionLogic &&
+                coneRayCastDetectionLogic.ConeRayAngles == GeneratedAsset)
+            {
+                dataCollector.Interactor.DetectionLogic = previousDetectionLogicReference;
             }
             else
             {
-                fullrangeRaycastDetectionLogicReference = dataCollector.Interactor.DetectionLogic as HPUIFullRangeRayCastDetectionLogic;
+                previousDetectionLogicReference = dataCollector.Interactor.DetectionLogic as HPUIRayCastDetectionBaseLogic;
             }
+
+            GeneratedAsset = null;
 
             if (dataCollector.StartDataCollection())
             {
@@ -299,7 +302,7 @@ namespace ubco.ovilab.HPUI
             {
                 dataCollector.Interactor.DetectionLogic = new HPUIConeRayCastDetectionLogic(
                     dataCollector.Interactor.DetectionLogic.InteractionHoverRadius,
-                    estimatedConeRayAngles,
+                    GeneratedAsset,
                     XRHandTrackingEventsForConeDetection != null ? XRHandTrackingEventsForConeDetection : dataCollector.Interactor.GetComponent<XRHandTrackingEvents>());
             }
 
