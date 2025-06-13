@@ -13,8 +13,8 @@ namespace ubco.ovilab.HPUI.Editor
         private float maxAngle = 90;
         private float angleStep = 5;
         private float axisA = 0.015f;
-        private float axisB = 0.015f;
-        private float axisC = 0.015f;
+        private float axisB = 0.01f;
+        private float axisC = 0.02f;
 
         protected void OnEnable()
         {
