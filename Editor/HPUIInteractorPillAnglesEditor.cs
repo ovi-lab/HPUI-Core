@@ -5,10 +5,10 @@ using ubco.ovilab.HPUI.Interaction;
 namespace ubco.ovilab.HPUI.Editor
 {
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(HPUIInteractorPill), true)]
-    public class HPUIInteractorPillEditor : UnityEditor.Editor
+    [CustomEditor(typeof(HPUIInteractorPillAngles), true)]
+    public class HPUIInteractorPillAnglesEditor : UnityEditor.Editor
     {
-        private HPUIInteractorPill t;
+        private HPUIInteractorPillAngles t;
         private bool generating = false;
         private float maxAngle = 90;
         private float angleStep = 5;
@@ -18,7 +18,7 @@ namespace ubco.ovilab.HPUI.Editor
 
         protected void OnEnable()
         {
-            t = target as HPUIInteractorPill;
+            t = target as HPUIInteractorPillAngles;
         }
 
         public override void OnInspectorGUI()
@@ -53,7 +53,7 @@ namespace ubco.ovilab.HPUI.Editor
                 {
                     if (EditorUtility.DisplayDialog("Generate angles", message, "Generate", "Cancel"))
                     {
-                        t.angles = HPUIInteractorPill.ComputeAngles((int)maxAngle, (int)angleStep, axisA, axisB, axisC);
+                        t.angles = HPUIInteractorPillAngles.ComputeAngles((int)maxAngle, (int)angleStep, axisA, axisB, axisC);
                         EditorUtility.SetDirty(t);
                         serializedObject.ApplyModifiedProperties();
                     }
