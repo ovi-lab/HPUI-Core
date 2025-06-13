@@ -83,7 +83,7 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <summary>
         /// Given the list of <see cref="HPUIInteractorRayAngle"/>, detect the interactables and populate the <see cref="validTargets"/> dictionary.
         /// </summary>
-        protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, List<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
+        protected void Process(IHPUIInteractor interactor, XRInteractionManager interactionManager, IReadOnlyList<HPUIInteractorRayAngle> activeFingerAngles, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
             validTargets.Clear();
 

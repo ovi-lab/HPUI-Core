@@ -44,9 +44,8 @@ namespace ubco.ovilab.HPUI.Interaction
         public Transform XROriginTransform { get => xrOriginTransform; set => xrOriginTransform = value; }
 
         protected bool receivedNewJointData;
-        // When it's not set by DetectedInteractables, use default value
-        protected List<HPUIInteractorRayAngle> activeFingerAngles = new();
-        protected Dictionary<XRHandJointID, Vector3> jointLocations = new Dictionary<XRHandJointID, Vector3>();
+        protected IReadOnlyList<HPUIInteractorRayAngle> activeFingerAngles;
+        protected Dictionary<XRHandJointID, Pose> jointLocations = new();
         protected List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
         {
             XRHandJointID.IndexProximal, XRHandJointID.IndexIntermediate, XRHandJointID.IndexDistal, XRHandJointID.IndexTip,
@@ -70,12 +69,16 @@ namespace ubco.ovilab.HPUI.Interaction
             {XRHandJointID.LittleIntermediate, XRHandJointID.LittleDistal},
             {XRHandJointID.LittleDistal,       XRHandJointID.LittleTip},
         };
+        protected readonly IReadOnlyList<HPUIInteractorRayAngle> defaultActiveFingerAngles;
 
         public HPUIConeRayCastDetectionLogic()
         {
+            // When it's not set by DetectedInteractables, use default value
+            defaultActiveFingerAngles = new List<HPUIInteractorRayAngle>().AsReadOnly();
+            activeFingerAngles = defaultActiveFingerAngles;
             foreach(XRHandJointID id in trackedJoints)
             {
-                jointLocations.Add(id, Vector3.zero);
+                jointLocations.Add(id, Pose.identity);
             }
             UpdateHandTrackingEventsHook(xrHandTrackingEvents);
         }
@@ -110,7 +113,7 @@ namespace ubco.ovilab.HPUI.Interaction
             {
                 if ( args.hand.GetJoint(id).TryGetPose(out Pose pose) )
                 {
-                    jointLocations[id] = xrOriginTransform.TransformPoint(pose.position);
+                    jointLocations[id] = pose;
                     receivedNewJointData = true;
                 }
             }
@@ -141,14 +144,14 @@ namespace ubco.ovilab.HPUI.Interaction
             if (receivedNewJointData)
             {
                 receivedNewJointData = false;
-                Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip];
+                Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip].position;
                 XRHandJointID closestJoint = XRHandJointID.BeginMarker;
                 float shortestDistance = float.MaxValue;
 
                 foreach(KeyValuePair<XRHandJointID, XRHandJointID> kvp in trackedJointsToSegment)
                 {
-                    Vector3 baseVector = jointLocations[kvp.Key];
-                    Vector3 segmentVector = jointLocations[kvp.Value] - baseVector;
+                    Vector3 baseVector = jointLocations[kvp.Key].position;
+                    Vector3 segmentVector = jointLocations[kvp.Value].position - baseVector;
                     Vector3 toTipVector = thumbTipPos - baseVector;
                     float distanceOnSegmentVector = Mathf.Clamp(Vector3.Dot(toTipVector, segmentVector.normalized), 0, segmentVector.magnitude);
                     Vector3 closestPoint = distanceOnSegmentVector * segmentVector.normalized + baseVector;
@@ -162,7 +165,11 @@ namespace ubco.ovilab.HPUI.Interaction
 
                 if (closestJoint != XRHandJointID.BeginMarker)
                 {
-                    activeFingerAngles = ConeRayAngles.ActiveFingerAngles[closestJoint];
+                    activeFingerAngles = ConeRayAngles.GetAngles(closestJoint, FingerSide.volar);
+                    if (activeFingerAngles == null)
+                    {
+                        activeFingerAngles = defaultActiveFingerAngles;
+                    }
                 }
             }
             Process(interactor, interactionManager, activeFingerAngles, validTargets, out hoverEndPoint);
