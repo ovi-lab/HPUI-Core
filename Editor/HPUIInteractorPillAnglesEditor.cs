@@ -10,7 +10,7 @@ namespace ubco.ovilab.HPUI.Editor
     {
         private HPUIInteractorPillAngles t;
         private bool generating = false;
-        private float maxAngle = 90;
+        private float maxAngle = 180;
         private float angleStep = 5;
         private float axisA = 0.015f;
         private float axisB = 0.01f;
@@ -45,9 +45,9 @@ namespace ubco.ovilab.HPUI.Editor
                 maxAngle = Mathf.Round(EditorGUILayout.Slider("Max Angle", maxAngle, 0, 180));
                 angleStep = Mathf.Round(EditorGUILayout.Slider("Angle Step", angleStep, 0, 180));
 
-                axisA = EditorGUILayout.Slider("Length along local X", axisA, 0, 0.05f);
-                axisB = EditorGUILayout.Slider("Length along local Y", axisB, 0, 0.05f);
-                axisC = EditorGUILayout.Slider("Length along local Z", axisC, 0, 0.05f);
+                axisA = EditorGUILayout.Slider(new GUIContent("Length along local X", "Measures along the thumb's length"), axisA, 0, 0.05f);
+                axisB = EditorGUILayout.Slider(new GUIContent("Length along local Y", "Measures across the thumb's lateral thickness"), axisB, 0, 0.05f);
+                axisC = EditorGUILayout.Slider(new GUIContent("Length along local Z", "Measures through the thumb's depth (axial thickness)"), axisC, 0, 0.05f);
 
                 if (GUILayout.Button("Generate new values"))
                 {
