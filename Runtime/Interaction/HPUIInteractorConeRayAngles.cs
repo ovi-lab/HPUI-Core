@@ -77,8 +77,11 @@ namespace ubco.ovilab.HPUI.Interaction
         public IReadOnlyList<HPUIInteractorRayAngle> GetAngles(XRHandJointID joint, FingerSide side)
         {
             List<HPUIInteractorRayAngle> angles;
-            if (ActiveFingerAngles.TryGetValue((joint, side), out angles) ||
-                ActiveFingerAngles.TryGetValue((joint, fallbackSide), out angles))
+            if (ActiveFingerAngles.TryGetValue((joint, side), out angles) && angles.Count > 0)
+            {
+                return angles.AsReadOnly();
+            }
+            if (ActiveFingerAngles.TryGetValue((joint, FallbackSide), out angles) && angles.Count > 0)
             {
                 return angles.AsReadOnly();
             }
