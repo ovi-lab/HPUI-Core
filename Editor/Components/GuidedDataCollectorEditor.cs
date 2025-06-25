@@ -44,16 +44,7 @@ namespace ubco.ovilab.HPUI.Editor
                     t.EndDataCollectionForTargetSegment();
                     // cycling strategy to automatically move to the next phalange.
                     // saves some headache when running a calibration protocol.
-                    int phalangeCount = Enum.GetNames(typeof(HPUIInteractorConeRayAngleSegment)).Length;
-                    int currentPhalangeIndex = Array.IndexOf(Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)), t.TargetSegment);
-                    if (currentPhalangeIndex < phalangeCount - 1)
-                    {
-                        t.TargetSegment = (HPUIInteractorConeRayAngleSegment)currentPhalangeIndex + 1;
-                    }
-                    else
-                    {
-                        t.TargetSegment = (HPUIInteractorConeRayAngleSegment)0;
-                    }
+                    StepEnum(1);
                 }
             }
             else
@@ -64,7 +55,17 @@ namespace ubco.ovilab.HPUI.Editor
                     t.StartDataCollectionForNextTargetSegment();
                 }
             }
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Go Prev Segment"))
+            {
+                StepEnum(-1);
+            }
 
+            if (GUILayout.Button("Go Next Segment"))
+            {
+                StepEnum(1);
+            }
+            GUILayout.EndHorizontal();
             if (Application.isPlaying && t.CollectingData)
             {
                 var presentSegments = new HashSet<HPUIInteractorConeRayAngleSegment>();
@@ -91,6 +92,34 @@ namespace ubco.ovilab.HPUI.Editor
 
             serializedObject.ApplyModifiedProperties();
 
+        }
+
+        private void StepEnum(int amt = 1)
+        {
+            int phalangeCount = Enum.GetNames(typeof(HPUIInteractorConeRayAngleSegment)).Length;
+            int currentPhalangeIndex = Array.IndexOf(Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)), t.TargetSegment);
+            if (amt > 0)
+            {
+                if (currentPhalangeIndex < phalangeCount - 1)
+                {
+                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)currentPhalangeIndex + amt;
+                }
+                else
+                {
+                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)0;
+                }
+            }
+            else
+            {
+                if (currentPhalangeIndex == 0)
+                {
+                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)phalangeCount - 1;
+                }
+                else
+                {
+                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)currentPhalangeIndex + amt;
+                }
+            }
         }
     }
 }
