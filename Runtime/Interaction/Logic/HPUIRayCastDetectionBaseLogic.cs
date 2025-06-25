@@ -50,6 +50,14 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public bool ShowDebugRayVisual { get => showDebugRayVisual; set => showDebugRayVisual = value; }
 
+        [SerializeField]
+        [Tooltip("Show rays used for interaction selections. A ray turns green when it detects a selection and remains invisible otherwise.")]
+        private bool showOnlyInteractingDebugRayVisual = false;
+
+        /// <summary>
+        /// Show rays used for interaction selections. A ray turns green when it detects a selection and remains invisible otherwise.
+        /// </summary>
+        public bool ShowOnlyInteractingDebugRayVisual { get => showOnlyInteractingDebugRayVisual; set => showOnlyInteractingDebugRayVisual = value; }
 
         /// <summary>
         /// If subscribed to, provides the data of the raycasts during each frame.
@@ -74,11 +82,11 @@ namespace ubco.ovilab.HPUI.Interaction
 
         /// <inheritdoc />
         public virtual void Dispose()
-        {}
+        { }
 
         /// <inheritdoc />
         public virtual void Reset()
-        {}
+        { }
 
         /// <summary>
         /// Given the list of <see cref="HPUIInteractorRayAngle"/>, detect the interactables and populate the <see cref="validTargets"/> dictionary.
@@ -92,13 +100,13 @@ namespace ubco.ovilab.HPUI.Interaction
             hoverEndPoint = interactionPoint;
             UnityEngine.Profiling.Profiler.BeginSample("Process angles");
             bool isLeftHand = interactor.handedness == InteractorHandedness.Left;
-            foreach(HPUIInteractorRayAngle angle in activeFingerAngles)
+            foreach (HPUIInteractorRayAngle angle in activeFingerAngles)
             {
                 bool validInteractable = false,
                     isSelection = false;
                 UnityEngine.Profiling.Profiler.BeginSample("Compute direction");
                 // TODO: Batch compute this.
-                Vector3 direction  = attachTransform.TransformDirection(angle.GetDirection(isLeftHand));
+                Vector3 direction = attachTransform.TransformDirection(angle.GetDirection(isLeftHand));
                 UnityEngine.Profiling.Profiler.EndSample();
 
                 UnityEngine.Profiling.Profiler.BeginSample("raycast");
@@ -164,6 +172,10 @@ namespace ubco.ovilab.HPUI.Interaction
                     Color rayColor = validInteractable && isSelection ? Color.green : Color.red;
                     Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, rayColor);
                 }
+                if (ShowOnlyInteractingDebugRayVisual)
+                {
+                    if (validInteractable && isSelection) Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, Color.green);
+                }
             }
             UnityEngine.Profiling.Profiler.EndSample();
 
@@ -172,7 +184,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 hoverEndPoint = newHoverEndPoint;
             }
 
-            foreach(List<RaycastInteractionInfo> info in tempValidTargets.Values)
+            foreach (List<RaycastInteractionInfo> info in tempValidTargets.Values)
             {
                 ListPool<RaycastInteractionInfo>.Release(info);
             }
@@ -207,7 +219,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 float localOverThresholdCount = 0,
                     localCount = 0;
 
-                foreach(RaycastInteractionInfo i in kvp.Value)
+                foreach (RaycastInteractionInfo i in kvp.Value)
                 {
                     xEndPoint += i.point.x;
                     yEndPoint += i.point.y;
