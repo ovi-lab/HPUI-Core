@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -42,22 +43,8 @@ namespace ubco.ovilab.HPUI.Interaction
         private QueryTriggerInteraction physicsTriggerInteraction = QueryTriggerInteraction.Ignore;
 
         [SerializeField]
-        [Tooltip("Show rays used for interaction selections. A ray turns green when it detects a selection and remains red otherwise.")]
-        private bool showDebugRayVisual = true;
-
-        /// <summary>
-        /// Show rays used for interaction selections. A ray turns green when it detects a selection and remains red otherwise.
-        /// </summary>
-        public bool ShowDebugRayVisual { get => showDebugRayVisual; set => showDebugRayVisual = value; }
-
-        [SerializeField]
-        [Tooltip("Show rays used for interaction selections. A ray turns green when it detects a selection and remains invisible otherwise.")]
-        private bool showOnlyInteractingDebugRayVisual = false;
-
-        /// <summary>
-        /// Show rays used for interaction selections. A ray turns green when it detects a selection and remains invisible otherwise.
-        /// </summary>
-        public bool ShowOnlyInteractingDebugRayVisual { get => showOnlyInteractingDebugRayVisual; set => showOnlyInteractingDebugRayVisual = value; }
+        [Tooltip("Show rays used for interaction selections. None hides all rays, All shows active rays in green and inactive rays in red, OnlyActive shows only active rays in green")]
+        private DebugRayVisual debugRayVisual = DebugRayVisual.All;
 
         /// <summary>
         /// If subscribed to, provides the data of the raycasts during each frame.
@@ -167,14 +154,17 @@ namespace ubco.ovilab.HPUI.Interaction
                 }
                 UnityEngine.Profiling.Profiler.EndSample();
 
-                if (ShowDebugRayVisual)
+                if (debugRayVisual == DebugRayVisual.All)
                 {
                     Color rayColor = validInteractable && isSelection ? Color.green : Color.red;
                     Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, rayColor);
                 }
-                if (ShowOnlyInteractingDebugRayVisual)
+                if (debugRayVisual == DebugRayVisual.OnlyActive)
                 {
-                    if (validInteractable && isSelection) Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, Color.green);
+                    if (validInteractable && isSelection)
+                    {
+                        Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, Color.green);
+                    }
                 }
             }
             UnityEngine.Profiling.Profiler.EndSample();
@@ -292,6 +282,14 @@ namespace ubco.ovilab.HPUI.Interaction
                 this.distance = distance;
                 this.isSelection = isSelection;
             }
+        }
+
+        [Serializable]
+        public enum DebugRayVisual
+        {
+            None = 0,
+            All = 1,
+            OnlyActive = 2
         }
     }
 }
