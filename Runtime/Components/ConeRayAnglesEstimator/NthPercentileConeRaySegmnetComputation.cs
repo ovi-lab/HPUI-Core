@@ -48,20 +48,22 @@ namespace ubco.ovilab.HPUI
                         }
                     }
                     int frameCountForMinRayInteractionsThreshold = (int)(minRayInteractionsThreshold * interactionRecord.records.Count);
+                    bool atLeastOneRayAnalyzed = false;
                     foreach (var ray in rayDistances)
                     {
+                        atLeastOneRayAnalyzed = true;
                         if (ray.Value.Count > frameCountForMinRayInteractionsThreshold)
                         {
                             averageRayDistance[(ray.Key.Item1, ray.Key.Item2)] = ray.Value.Percentile(percentile);
                         }
                     }
+                    if (atLeastOneRayAnalyzed && averageRayDistance.Count() == 0)
+                    {
+                        Debug.LogWarning($"Data collection has gone wrong for Phalange {segment.ToString()}, no rays have been utilized enough for ray interaction threshold of {minRayInteractionsThreshold}");
+                    }
                 }
             }
 
-            if (averageRayDistance.Count() == 0)
-            {
-                Debug.LogWarning($"Data collection has gone wrong for Phalange {segment.ToString()}, no rays have been utilized enough for ray interaction threshold of {minRayInteractionsThreshold}");
-            }
 
             List<HPUIInteractorRayAngle> coneAnglesForSegment = new();
 
