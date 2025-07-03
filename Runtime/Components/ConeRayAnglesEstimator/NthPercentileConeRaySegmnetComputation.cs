@@ -24,6 +24,8 @@ namespace ubco.ovilab.HPUI
         {
             Dictionary<(float, float), float> averageRayDistance = new();
             // For each interaction, get the frame with the shortest distance
+            bool atLeastOneRayAnalyzed = false;
+
             foreach (ConeRayComputationDataRecord interactionRecord in interactionRecords)
             {
                 if (interactionRecord.segment == segment)
@@ -48,7 +50,6 @@ namespace ubco.ovilab.HPUI
                         }
                     }
                     int frameCountForMinRayInteractionsThreshold = (int)(minRayInteractionsThreshold * interactionRecord.records.Count);
-                    bool atLeastOneRayAnalyzed = false;
                     foreach (var ray in rayDistances)
                     {
                         atLeastOneRayAnalyzed = true;
@@ -57,13 +58,13 @@ namespace ubco.ovilab.HPUI
                             averageRayDistance[(ray.Key.Item1, ray.Key.Item2)] = ray.Value.Percentile(percentile);
                         }
                     }
-                    if (atLeastOneRayAnalyzed && averageRayDistance.Count() == 0)
-                    {
-                        Debug.LogWarning($"Data collection has gone wrong for Phalange {segment.ToString()}, no rays have been utilized enough for ray interaction threshold of {minRayInteractionsThreshold}");
-                    }
                 }
             }
 
+            if (atLeastOneRayAnalyzed && averageRayDistance.Count() == 0)
+            {
+                Debug.LogWarning($"Data collection has gone wrong for Phalange {segment.ToString()}, no rays have been utilized enough for ray interaction threshold of {minRayInteractionsThreshold}");
+            }
 
             List<HPUIInteractorRayAngle> coneAnglesForSegment = new();
 
