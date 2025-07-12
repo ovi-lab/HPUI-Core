@@ -20,6 +20,10 @@ namespace ubco.ovilab.HPUI
         [Tooltip("Get the nth percentile distance at which interactions occured for each ray")]
         public float percentile = 0.6f;
 
+        [SerializeField, Range(1f, 2f)]
+        [Tooltip("Amplify each ray by a fixed multiplier. Useful for when the rays produced are frequently losing contact during gestures.")]
+        public float amplifier = 1f;
+
         List<HPUIInteractorRayAngle> IConeRaySegmentComputation.EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment, IEnumerable<ConeRayComputationDataRecord> interactionRecords)
         {
             Dictionary<(float, float), float> averageRayDistance = new();
@@ -55,7 +59,7 @@ namespace ubco.ovilab.HPUI
                         atLeastOneRayAnalyzed = true;
                         if (ray.Value.Count > frameCountForMinRayInteractionsThreshold)
                         {
-                            averageRayDistance[(ray.Key.Item1, ray.Key.Item2)] = ray.Value.Percentile(percentile);
+                            averageRayDistance[(ray.Key.Item1, ray.Key.Item2)] = ray.Value.Percentile(percentile) * amplifier;
                         }
                     }
                 }
