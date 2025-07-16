@@ -13,12 +13,11 @@ namespace ubco.ovilab.HPUI.Interaction
 
         // FIXME: Compute this on the fly and store it
 
-        public static List<HPUIInteractorRayAngle> ComputeAngles(int maxAngle, int angleStep, float raySelectionThreshold)
+        public static List<HPUIInteractorRayAngle> ComputeAngles(int maxAngle, int angleStep, float a, float b, float c)
         {
             List<HPUIInteractorRayAngle> allAngles = new();
 
             float numberOfSamples = Mathf.Pow(360 / angleStep, 2);
-            List<Vector3> spericalPoints = new();
             float phi = Mathf.PI * (Mathf.Sqrt(5) - 1);
 
             float yMin = Mathf.Cos(Mathf.Min(maxAngle * Mathf.Deg2Rad));
@@ -38,12 +37,14 @@ namespace ubco.ovilab.HPUI.Interaction
                 float x = Mathf.Cos(theta) * radius;
                 float z = Mathf.Sin(theta) * radius;
 
-                Vector3 point = new Vector3(x, y, z);
+                // Stretch point to ellipsoid dimensions
+                Vector3 ellipsoidPoint = new Vector3(x * a, y * b, z * c);
 
-                float xAngle = Vector3.Angle(Vector3.up, new Vector3(0, y, z)) * (z < 0 ? -1: 1);
-                float zAngle = Vector3.Angle(Vector3.up, new Vector3(x, y, 0)) * (x < 0 ? -1: 1);
+                float xAngle = Vector3.Angle(Vector3.up, new Vector3(0, ellipsoidPoint.y, ellipsoidPoint.z)) * (ellipsoidPoint.z < 0 ? -1 : 1);
+                float zAngle = Vector3.Angle(Vector3.up, new Vector3(ellipsoidPoint.x, ellipsoidPoint.y, 0)) * (ellipsoidPoint.x < 0 ? -1 : 1);
+                float distance = ellipsoidPoint.magnitude;
 
-                allAngles.Add(new HPUIInteractorRayAngle(xAngle, zAngle, raySelectionThreshold));
+                allAngles.Add(new HPUIInteractorRayAngle(xAngle, zAngle, distance));
             }
             return allAngles;
         }
