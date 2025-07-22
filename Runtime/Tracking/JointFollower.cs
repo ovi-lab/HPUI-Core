@@ -23,6 +23,7 @@ namespace ubco.ovilab.HPUI.Tracking
         /// The target transform to use. If not set, use this transform.
         /// </summary>
         public Transform TargetTransform { get => targetTransform; set => targetTransform = value; }
+        [SerializeField] private Transform referenceTransform;
 
         /// <inheritdoc />
         public override Handedness Handedness
@@ -95,6 +96,18 @@ namespace ubco.ovilab.HPUI.Tracking
                 return;
             }
 
+            if (referenceTransform == null)
+            {
+                if (xrOrigin != null)
+                {
+                    referenceTransform = xrOrigin.transform;
+                }
+                else
+                {
+                    Debug.LogError("XR Origin not found. Make sure an XR Origin Exists in the Scene");
+                }
+            }
+
             XRHand hand;
             if (Handedness.Left == jointFollowerData.Value.handedness)
             {
@@ -136,15 +149,14 @@ namespace ubco.ovilab.HPUI.Tracking
 
             if (mainPoseSuccess && (!jointFollowerDataValue.useSecondJointID || secondPoseSuccess))
             {
-                if (xrOrigin != null)
+                if (referenceTransform != null)
                 {
-                    Vector3 position = xrOrigin.transform.position;
-                    // position.y += xrOrigin.CameraYOffset;
-                    Pose xrOriginPose = new Pose(position, xrOrigin.transform.rotation);
-                    mainJointPose = mainJointPose.GetTransformedBy(xrOriginPose);
+                    Vector3 position = referenceTransform.transform.position;
+                    Pose referencePose = new Pose(position, referenceTransform.transform.rotation);
+                    mainJointPose = mainJointPose.GetTransformedBy(referencePose);
                     if (secondPoseSuccess)
                     {
-                        secondJointPose = secondJointPose.GetTransformedBy(xrOriginPose);
+                        secondJointPose = secondJointPose.GetTransformedBy(referencePose);
                     }
                 }
 
