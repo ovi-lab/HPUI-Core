@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ubco.ovilab.HPUI
@@ -24,6 +25,10 @@ namespace ubco.ovilab.HPUI
         /// Ensures that only one calibration data record is collected for each phalange. Disabling this will allow averaging over multiple calibrations per phalange
         /// </summary>
         public bool UniqueDataRecordPerPhalange { get => uniqueDataRecordPerPhalange; set => uniqueDataRecordPerPhalange = value; }
+
+        [SerializeField] private List<HPUIInteractorConeRayAngleSegment> orderOfCalibration;
+
+        public List<HPUIInteractorConeRayAngleSegment> OrderOfCalibration { get => orderOfCalibration; }
 
         /// <summary>
         /// This will create a <see cref="ConeRayComputationDataRecord"/> for the
