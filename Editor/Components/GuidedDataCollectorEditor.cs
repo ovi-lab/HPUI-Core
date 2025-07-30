@@ -10,6 +10,8 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomEditor(typeof(GuidedDataCollector), true)]
     public class GuidedDataCollectorEditor : UnityEditor.Editor
     {
+        private int currentPhalangeIndex = 0;
+
         private enum State { Wait, Started, Processing, Processed }
         private class StateInformation
         {
@@ -29,6 +31,8 @@ namespace ubco.ovilab.HPUI.Editor
         protected void OnEnable()
         {
             t = target as GuidedDataCollector;
+            currentPhalangeIndex = 0;
+            StepToTargetEnum();
         }
 
         public override void OnInspectorGUI()
@@ -44,7 +48,7 @@ namespace ubco.ovilab.HPUI.Editor
                     t.EndDataCollectionForTargetSegment();
                     // cycling strategy to automatically move to the next phalange.
                     // saves some headache when running a calibration protocol.
-                    StepEnum(1);
+                    StepToTargetEnum();
                 }
             }
             else
@@ -92,6 +96,16 @@ namespace ubco.ovilab.HPUI.Editor
 
             serializedObject.ApplyModifiedProperties();
 
+        }
+
+        private void StepToTargetEnum(bool iterateToNext = true)
+        {
+            if (currentPhalangeIndex >= t.OrderOfCalibration.Count)
+            {
+                currentPhalangeIndex = 0;
+            }
+            t.TargetSegment = t.OrderOfCalibration[currentPhalangeIndex];
+            if(iterateToNext) currentPhalangeIndex++;
         }
 
         private void StepEnum(int amt = 1)
