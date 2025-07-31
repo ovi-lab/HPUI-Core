@@ -26,9 +26,35 @@ namespace ubco.ovilab.HPUI
         /// </summary>
         public bool UniqueDataRecordPerPhalange { get => uniqueDataRecordPerPhalange; set => uniqueDataRecordPerPhalange = value; }
 
-        [SerializeField] private List<HPUIInteractorConeRayAngleSegment> orderOfCalibration;
+        [SerializeField]
+        [Tooltip("Defines a custom order of calibration. If auto-move to next phalange is enabled, the target segment will automatically move to the next segment when you pause data collection for the current segment.")]
+        private List<HPUIInteractorConeRayAngleSegment> orderOfCalibration;
 
+        /// <summary>
+        /// Defines a custom order of calibration. If auto-move 
+        /// to next phalange is enabled, the target segment will 
+        /// automatically move to the next segment when you pause 
+        /// data collection for the current segment. 
+        /// </summary>
         public List<HPUIInteractorConeRayAngleSegment> OrderOfCalibration { get => orderOfCalibration; }
+
+        [SerializeField]
+        [Tooltip("Automatically move to next segment. If order of calibration is populated, then this will move to the next item in the order, and cycle back upon finishing. Else, it will move through the full phalanges list")]
+        private bool autoMoveToNextPhalange = true;
+
+        /// <summary>
+        /// Automatically move to next segment. If order 
+        /// of calibration is populated, then this will 
+        /// move to the next item in the order, and cycle 
+        /// back upon finishing. Else, it will move through 
+        /// the full phalanges list 
+        /// </summary>
+        /// <param name="parameterName">Parameter description.</param>
+        /// <returns>Type and description of the returned object.</returns>
+        /// <example>Write me later.</example>
+        public bool AutoMoveToNextPhalange => autoMoveToNextPhalange;
+
+        private int currentPhalangeIndex;
 
         /// <summary>
         /// This will create a <see cref="ConeRayComputationDataRecord"/> for the
@@ -55,7 +81,8 @@ namespace ubco.ovilab.HPUI
 
         /// <summary>
         /// This will create a <see cref="ConeRayComputationDataRecord"/> for the
-        /// current <see cref="TargetSegment"/>.
+        /// current <see cref="TargetSegment"/>. Also pauses the data collector
+        /// to adjust target segment for the next data record.
         /// </summary>
         public void EndDataCollectionForTargetSegment()
         {
@@ -63,9 +90,26 @@ namespace ubco.ovilab.HPUI
             PauseDataCollection = true;
         }
 
+        /// <summary>
+        /// Resumes data collection. To be used after 
+        /// `EndDataCollectionForTargetSegment`
+        /// </summary>
         public void StartDataCollectionForNextTargetSegment()
         {
             PauseDataCollection = false;
+        }
+
+        /// <summary>
+        /// Set's the target segment to be calibrated.
+        /// See <see cref="GuidedDataCollectorEditor.StepThroughOrderOfCalibrationPhalanges"/> 
+        /// for an example on using this during calibration procedures.
+        /// </summary>
+        /// <param name="parameterName">Parameter description.</param>
+        /// <returns>Type and description of the returned object.</returns>
+        /// <example>Write me later.</example>
+        public void StepToTargetPhalange(HPUIInteractorConeRayAngleSegment targetSegment)
+        {
+            this.targetSegment = targetSegment;
         }
     }
 }

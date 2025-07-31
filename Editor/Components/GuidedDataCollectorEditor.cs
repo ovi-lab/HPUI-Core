@@ -10,8 +10,6 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomEditor(typeof(GuidedDataCollector), true)]
     public class GuidedDataCollectorEditor : UnityEditor.Editor
     {
-        private int currentPhalangeIndex = 0;
-
         private enum State { Wait, Started, Processing, Processed }
         private class StateInformation
         {
@@ -27,17 +25,24 @@ namespace ubco.ovilab.HPUI.Editor
 
         private SerializedObject generatedConeRayAnglesObj;
         private GuidedDataCollector t;
+        private int currentPhalangeIndex;
 
         protected void OnEnable()
         {
             t = target as GuidedDataCollector;
-            currentPhalangeIndex = 0;
-            StepToTargetEnum();
+            if (t.OrderOfCalibration.Count > 0)
+            {
+                t.StepToTargetPhalange(t.OrderOfCalibration[0]);
+            }
         }
 
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
+            if (t.OrderOfCalibration.Count == 0)
+            {
+                EditorGUILayout.HelpBox("The guided data collector works best with a custom order of calibration. Without one, you will have to change the target phalange to be calibrated manually. Consider populating Order of Calibration.", MessageType.Warning);
+            }
 
             GUI.enabled = Application.isPlaying && t.CollectingData;
 
@@ -48,7 +53,17 @@ namespace ubco.ovilab.HPUI.Editor
                     t.EndDataCollectionForTargetSegment();
                     // cycling strategy to automatically move to the next phalange.
                     // saves some headache when running a calibration protocol.
-                    StepToTargetEnum();
+                    if (t.AutoMoveToNextPhalange)
+                    {
+                        if (t.OrderOfCalibration.Count > 0)
+                        {
+                            StepThroughCustomPhalanges(1);
+                        }
+                        else
+                        {
+                            StepThroughAllPhalanges(1);
+                        }
+                    }
                 }
             }
             else
@@ -60,15 +75,33 @@ namespace ubco.ovilab.HPUI.Editor
                 }
             }
             GUILayout.BeginHorizontal();
+            GUI.enabled = t.PauseDataCollection;
+
             if (GUILayout.Button("Go Prev Segment"))
             {
-                StepEnum(-1);
+                if (t.OrderOfCalibration.Count > 0)
+                {
+                    StepThroughCustomPhalanges(-1);
+                }
+                else
+                {
+                    StepThroughAllPhalanges(-1);
+                }
             }
 
             if (GUILayout.Button("Go Next Segment"))
             {
-                StepEnum(1);
+                if (t.OrderOfCalibration.Count > 0)
+                {
+                    StepThroughCustomPhalanges(1);
+                }
+                else
+                {
+                    StepThroughAllPhalanges(1);
+                }
             }
+
+
             GUILayout.EndHorizontal();
             if (Application.isPlaying && t.CollectingData)
             {
@@ -95,20 +128,18 @@ namespace ubco.ovilab.HPUI.Editor
             }
 
             serializedObject.ApplyModifiedProperties();
-
         }
 
-        private void StepToTargetEnum(bool iterateToNext = true)
+        private void StepThroughCustomPhalanges(int amt = 1)
         {
-            if (currentPhalangeIndex >= t.OrderOfCalibration.Count)
-            {
-                currentPhalangeIndex = 0;
-            }
-            t.TargetSegment = t.OrderOfCalibration[currentPhalangeIndex];
-            if(iterateToNext) currentPhalangeIndex++;
+            currentPhalangeIndex = (currentPhalangeIndex + amt) % t.OrderOfCalibration.Count;
+            if (currentPhalangeIndex < 0)
+                currentPhalangeIndex += t.OrderOfCalibration.Count;
+            var targetSegment = t.OrderOfCalibration[currentPhalangeIndex];
+            t.StepToTargetPhalange(targetSegment);
         }
 
-        private void StepEnum(int amt = 1)
+        private void StepThroughAllPhalanges(int amt = 1)
         {
             int phalangeCount = Enum.GetNames(typeof(HPUIInteractorConeRayAngleSegment)).Length;
             int currentPhalangeIndex = Array.IndexOf(Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)), t.TargetSegment);
