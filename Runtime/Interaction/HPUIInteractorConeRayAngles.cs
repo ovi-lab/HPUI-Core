@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using System;
+using System.Linq;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -62,7 +63,12 @@ namespace ubco.ovilab.HPUI.Interaction
                 {
                     if (!ActiveFingerAngles.ContainsKey((kvp.Key, angleSide.side)))
                     {
-                        ActiveFingerAngles.Add((kvp.Key, angleSide.side), angleSide.rayAngles);
+                        List<HPUIInteractorRayAngle> angles = angleSide.rayAngles.Where(a => a.RaySelectionThreshold >= 0).ToList();
+                        if (angleSide.rayAngles.Count != angles.Count)
+                        {
+                            Debug.Log($"Removed {angleSide.rayAngles.Count - angles.Count} rays as they had RaySelectionThreshold below 0.");
+                        }
+                        ActiveFingerAngles.Add((kvp.Key, angleSide.side), angles);
                     }
                 }
             }

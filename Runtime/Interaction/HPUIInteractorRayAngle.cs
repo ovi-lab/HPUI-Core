@@ -5,19 +5,34 @@ using System;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
-    // TODO docuement all of this
     [Serializable, BurstCompile]
     public class HPUIInteractorRayAngle
     {
-        [SerializeField] private float x;
-        [SerializeField] private float z;
-        [SerializeField] private float raySelectionThreshold;
+        [SerializeField, Tooltip("The angle around the x axis")] private float x;
+
+        /// <summary>
+        /// The angle around the x axis
+        /// </summary>
+        public float X { get => x; }
+
+        [SerializeField, Tooltip("The angle around the z axis")] private float z;
+
+        /// <summary>
+        /// The angle around the z axis
+        /// </summary>
+        public float Z { get => z; }
+
+        [SerializeField, Tooltip("The distance threshold for selection")] private float raySelectionThreshold;
+
+        /// <summary>
+        /// The distance threshold for selection
+        /// </summary>
+        public float RaySelectionThreshold { get => raySelectionThreshold; set => raySelectionThreshold = value; }
+
         private Vector3 leftRayDirection;
         private Vector3 rightRayDirection;
         private bool isCached;
-        public float X { get => x; }
-        public float Z { get => z; }
-        public float RaySelectionThreshold { get => raySelectionThreshold; set => raySelectionThreshold = value; }
+
         public HPUIInteractorRayAngle(float x, float z, float angleThreshold)
         {
             this.x = x;
@@ -30,23 +45,17 @@ namespace ubco.ovilab.HPUI.Interaction
             this.leftRayDirection = _leftRay;
         }
 
-        public HPUIInteractorRayAngle(float x, float z)
-        {
-            this.x = x;
-            this.z = z;
-            isCached = false;
-            GetDirection(x, z, false, out float3 _rightRay);
-            GetDirection(x, z, true, out float3 _leftRay);
-            this.rightRayDirection = _rightRay;
-            this.leftRayDirection = _leftRay;
-        }
-
+        /// <summary>
+        /// Given is the distance (dist), less than the <see cref="RaySelectionThreshold"/>.
+        /// </summary>
         public bool WithinThreshold(float dist)
         {
             return dist < raySelectionThreshold;
         }
 
-
+        /// <summary>
+        /// The float3 (vector3) direction based of this RayAngle instance based on the handedness.
+        /// </summary>
         public float3 GetDirection(bool isLeftHand)
         {
             if (!isCached)

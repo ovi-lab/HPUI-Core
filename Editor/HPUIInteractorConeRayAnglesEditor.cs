@@ -129,6 +129,12 @@ namespace ubco.ovilab.HPUI.Editor
                 EditorGUILayout.HelpBox($"Duplicate side entries for angles in {prop.displayName}", MessageType.Warning);
             }
 
+            int negativeRaysCount = angles.SelectMany(el => el.rayAngles).Where(a => a.RaySelectionThreshold < 0).Count();
+            if (negativeRaysCount != 0)
+            {
+                EditorGUILayout.HelpBox($"There are {negativeRaysCount} rays with negative distances. These rays will be ignored at runtime.", MessageType.Warning);
+            }
+
             GUIContent content = new GUIContent(prop.displayName + details);
             EditorGUILayout.PropertyField(prop, content);
         }
