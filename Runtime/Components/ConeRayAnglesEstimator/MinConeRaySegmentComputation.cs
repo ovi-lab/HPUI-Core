@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ubco.ovilab.HPUI.Interaction;
 using UnityEngine.Assertions;
+using static ubco.ovilab.HPUI.Interaction.HPUIRayCastDetectionBaseLogic;
 
 namespace ubco.ovilab.HPUI
 {
@@ -24,7 +25,8 @@ namespace ubco.ovilab.HPUI
                     var minDistRaycastRecords = interactionRecord.records.AsParallel()
                         .Select(frameRaycastRecords =>
                         {
-                            if (frameRaycastRecords.Count() == 0)
+                            IEnumerable<RaycastDataRecord> filteredFrameRaycastRecords = frameRaycastRecords.Where(r => r.isSelection);
+                            if (filteredFrameRaycastRecords.Count() == 0)
                             {
                                 return null;
                             }
@@ -32,8 +34,8 @@ namespace ubco.ovilab.HPUI
                             {
                                 return new
                                 {
-                                    distance = frameRaycastRecords.Min(raycastRecord => raycastRecord.distance),
-                                    raycastRecordsForFrame = frameRaycastRecords
+                                    distance = filteredFrameRaycastRecords.Min(raycastRecord => raycastRecord.distance),
+                                    raycastRecordsForFrame = filteredFrameRaycastRecords
                                 };
                             }
                         })

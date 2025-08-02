@@ -138,7 +138,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
                         if (raycastData != null)
                         {
-                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, angle.X, angle.Z, distance, isSelection));
+                            raycastDataRecords.Add(new RaycastDataRecord(hpuiInteractable, angle.X, angle.Z, hitInfo.distance, isSelection));
                         }
 
                         List<RaycastInteractionInfo> infoList;
@@ -268,10 +268,31 @@ namespace ubco.ovilab.HPUI.Interaction
         /// </summary>
         public struct RaycastDataRecord
         {
+            /// <summary>
+            /// The interactable which the ray interacted with.
+            /// </summary>
             public IHPUIInteractable interactable;
+
+            /// <summary>
+            /// The angle around the X axis of the interactor
+            /// <seealso cref="HPUIInteractorRayAngle"/>
+            /// </summary>
             public float angleX;
+
+            /// <summary>
+            /// The angle around the Z axis of the interactor
+            /// <seealso cref="HPUIInteractorRayAngle"/>
+            /// </summary>
             public float angleZ;
+
+            /// <summary>
+            /// The distance from the ray's origin (interactor) to the interactable.
+            /// </summary>
             public float distance;
+
+            /// <summary>
+            /// If the ray interaction is a valid selection.
+            /// </summary>
             public bool isSelection;
 
             public RaycastDataRecord(IHPUIInteractable interactable, float x, float z, float distance, bool isSelection) : this()

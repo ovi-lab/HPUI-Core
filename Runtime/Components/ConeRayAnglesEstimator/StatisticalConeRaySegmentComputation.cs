@@ -63,6 +63,12 @@ namespace ubco.ovilab.HPUI
                         // for each ray in a given frame
                         foreach (var ray in frame)
                         {
+                            // Skipping rays that were not selection
+                            if (!ray.isSelection)
+                            {
+                                continue;
+                            }
+
                             // if a list hasn't been created for a ray
                             // i.e. this is the first time the ray is interacting
                             // in this gesture
