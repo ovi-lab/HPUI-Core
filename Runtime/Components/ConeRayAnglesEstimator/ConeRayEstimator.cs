@@ -296,6 +296,7 @@ namespace ubco.ovilab.HPUI
                 }
             }
 
+            estimatedConeRayAngles.RefreshCache();
             GeneratedAsset = estimatedConeRayAngles;
 
             if (SetDetectionLogicOnEstimation)
