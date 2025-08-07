@@ -93,6 +93,15 @@ namespace ubco.ovilab.HPUI.Interaction
             }
             return null;
         }
+
+        /// <summary>
+        /// Serialize the data as a json object.
+        /// <seealso cref="LoadAndSaveConeDataFromJson"/>
+        /// </summary>
+        public string ToJsonString()
+        {
+            return JsonUtility.ToJson(this);
+        }
     }
 
     /// <summary>
