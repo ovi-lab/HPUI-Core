@@ -157,7 +157,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 if (debugRayVisual == DebugRayVisual.All)
                 {
                     Color rayColor = validInteractable && isSelection ? Color.green : Color.red;
-                    Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * angle.RaySelectionThreshold, rayColor);
+                    Debug.DrawLine(interactionPoint, interactionPoint + direction.normalized * Mathf.Min(angle.RaySelectionThreshold, InteractionHoverRadius), rayColor);
                 }
                 if (debugRayVisual == DebugRayVisual.OnlyActive)
                 {
