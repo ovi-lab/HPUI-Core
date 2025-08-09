@@ -282,10 +282,10 @@ namespace ubco.ovilab.HPUI.Editor
                 {
                     continue;
                 }
-                // if (childProperty.depth > (depthOfParent + depth))
-                // {
-                //     continue;
-                // }
+                if (childProperty.depth > (depthOfParent + depth))
+                {
+                    continue;
+                }
                 yield return childProperty.Copy();
             }
         }
