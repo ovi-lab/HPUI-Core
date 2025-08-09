@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ubco.ovilab.HPUI.Interaction;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI
 {
@@ -24,6 +25,14 @@ namespace ubco.ovilab.HPUI
         /// The interactor used to collect <see cref="HPUIRayCastDetectionBaseLogic.RaycastDataRecord"/> data.
         /// </summary>
         public HPUIInteractor Interactor { get => interactor; set => interactor = value; }
+
+        [SerializeReference, Tooltip("The estimator to compute closest joint and side.")]
+        private HPUIConeRayCastDetectionLogic.ClosestJointAndSideEstimator closestJointAndSideEstimator;
+
+        /// <summary>
+        /// The estimator to compute closest joint and side.
+        /// </summary>
+        public HPUIConeRayCastDetectionLogic.ClosestJointAndSideEstimator ClosestJointAndSideEstimator { get => closestJointAndSideEstimator; set => closestJointAndSideEstimator = value; }
 
         /// <summary>
         /// The flag indicating if data collection is active.
@@ -87,10 +96,11 @@ namespace ubco.ovilab.HPUI
                             ((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles,
                             $"Interactor {fullRangeAngles.name} is not the same as {((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles.name}");
 
+            closestJointAndSideEstimator.Estimate(out XRHandJointID closestJoint, out FingerSide closestSide);
+
             if (raycastDataRecords.Count > 0)
             {
-                // TODO Compute the closes joint and side
-                currentInteractionData.Add(new RaycastDataRecordsContainer(raycastDataRecords, FingerSide.volar, UnityEngine.XR.Hands.XRHandJointID.Invalid));
+                currentInteractionData.Add(new RaycastDataRecordsContainer(raycastDataRecords, closestSide, closestJoint));
             }
         }
 
