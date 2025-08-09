@@ -25,7 +25,7 @@ namespace ubco.ovilab.HPUI
                     var minDistRaycastRecords = interactionRecord.records.AsParallel()
                         .Select(frameRaycastRecords =>
                         {
-                            IEnumerable<RaycastDataRecord> filteredFrameRaycastRecords = frameRaycastRecords.Where(r => r.isSelection);
+                            IEnumerable<RaycastDataRecord> filteredFrameRaycastRecords = frameRaycastRecords.raycastDataRecordsList.Where(r => r.isSelection);
                             if (filteredFrameRaycastRecords.Count() == 0)
                             {
                                 return null;

@@ -61,7 +61,7 @@ namespace ubco.ovilab.HPUI
                     foreach (var frame in interactionRecord.records)
                     {
                         // for each ray in a given frame
-                        foreach (var ray in frame)
+                        foreach (var ray in frame.raycastDataRecordsList)
                         {
                             // Skipping rays that were not selection
                             if (!ray.isSelection)

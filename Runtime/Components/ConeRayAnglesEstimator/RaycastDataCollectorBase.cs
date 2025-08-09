@@ -38,7 +38,7 @@ namespace ubco.ovilab.HPUI
 
         private HPUIFullRangeRayCastDetectionLogic fullRayDetectionLogic;
         private HPUIInteractorFullRangeAngles fullRangeAngles;
-        protected List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> currentInteractionData = new();
+        protected List<RaycastDataRecordsContainer> currentInteractionData = new();
 
         public List<ConeRayComputationDataRecord> DataRecords { get; protected set; }
 
@@ -64,7 +64,7 @@ namespace ubco.ovilab.HPUI
             }
 
             this.DataRecords = new List<ConeRayComputationDataRecord>();
-            this.currentInteractionData = new List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>>();
+            this.currentInteractionData = new List<RaycastDataRecordsContainer>();
             this.fullRayDetectionLogic = fullRayDetectionLogic;
             this.fullRangeAngles = fullRayDetectionLogic.FullRangeRayAngles;
 
@@ -76,7 +76,7 @@ namespace ubco.ovilab.HPUI
         /// <summary>
         /// The callback used to get the data from the <see cref="HPUIFullRangeRayCastDetectionLogic.raycastData"/>.
         /// </summary>
-        protected void RaycastDataCallback(List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecords)
+        protected void RaycastDataCallback(HPUIRayCastDetectionBaseLogic detectionLogic, List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecords)
         {
             if (PauseDataCollection)
             {
@@ -89,7 +89,8 @@ namespace ubco.ovilab.HPUI
 
             if (raycastDataRecords.Count > 0)
             {
-                currentInteractionData.Add(raycastDataRecords);
+                // TODO Compute the closes joint and side
+                currentInteractionData.Add(new RaycastDataRecordsContainer(raycastDataRecords, FingerSide.volar, UnityEngine.XR.Hands.XRHandJointID.Invalid));
             }
         }
 

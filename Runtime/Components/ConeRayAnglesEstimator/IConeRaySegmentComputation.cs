@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ubco.ovilab.HPUI.Interaction;
+using UnityEngine.XR.Hands;
 
 namespace ubco.ovilab.HPUI
 {
@@ -52,13 +53,32 @@ namespace ubco.ovilab.HPUI
     /// </summary>
     public struct ConeRayComputationDataRecord
     {
-        public List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> records;
+        public List<RaycastDataRecordsContainer> records;
         public HPUIInteractorConeRayAngleSegment segment;
 
-        public ConeRayComputationDataRecord(List<List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord>> records, HPUIInteractorConeRayAngleSegment segment) : this()
+        public ConeRayComputationDataRecord(List<RaycastDataRecordsContainer> records, HPUIInteractorConeRayAngleSegment segment) : this()
         {
             this.records = records;
             this.segment = segment;
+        }
+    }
+
+    /// <summary>
+    /// Container for a list of <see cref="HPUIRayCastDetectionBaseLogic.RaycastDataRecord"/> emited with
+    /// <see cref="HPUIRayCastDetectionBaseLogic.raycastData"/>. Also contains the closest
+    /// <see cref="FingerSide">side</see> and <see cref="XRHandJoint">joint</see>
+    /// </summary>
+    public struct RaycastDataRecordsContainer
+    {
+        public List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecordsList;
+        public FingerSide fingerSide;
+        public XRHandJointID handJointID;
+
+        public RaycastDataRecordsContainer(List<HPUIRayCastDetectionBaseLogic.RaycastDataRecord> raycastDataRecord, FingerSide fingerSide, XRHandJointID handJointID) : this()
+        {
+            this.raycastDataRecordsList = raycastDataRecord;
+            this.fingerSide = fingerSide;
+            this.handJointID = handJointID;
         }
     }
 }
