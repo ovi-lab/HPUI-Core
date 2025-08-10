@@ -112,12 +112,25 @@ namespace ubco.ovilab.HPUI.Editor
                 }
 
                 var missingSegments = "";
-                Array allSegments = Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment));
-                foreach (HPUIInteractorConeRayAngleSegment segment in allSegments)
+                if (t.OrderOfCalibration.Count > 0)
                 {
-                    if (!presentSegments.Contains(segment))
+                    foreach (HPUIInteractorConeRayAngleSegment segment in t.OrderOfCalibration)
                     {
-                        missingSegments += $"{segment.ToString()}, ";
+                        if (!presentSegments.Contains(segment))
+                        {
+                            missingSegments += $"{segment.ToString()}, ";
+                        }
+                    }
+                }
+                else
+                {
+                    Array allSegments = Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment));
+                    foreach (HPUIInteractorConeRayAngleSegment segment in allSegments)
+                    {
+                        if (!presentSegments.Contains(segment))
+                        {
+                            missingSegments += $"{segment.ToString()}, ";
+                        }
                     }
                 }
                 missingSegments = missingSegments.Trim(new[] { ' ', ',' });
