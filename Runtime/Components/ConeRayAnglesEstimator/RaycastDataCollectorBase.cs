@@ -67,6 +67,12 @@ namespace ubco.ovilab.HPUI
                 return false;
             }
 
+            if (ClosestJointAndSideEstimator.XRHandTrackingEvents == null)
+            {
+                Debug.LogError($"The `xrHandTrackingEvents` is not set!");
+                return false;
+            }
+
             if (!(interactor.DetectionLogic is HPUIFullRangeRayCastDetectionLogic fullRayDetectionLogic))
             {
                 throw new ArgumentException("Interactor is expected to have `HPUIFullRangeRayCastDetectionLogic` as the DetectionLogic.");
@@ -96,7 +102,7 @@ namespace ubco.ovilab.HPUI
                             ((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles,
                             $"Interactor {fullRangeAngles.name} is not the same as {((HPUIFullRangeRayCastDetectionLogic)interactor.DetectionLogic).FullRangeRayAngles.name}");
 
-            closestJointAndSideEstimator.Estimate(out XRHandJointID closestJoint, out FingerSide closestSide);
+            ClosestJointAndSideEstimator.Estimate(out XRHandJointID closestJoint, out FingerSide closestSide);
 
             if (raycastDataRecords.Count > 0)
             {
