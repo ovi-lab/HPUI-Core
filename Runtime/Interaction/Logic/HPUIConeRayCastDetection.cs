@@ -258,7 +258,7 @@ namespace ubco.ovilab.HPUI.Interaction
                             _closestSide = FingerSide.radial;
                         }
 
-                        if (_closestJoint != closestJoint && _closestSide != closestSide)
+                        if (_closestJoint != closestJoint || _closestSide != closestSide)
                         {
                             closestJoint = _closestJoint;
                             closestSide = _closestSide;
