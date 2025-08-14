@@ -26,19 +26,33 @@ namespace ubco.ovilab.HPUI.Editor
         private SerializedObject generatedConeRayAnglesObj;
         private GuidedDataCollector t;
         private int currentPhalangeIndex;
+        private bool autoMoveToNextPhalange;
+        private const string AutoMoveKey = "GuidedDataCollectorEditor_AutoMove";
 
         protected void OnEnable()
         {
             t = target as GuidedDataCollector;
-            if (t.OrderOfCalibration.Count > 0)
+            // resets the target phalange to the first one in the calibration order
+            // only if the application is not playing, to avoid resets mid calibration
+            if ((!Application.isPlaying) && t.OrderOfCalibration.Count > 0)
             {
                 t.StepToTargetPhalange(t.OrderOfCalibration[0]);
             }
+            autoMoveToNextPhalange = EditorPrefs.GetBool(AutoMoveKey, true);
         }
 
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
+            EditorGUI.BeginChangeCheck();
+            autoMoveToNextPhalange = EditorGUILayout.Toggle(new GUIContent(
+                "Auto Move",
+                "Automatically move to next segment. If order of calibration is populated, then this will move to the next item in the order, and cycle back upon finishing. Else, it will move through the full phalanges list"
+            ), autoMoveToNextPhalange);
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorPrefs.SetBool(AutoMoveKey, autoMoveToNextPhalange);
+            }
             if (t.OrderOfCalibration.Count == 0)
             {
                 EditorGUILayout.HelpBox("The guided data collector works best with a custom order of calibration. Without one, you will have to change the target phalange to be calibrated manually. Consider populating Order of Calibration.", MessageType.Warning);
@@ -53,7 +67,7 @@ namespace ubco.ovilab.HPUI.Editor
                     t.EndDataCollectionForTargetSegment();
                     // cycling strategy to automatically move to the next phalange.
                     // saves some headache when running a calibration protocol.
-                    if (t.AutoMoveToNextPhalange)
+                    if (autoMoveToNextPhalange)
                     {
                         if (t.OrderOfCalibration.Count > 0)
                         {
@@ -105,13 +119,13 @@ namespace ubco.ovilab.HPUI.Editor
             GUILayout.EndHorizontal();
             if (Application.isPlaying && t.CollectingData)
             {
-                var presentSegments = new HashSet<HPUIInteractorConeRayAngleSegment>();
-                foreach (var record in t.DataRecords)
+                HashSet<HPUIInteractorConeRayAngleSegment> presentSegments = new HashSet<HPUIInteractorConeRayAngleSegment>();
+                foreach (ConeRayComputationDataRecord record in t.DataRecords)
                 {
                     presentSegments.Add(record.segment);
                 }
 
-                var missingSegments = "";
+                string missingSegments = "";
                 if (t.OrderOfCalibration.Count > 0)
                 {
                     foreach (HPUIInteractorConeRayAngleSegment segment in t.OrderOfCalibration)
@@ -147,8 +161,10 @@ namespace ubco.ovilab.HPUI.Editor
         {
             currentPhalangeIndex = (currentPhalangeIndex + amt) % t.OrderOfCalibration.Count;
             if (currentPhalangeIndex < 0)
+            {
                 currentPhalangeIndex += t.OrderOfCalibration.Count;
-            var targetSegment = t.OrderOfCalibration[currentPhalangeIndex];
+            }
+            HPUIInteractorConeRayAngleSegment targetSegment = t.OrderOfCalibration[currentPhalangeIndex];
             t.StepToTargetPhalange(targetSegment);
         }
 
