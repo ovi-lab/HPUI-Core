@@ -15,7 +15,28 @@ namespace ubco.ovilab.HPUI
         /// <summary>
         /// Phalange that the interactor is currently being calibrated for
         /// </summary>
-        public HPUIInteractorConeRayAngleSegment TargetSegment { get => targetSegment; set => targetSegment = value; }
+        public HPUIInteractorConeRayAngleSegment TargetSegment
+        {
+            get => targetSegment;
+            set
+            {
+                if (orderOfCalibration != null && orderOfCalibration.Count > 0)
+                {
+                    if (orderOfCalibration.Contains(value))
+                    {
+                        targetSegment = value;
+                    }
+                    else
+                    {
+                        Debug.LogError($"Attempted to set TargetSegment to a value not in OrderOfCalibration: {value}");
+                    }
+                }
+                else
+                {
+                    targetSegment = value;
+                }
+            }
+        }
 
         [SerializeField]
         [Tooltip("Ensures that only one calibration data record is collected for each phalange. Disabling this will allow averaging over multiple calibrations per phalange")]
@@ -38,22 +59,6 @@ namespace ubco.ovilab.HPUI
         /// </summary>
         public List<HPUIInteractorConeRayAngleSegment> OrderOfCalibration { get => orderOfCalibration; }
 
-        [SerializeField]
-        [Tooltip("Automatically move to next segment. If order of calibration is populated, then this will move to the next item in the order, and cycle back upon finishing. Else, it will move through the full phalanges list")]
-        private bool autoMoveToNextPhalange = true;
-
-        /// <summary>
-        /// Automatically move to next segment. If order 
-        /// of calibration is populated, then this will 
-        /// move to the next item in the order, and cycle 
-        /// back upon finishing. Else, it will move through 
-        /// the full phalanges list 
-        /// </summary>
-        /// <param name="parameterName">Parameter description.</param>
-        /// <returns>Type and description of the returned object.</returns>
-        /// <example>Write me later.</example>
-        public bool AutoMoveToNextPhalange => autoMoveToNextPhalange;
-
         private int currentPhalangeIndex;
 
         /// <summary>
@@ -64,7 +69,7 @@ namespace ubco.ovilab.HPUI
         {
             if (uniqueDataRecordPerPhalange)
             {
-                foreach (var dataRecord in DataRecords)
+                foreach (ConeRayComputationDataRecord dataRecord in DataRecords)
                 {
                     if (dataRecord.segment == segment)
                     {
