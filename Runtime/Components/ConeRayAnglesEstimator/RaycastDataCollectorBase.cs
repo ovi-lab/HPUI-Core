@@ -83,6 +83,9 @@ namespace ubco.ovilab.HPUI
             this.fullRayDetectionLogic = fullRayDetectionLogic;
             this.fullRangeAngles = fullRayDetectionLogic.FullRangeRayAngles;
 
+            Assert.IsNotNull(ClosestJointAndSideEstimator);
+            ClosestJointAndSideEstimator.Reset();
+
             fullRayDetectionLogic.raycastData += RaycastDataCallback;
             CollectingData = true;
             return true;
