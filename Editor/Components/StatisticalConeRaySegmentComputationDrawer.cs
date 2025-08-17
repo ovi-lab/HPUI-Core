@@ -11,9 +11,9 @@ namespace ubco.ovilab.HPUI.Editor
         {
             int lines = 4;
 
-            // Show percentile only if Estimate is Percentile
-            SerializedProperty estimateProp = property.FindPropertyRelative("estimate");
-            if ((StatisticalConeRaySegmentComputation.Estimate)estimateProp.enumValueIndex
+            // Show percentile only if EstimateTechnique is Percentile
+            SerializedProperty estimateTechniqueProp = property.FindPropertyRelative("estimateTechnique");
+            if ((StatisticalConeRaySegmentComputation.Estimate)estimateTechniqueProp.enumValueIndex
                  == StatisticalConeRaySegmentComputation.Estimate.Percentile)
             {
                 lines++; // show percentile
@@ -27,15 +27,15 @@ namespace ubco.ovilab.HPUI.Editor
 
             Rect lineRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
 
-            SerializedProperty estimateProp = property.FindPropertyRelative("estimate");
+            SerializedProperty estimateTechniqueProp = property.FindPropertyRelative("estimateTechnique");
             SerializedProperty minRayInteractionsThresholdProp = property.FindPropertyRelative("minRayInteractionsThreshold");
             SerializedProperty percentileProp = property.FindPropertyRelative("percentile");
             SerializedProperty multiplierProp = property.FindPropertyRelative("multiplier");
 
             lineRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-            EditorGUI.PropertyField(lineRect, estimateProp);
+            EditorGUI.PropertyField(lineRect, estimateTechniqueProp);
 
-            if ((StatisticalConeRaySegmentComputation.Estimate)estimateProp.enumValueIndex
+            if ((StatisticalConeRaySegmentComputation.Estimate)estimateTechniqueProp.enumValueIndex
                 == StatisticalConeRaySegmentComputation.Estimate.Percentile)
             {
                 lineRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;

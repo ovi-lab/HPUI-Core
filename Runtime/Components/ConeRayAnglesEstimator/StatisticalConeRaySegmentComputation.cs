@@ -15,7 +15,8 @@ namespace ubco.ovilab.HPUI
     [Serializable]
     public class StatisticalConeRaySegmentComputation : IConeRaySegmentComputation
     {
-        public enum Estimate {
+        public enum Estimate
+        {
             /// <summary>
             /// For each ray seen during interactions, use the average
             /// interaction distance from all the data collected.
@@ -29,9 +30,8 @@ namespace ubco.ovilab.HPUI
             Percentile
         }
 
-        [SerializeField]
-        [Tooltip("The statistical estimate to use.")]
-        private Estimate estimate;
+        [SerializeField, Tooltip("The statistical estimate to use.")]
+        private Estimate estimateTechnique;
 
         [SerializeField, Range(0.01f, 1f)]
         [Tooltip("The percentage of frames in the gesture that a ray should have been used to qualify for the final cone")]
@@ -51,12 +51,15 @@ namespace ubco.ovilab.HPUI
             // For each interaction, get the frame with the shortest distance
             bool atLeastOneRayAnalyzed = false;
 
+            // Collect all the distances for a given ray, defined by the x and z angles
+            Dictionary<(float, float), List<float>> rayDistances = new();
+
+            int totalInteractionRecords = 0;
+
             foreach (ConeRayComputationDataRecord interactionRecord in interactionRecords)
             {
                 if (interactionRecord.segment == segment)
                 {
-                    // Collect all the distances for a given ray, defined by the x and z angles
-                    Dictionary<(float, float), List<float>> rayDistances = new();
                     // for each frame in all the frames collected in a gesture
                     foreach (var frame in interactionRecord.records)
                     {
@@ -80,20 +83,22 @@ namespace ubco.ovilab.HPUI
                             rayDistances[(ray.angleX, ray.angleZ)].Add(ray.distance);
                         }
                     }
-                    int frameCountForMinRayInteractionsThreshold = (int)(minRayInteractionsThreshold * interactionRecord.records.Count);
-                    foreach (var ray in rayDistances)
-                    {
-                        atLeastOneRayAnalyzed = true;
-                        if (ray.Value.Count > frameCountForMinRayInteractionsThreshold)
+                    totalInteractionRecords += interactionRecord.records.Count;
+                }
+            }
+
+            int frameCountForMinRayInteractionsThreshold = (int)(minRayInteractionsThreshold * totalInteractionRecords);
+            foreach (var ray in rayDistances)
+            {
+                atLeastOneRayAnalyzed = true;
+                if (ray.Value.Count > frameCountForMinRayInteractionsThreshold)
+                {
+                    averageRayDistance[(ray.Key.Item1, ray.Key.Item2)] = EstimateTechnique switch
                         {
-                            averageRayDistance[(ray.Key.Item1, ray.Key.Item2)] = estimate switch
-                            {
-                                Estimate.Average => ray.Value.Average() * multiplier,
-                                Estimate.Percentile => ray.Value.Percentile(percentile) * multiplier,
-                                _ => throw new NotImplementedException("Unknown value")
-                            };
-                        }
-                    }
+                            Estimate.Average => ray.Value.Average() * multiplier,
+                            Estimate.Percentile => ray.Value.Percentile(percentile) * multiplier,
+                            _ => throw new NotImplementedException("Unknown value")
+                        };
                 }
             }
 
