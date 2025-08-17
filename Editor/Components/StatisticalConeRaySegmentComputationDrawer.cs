@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using ubco.ovilab.HPUI;
 
 namespace ubco.ovilab.HPUI.Editor
 {
@@ -9,7 +8,7 @@ namespace ubco.ovilab.HPUI.Editor
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            int lines = 4;
+            int lines = 6;
 
             // Show percentile only if EstimateTechnique is Percentile
             SerializedProperty estimateTechniqueProp = property.FindPropertyRelative("estimateTechnique");
@@ -32,6 +31,9 @@ namespace ubco.ovilab.HPUI.Editor
             SerializedProperty percentileProp = property.FindPropertyRelative("percentile");
             SerializedProperty multiplierProp = property.FindPropertyRelative("multiplier");
 
+            SerializedProperty cullRaysByDistanceToCentroidProp = property.FindPropertyRelative("cullRaysByDistanceToCentroid");
+            SerializedProperty cullingDistanceThresholdNormalizedProp = property.FindPropertyRelative("cullingDistanceThresholdNormalized");
+
             lineRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             EditorGUI.PropertyField(lineRect, estimateTechniqueProp);
 
@@ -47,6 +49,14 @@ namespace ubco.ovilab.HPUI.Editor
 
             lineRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             EditorGUI.PropertyField(lineRect, multiplierProp);
+
+            lineRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+            EditorGUI.PropertyField(lineRect, cullRaysByDistanceToCentroidProp);
+
+            GUI.enabled = cullRaysByDistanceToCentroidProp.boolValue;
+            lineRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+            EditorGUI.PropertyField(lineRect, cullingDistanceThresholdNormalizedProp);
+            GUI.enabled = true;
 
             EditorGUI.EndProperty();
         }
