@@ -33,17 +33,60 @@ namespace ubco.ovilab.HPUI
         [SerializeField, Tooltip("The statistical estimate to use.")]
         private Estimate estimateTechnique;
 
+        /// <summary>
+        /// Gets or sets the statistical estimate technique used to aggregate ray interaction distances.
+        /// Changing this value affects how the final cone distance is computed.
+        /// </summary>
+        /// <seealso cref="Estimate"/>
+        public Estimate EstimateTechnique
+        {
+            get => estimateTechnique;
+            set => estimateTechnique = value;
+        }
+
         [SerializeField, Range(0.01f, 1f)]
         [Tooltip("The percentage of frames in the gesture that a ray should have been used to qualify for the final cone")]
         private float minRayInteractionsThreshold = 0.2f;
 
+        /// <summary>
+        /// Gets or sets the minimum fraction (0.01 - 1.0) of gesture frames in which a ray must have had interactions
+        /// in order to be considered when computing the final cone.
+        /// Values are clamped to the valid range [0.01, 1.0].
+        /// </summary>
+        public float MinRayInteractionsThreshold
+        {
+            get => minRayInteractionsThreshold;
+            set => minRayInteractionsThreshold = Mathf.Clamp(value, 0.01f, 1f);
+        }
+
         [SerializeField, Range(0f, 1f)]
         [Tooltip("When Percentile is used, get the nth percentile distance at which interactions occured for each ray")]
-        public float percentile = 0.6f;
+        private float percentile = 0.6f;
+
+        /// <summary>
+        /// Gets or sets the percentile (0.0 - 1.0) to use when <see cref="EstimateTechnique"/> is set to Percentile.
+        /// For example, 0.5 corresponds to the 50th percentile (median). Values are clamped to [0.0, 1.0].
+        /// </summary>
+        public float Percentile
+        {
+            get => percentile;
+            set => percentile = Mathf.Clamp(value, 0f, 1f);
+        }
 
         [SerializeField, Range(1f, 2f)]
         [Tooltip("Multiply each ray by a fixed multiplier. Useful for when the rays produced are frequently losing contact during gestures.")]
-        public float multiplier = 1f;
+        private float multiplier = 1f;
+
+        /// <summary>
+        /// Gets or sets the multiplier (1.0 - 2.0) applied to ray distances before aggregation.
+        /// This can help compensate for rays that frequently lose contact during gestures.
+        /// Values are clamped to the valid range [1.0, 2.0].
+        /// </summary>
+        public float Multiplier
+        {
+            get => multiplier;
+            set => multiplier = Mathf.Clamp(value, 1f, 2f);
+        }
 
         List<HPUIInteractorRayAngle> IConeRaySegmentComputation.EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment, IEnumerable<ConeRayComputationDataRecord> interactionRecords)
         {
