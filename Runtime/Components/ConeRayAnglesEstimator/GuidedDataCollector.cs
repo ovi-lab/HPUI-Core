@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -52,12 +53,12 @@ namespace ubco.ovilab.HPUI
         private List<HPUIInteractorConeRayAngleSegment> orderOfCalibration;
 
         /// <summary>
-        /// Defines a custom order of calibration. If auto-move 
-        /// to next phalange is enabled, the target segment will 
-        /// automatically move to the next segment when you pause 
-        /// data collection for the current segment. 
+        /// Defines a custom order of calibration. If auto-move
+        /// to next phalange is enabled, the target segment will
+        /// automatically move to the next segment when you pause
+        /// data collection for the current segment.
         /// </summary>
-        public List<HPUIInteractorConeRayAngleSegment> OrderOfCalibration { get => orderOfCalibration; }
+        public List<HPUIInteractorConeRayAngleSegment> OrderOfCalibration => orderOfCalibration;
 
         private int currentPhalangeIndex;
 
@@ -96,7 +97,7 @@ namespace ubco.ovilab.HPUI
         }
 
         /// <summary>
-        /// Resumes data collection. To be used after 
+        /// Resumes data collection. To be used after
         /// `EndDataCollectionForTargetSegment`
         /// </summary>
         public void StartDataCollectionForNextTargetSegment()
@@ -104,17 +105,43 @@ namespace ubco.ovilab.HPUI
             PauseDataCollection = false;
         }
 
-        /// <summary>
-        /// Set's the target segment to be calibrated.
-        /// See <see cref="GuidedDataCollectorEditor.StepThroughOrderOfCalibrationPhalanges"/> 
-        /// for an example on using this during calibration procedures.
-        /// </summary>
-        /// <param name="parameterName">Parameter description.</param>
-        /// <returns>Type and description of the returned object.</returns>
-        /// <example>Write me later.</example>
-        public void StepToTargetPhalange(HPUIInteractorConeRayAngleSegment targetSegment)
+        public void StepThroughCustomPhalanges(int amt = 1)
         {
-            this.targetSegment = targetSegment;
+            currentPhalangeIndex = (currentPhalangeIndex + amt) % OrderOfCalibration.Count;
+            if (currentPhalangeIndex < 0)
+            {
+                currentPhalangeIndex += OrderOfCalibration.Count;
+            }
+            HPUIInteractorConeRayAngleSegment currentTargetSegment = OrderOfCalibration[currentPhalangeIndex];
+            TargetSegment = currentTargetSegment;
+        }
+
+        public void StepThroughAllPhalanges(int amt = 1)
+        {
+            int phalangeCount = Enum.GetNames(typeof(HPUIInteractorConeRayAngleSegment)).Length;
+            int targetSegmentIndex = Array.IndexOf(Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)), TargetSegment);
+            if (amt > 0)
+            {
+                if (targetSegmentIndex < phalangeCount - 1)
+                {
+                    TargetSegment = (HPUIInteractorConeRayAngleSegment)targetSegmentIndex + amt;
+                }
+                else
+                {
+                    TargetSegment = 0;
+                }
+            }
+            else
+            {
+                if (targetSegmentIndex == 0)
+                {
+                    TargetSegment = (HPUIInteractorConeRayAngleSegment)phalangeCount - 1;
+                }
+                else
+                {
+                    TargetSegment = (HPUIInteractorConeRayAngleSegment)targetSegmentIndex + amt;
+                }
+            }
         }
     }
 }

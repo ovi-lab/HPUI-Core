@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using ubco.ovilab.HPUI.Interaction;
 using System;
 using System.Collections.Generic;
 
@@ -10,35 +9,21 @@ namespace ubco.ovilab.HPUI.Editor
     [CustomEditor(typeof(GuidedDataCollector), true)]
     public class GuidedDataCollectorEditor : UnityEditor.Editor
     {
-        private enum State { Wait, Started, Processing, Processed }
-        private class StateInformation
-        {
-            public State state = State.Wait;
-            public HPUIInteractorConeRayAngles generatedAsset, savedAsset;
-            public StateInformation(State state = State.Wait, HPUIInteractorConeRayAngles generatedAsset = null, HPUIInteractorConeRayAngles savedAsset = null)
-            {
-                this.state = state;
-                this.generatedAsset = generatedAsset;
-                this.savedAsset = savedAsset;
-            }
-        }
-
         private SerializedObject generatedConeRayAnglesObj;
         private GuidedDataCollector t;
-        private int currentPhalangeIndex;
         private bool autoMoveToNextPhalange;
-        private const string AutoMoveKey = "GuidedDataCollectorEditor_AutoMove";
+        private const string AUTO_MOVE_KEY = "GuidedDataCollectorEditor_AutoMove";
 
         protected void OnEnable()
         {
             t = target as GuidedDataCollector;
             // resets the target phalange to the first one in the calibration order
-            // only if the application is not playing, to avoid resets mid calibration
+            // only if the application is not playing, to avoid resets mid-calibration
             if ((!Application.isPlaying) && t.OrderOfCalibration.Count > 0)
             {
-                t.StepToTargetPhalange(t.OrderOfCalibration[0]);
+                t.TargetSegment = t.OrderOfCalibration[0];
             }
-            autoMoveToNextPhalange = EditorPrefs.GetBool(AutoMoveKey, true);
+            autoMoveToNextPhalange = EditorPrefs.GetBool(AUTO_MOVE_KEY, true);
         }
 
         public override void OnInspectorGUI()
@@ -51,7 +36,7 @@ namespace ubco.ovilab.HPUI.Editor
             ), autoMoveToNextPhalange);
             if (EditorGUI.EndChangeCheck())
             {
-                EditorPrefs.SetBool(AutoMoveKey, autoMoveToNextPhalange);
+                EditorPrefs.SetBool(AUTO_MOVE_KEY, autoMoveToNextPhalange);
             }
             if (t.OrderOfCalibration.Count == 0)
             {
@@ -71,11 +56,11 @@ namespace ubco.ovilab.HPUI.Editor
                     {
                         if (t.OrderOfCalibration.Count > 0)
                         {
-                            StepThroughCustomPhalanges(1);
+                            t.StepThroughCustomPhalanges();
                         }
                         else
                         {
-                            StepThroughAllPhalanges(1);
+                            t.StepThroughAllPhalanges();
                         }
                     }
                 }
@@ -95,11 +80,11 @@ namespace ubco.ovilab.HPUI.Editor
             {
                 if (t.OrderOfCalibration.Count > 0)
                 {
-                    StepThroughCustomPhalanges(-1);
+                    t.StepThroughCustomPhalanges(-1);
                 }
                 else
                 {
-                    StepThroughAllPhalanges(-1);
+                    t.StepThroughAllPhalanges(-1);
                 }
             }
 
@@ -107,14 +92,13 @@ namespace ubco.ovilab.HPUI.Editor
             {
                 if (t.OrderOfCalibration.Count > 0)
                 {
-                    StepThroughCustomPhalanges(1);
+                    t.StepThroughCustomPhalanges();
                 }
                 else
                 {
-                    StepThroughAllPhalanges(1);
+                    t.StepThroughAllPhalanges();
                 }
             }
-
 
             GUILayout.EndHorizontal();
             if (Application.isPlaying && t.CollectingData)
@@ -155,45 +139,6 @@ namespace ubco.ovilab.HPUI.Editor
             }
 
             serializedObject.ApplyModifiedProperties();
-        }
-
-        private void StepThroughCustomPhalanges(int amt = 1)
-        {
-            currentPhalangeIndex = (currentPhalangeIndex + amt) % t.OrderOfCalibration.Count;
-            if (currentPhalangeIndex < 0)
-            {
-                currentPhalangeIndex += t.OrderOfCalibration.Count;
-            }
-            HPUIInteractorConeRayAngleSegment targetSegment = t.OrderOfCalibration[currentPhalangeIndex];
-            t.StepToTargetPhalange(targetSegment);
-        }
-
-        private void StepThroughAllPhalanges(int amt = 1)
-        {
-            int phalangeCount = Enum.GetNames(typeof(HPUIInteractorConeRayAngleSegment)).Length;
-            int currentPhalangeIndex = Array.IndexOf(Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)), t.TargetSegment);
-            if (amt > 0)
-            {
-                if (currentPhalangeIndex < phalangeCount - 1)
-                {
-                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)currentPhalangeIndex + amt;
-                }
-                else
-                {
-                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)0;
-                }
-            }
-            else
-            {
-                if (currentPhalangeIndex == 0)
-                {
-                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)phalangeCount - 1;
-                }
-                else
-                {
-                    t.TargetSegment = (HPUIInteractorConeRayAngleSegment)currentPhalangeIndex + amt;
-                }
-            }
         }
     }
 }
