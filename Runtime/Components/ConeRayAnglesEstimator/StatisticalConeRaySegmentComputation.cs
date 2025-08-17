@@ -7,11 +7,31 @@ using UnityEngine;
 namespace ubco.ovilab.HPUI
 {
     /// <summary>
-    /// Computes the cone ray angles for a segment using statistical estimates based on frame data.
-    /// This class takes interaction records and, for each qualified ray, calculates an estimated distance
-    /// using either an average or a specified percentile, optionally scaled by a multiplier.
-    /// Rays must be present in at least a minimum threshold of frames to qualify.
+    /// Computes cone ray angles for a given segment by aggregating distance samples gathered during interaction frames.
+    /// For each unique ray direction (identified by its X and Z angles) the implementation collects all selection distances
+    /// observed across the provided interaction records, filters rays that do not meet a minimum interaction frequency,
+    /// and then produces a single representative distance per ray using the configured statistical technique.
+    /// The resulting collection contains HPUIInteractorRayAngle entries (angleX, angleZ, distance) describing the cone
+    /// for the segment.
     /// </summary>
+    /// <remarks>
+    /// Behavior summary:
+    /// - Only rays marked as selection are considered.
+    /// - A ray must appear in at least MinRayInteractionsThreshold fraction of total frames to be included.
+    /// - When EstimateTechnique is Average the mean of the collected distances is used; when Percentile the configured
+    ///   Percentile (0.0-1.0) is used (interpolated percentile).
+    /// - The per-ray distance is multiplied by Multiplier before being stored in the output.
+    /// - If CullRaysByDistanceToCentroid is true, rays are further culled by their angular proximity to the centroid
+    ///   direction using CullingDistanceThresholdNormalized (1 = no culling, smaller values remove more rays).
+    /// - If interactionRecords contains no matching segment frames or no rays pass the interaction threshold the
+    ///   method returns an empty list (and emits a warning in the original implementation when appropriate).
+    /// </remarks>
+    /// <seealso cref="Estimate"/>
+    /// <seealso cref="MinRayInteractionsThreshold"/>
+    /// <seealso cref="Percentile"/>
+    /// <seealso cref="Multiplier"/>
+    /// <seealso cref="CullRaysByDistanceToCentroid"/>
+    /// <seealso cref="CullingDistanceThresholdNormalized"/>
     [Serializable]
     public class StatisticalConeRaySegmentComputation : IConeRaySegmentComputation
     {
@@ -88,6 +108,29 @@ namespace ubco.ovilab.HPUI
             set => multiplier = Mathf.Clamp(value, 1f, 2f);
         }
 
+        [SerializeField, Tooltip("When true, rays are culled based on their distance to the centroid; when false, all rays are considered.")]
+        private bool cullRaysByDistanceToCentroid = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether rays are culled by their distance to the centroid.
+        /// True enables distance-based culling; false disables it and all rays are considered.
+        /// </summary>
+        public bool CullRaysByDistanceToCentroid { get => cullRaysByDistanceToCentroid; set => cullRaysByDistanceToCentroid = value; }
+
+        [SerializeField, Range(0.01f, 1f)]
+        [Tooltip("Normalized distance from the cluster centroid at which rays will be culled (1 = no culling, 0 = full culling).")]
+        private float cullingDistanceThresholdNormalized = 1.0f;
+
+        /// <summary>
+        /// Normalized distance from the cluster centroid used to determine when rays should be culled.
+        /// Value is in the range [0, 1]: 1 no rays are culled, 0 nearly all rays.
+        /// </summary>
+        public float CullingDistanceThresholdNormalized
+        {
+            get => cullingDistanceThresholdNormalized;
+            set => cullingDistanceThresholdNormalized = Mathf.Clamp(value, 0.01f, 1f);
+        }
+
         List<HPUIInteractorRayAngle> IConeRaySegmentComputation.EstimateConeAnglesForSegment(HPUIInteractorConeRayAngleSegment segment, IEnumerable<ConeRayComputationDataRecord> interactionRecords)
         {
             Dictionary<(float, float), float> averageRayDistance = new();
@@ -155,6 +198,19 @@ namespace ubco.ovilab.HPUI
             foreach (var ray in averageRayDistance)
             {
                 coneAnglesForSegment.Add(new HPUIInteractorRayAngle(ray.Key.Item1, ray.Key.Item2, ray.Value));
+            }
+
+            if (CullRaysByDistanceToCentroid)
+            {
+                // KLUDGE: This is a simplistic centroid - is it worth having the Karcher (Riemannian) mean instead?
+                Vector3 centroidRay = ((Vector3)coneAnglesForSegment.Select(angle => angle.GetDirection(false)).Aggregate((el1, el2) => el1 + el2) / coneAnglesForSegment.Count).normalized;
+
+                // Projection lengths on the centroid. Since all vectors are normalized, no need to compute the projection itself
+                Dictionary<HPUIInteractorRayAngle, float> distanceMapping = coneAnglesForSegment.ToDictionary(c => c, c => Vector3.Dot(((Vector3)c.GetDirection(false)).normalized, centroidRay));
+
+                // Compute the threshold for filtering and filter
+                float threshold = (distanceMapping.Values.Max() - distanceMapping.Values.Min()) * (1 - CullingDistanceThresholdNormalized) + distanceMapping.Values.Min();
+                coneAnglesForSegment = distanceMapping.Where(kvp => kvp.Value >= threshold).Select(kvp => kvp.Key).ToList();
             }
 
             return coneAnglesForSegment;
