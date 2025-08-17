@@ -89,43 +89,9 @@ namespace ubco.ovilab.HPUI
             {
                 foreach(IGrouping<(XRHandJointID, FingerSide), RaycastDataRecordsContainer> records in currentInteractionData.GroupBy(data => (data.handJointID, data.fingerSide)))
                 {
-                    HPUIInteractorConeRayAngleSegment segment = records.Key switch
-                    {
-                        (XRHandJointID.IndexDistal,        FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.IndexDistalVolarSegment,
-                        (XRHandJointID.IndexIntermediate,  FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.IndexIntermediateVolarSegment,
-                        (XRHandJointID.IndexProximal,      FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.IndexProximalVolarSegment,
+                    HPUIInteractorConeRayAngleSegment segment = HPUIInteractorConeRayAngleSegmentConversion.ToConeRayAngleSegment(records.Key.Item1, records.Key.Item2);
 
-                        (XRHandJointID.MiddleDistal,       FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.MiddleDistalVolarSegment,
-                        (XRHandJointID.MiddleIntermediate, FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.MiddleIntermediateVolarSegment,
-                        (XRHandJointID.MiddleProximal,     FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.MiddleProximalVolarSegment,
-
-                        (XRHandJointID.RingDistal,         FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.RingDistalVolarSegment,
-                        (XRHandJointID.RingIntermediate,   FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.RingIntermediateVolarSegment,
-                        (XRHandJointID.RingProximal,       FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.RingProximalVolarSegment,
-
-                        (XRHandJointID.LittleDistal,       FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.LittleDistalVolarSegment,
-                        (XRHandJointID.LittleIntermediate, FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.LittleIntermediateVolarSegment,
-                        (XRHandJointID.LittleProximal,     FingerSide.volar)  => HPUIInteractorConeRayAngleSegment.LittleProximalVolarSegment,
-
-                        (XRHandJointID.IndexDistal,        FingerSide.radial) => HPUIInteractorConeRayAngleSegment.IndexDistalRadialSegment,
-                        (XRHandJointID.IndexIntermediate,  FingerSide.radial) => HPUIInteractorConeRayAngleSegment.IndexIntermediateRadialSegment,
-                        (XRHandJointID.IndexProximal,      FingerSide.radial) => HPUIInteractorConeRayAngleSegment.IndexProximalRadialSegment,
-
-                        (XRHandJointID.MiddleDistal,       FingerSide.radial) => HPUIInteractorConeRayAngleSegment.MiddleDistalRadialSegment,
-                        (XRHandJointID.MiddleIntermediate, FingerSide.radial) => HPUIInteractorConeRayAngleSegment.MiddleIntermediateRadialSegment,
-                        (XRHandJointID.MiddleProximal,     FingerSide.radial) => HPUIInteractorConeRayAngleSegment.MiddleProximalRadialSegment,
-
-                        (XRHandJointID.RingDistal,         FingerSide.radial) => HPUIInteractorConeRayAngleSegment.RingDistalRadialSegment,
-                        (XRHandJointID.RingIntermediate,   FingerSide.radial) => HPUIInteractorConeRayAngleSegment.RingIntermediateRadialSegment,
-                        (XRHandJointID.RingProximal,       FingerSide.radial) => HPUIInteractorConeRayAngleSegment.RingProximalRadialSegment,
-
-                        (XRHandJointID.LittleDistal,       FingerSide.radial) => HPUIInteractorConeRayAngleSegment.LittleDistalRadialSegment,
-                        (XRHandJointID.LittleIntermediate, FingerSide.radial) => HPUIInteractorConeRayAngleSegment.LittleIntermediateRadialSegment,
-                        (XRHandJointID.LittleProximal,     FingerSide.radial) => HPUIInteractorConeRayAngleSegment.LittleProximalRadialSegment,
-                        _ => throw new ArgumentException($"Unexpected cone ray angle segment: {records.Key}")
-                    };
-
-                    DataRecords.Add(new ConeRayComputationDataRecord(currentInteractionData, segment));
+                    DataRecords.Add(new ConeRayComputationDataRecord(records.ToList(), segment));
                 }
                 currentInteractionData = new();
             }
