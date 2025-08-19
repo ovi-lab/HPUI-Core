@@ -12,8 +12,8 @@ namespace ubco.ovilab.HPUI.Interaction
     [Serializable]
     public class HPUIGestureLogic: IHPUIGestureLogic
     {
-        [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
         [SerializeField]
+        [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
         private float tapTimeThreshold;
         /// <summary>
         /// The time threshold (in seconds) at which an interaction would be
@@ -30,8 +30,8 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        [Tooltip("The distance threshold at which an interaction would be treated as a gesture.")]
         [SerializeField]
+        [Tooltip("The distance threshold at which an interaction would be treated as a gesture.")]
         private float tapDistanceThreshold;
         /// <summary>
         /// The distance threshold (in Unity units) at which an interaction would
@@ -48,8 +48,8 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        [Tooltip("After a gesture completes, within this time window, not new gestures will be triggered.")]
         [SerializeField]
+        [Tooltip("After a gesture completes, within this time window, not new gestures will be triggered.")]
         private float debounceTimeWindow;
         /// <summary>
         /// After a gesture completes, within this time window (in seconds), not
@@ -64,8 +64,9 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
+        [Range(0f, 1f), SerializeField]
         [Tooltip("The ratio at which the current tracking interactable should be recomputed. The higher the value, the easier it is to switch")]
-        [Range(0f, 1f), SerializeField] private float switchCurrentTrackingInteractableThreshold = 0.15f;
+        private float switchCurrentTrackingInteractableThreshold = 0.15f;
 
         /// <summary>
         /// The ratio at which the current tracking interactable should be recomputed.
