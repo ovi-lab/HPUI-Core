@@ -200,7 +200,7 @@ namespace ubco.ovilab.HPUI
                 coneAnglesForSegment.Add(new HPUIInteractorRayAngle(ray.Key.Item1, ray.Key.Item2, ray.Value));
             }
 
-            if (CullRaysByDistanceToCentroid)
+            if (CullRaysByDistanceToCentroid && coneAnglesForSegment.Count != 0)
             {
                 // KLUDGE: This is a simplistic centroid - is it worth having the Karcher (Riemannian) mean instead?
                 Vector3 centroidRay = ((Vector3)coneAnglesForSegment.Select(angle => angle.GetDirection(false)).Aggregate((el1, el2) => el1 + el2) / coneAnglesForSegment.Count).normalized;
