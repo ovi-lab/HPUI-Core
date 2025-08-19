@@ -58,7 +58,7 @@ namespace ubco.ovilab.HPUI
         /// automatically move to the next segment when you pause
         /// data collection for the current segment.
         /// </summary>
-        public List<HPUIInteractorConeRayAngleSegment> OrderOfCalibration => orderOfCalibration;
+        public List<HPUIInteractorConeRayAngleSegment> OrderOfCalibration { get => orderOfCalibration; }
 
         private int currentPhalangeIndex;
 
@@ -105,9 +105,9 @@ namespace ubco.ovilab.HPUI
             PauseDataCollection = false;
         }
 
-        public void StepThroughCustomPhalanges(int amt = 1)
+        public void StepThroughCustomPhalanges(int stepCount = 1)
         {
-            currentPhalangeIndex = (currentPhalangeIndex + amt) % OrderOfCalibration.Count;
+            currentPhalangeIndex = (currentPhalangeIndex + stepCount) % OrderOfCalibration.Count;
             if (currentPhalangeIndex < 0)
             {
                 currentPhalangeIndex += OrderOfCalibration.Count;
@@ -116,15 +116,15 @@ namespace ubco.ovilab.HPUI
             TargetSegment = currentTargetSegment;
         }
 
-        public void StepThroughAllPhalanges(int amt = 1)
+        public void StepThroughAllPhalanges(int stepCount = 1)
         {
             int phalangeCount = Enum.GetNames(typeof(HPUIInteractorConeRayAngleSegment)).Length;
             int targetSegmentIndex = Array.IndexOf(Enum.GetValues(typeof(HPUIInteractorConeRayAngleSegment)), TargetSegment);
-            if (amt > 0)
+            if (stepCount > 0)
             {
                 if (targetSegmentIndex < phalangeCount - 1)
                 {
-                    TargetSegment = (HPUIInteractorConeRayAngleSegment)targetSegmentIndex + amt;
+                    TargetSegment = (HPUIInteractorConeRayAngleSegment)targetSegmentIndex + stepCount;
                 }
                 else
                 {
@@ -139,7 +139,7 @@ namespace ubco.ovilab.HPUI
                 }
                 else
                 {
-                    TargetSegment = (HPUIInteractorConeRayAngleSegment)targetSegmentIndex + amt;
+                    TargetSegment = (HPUIInteractorConeRayAngleSegment)targetSegmentIndex + stepCount;
                 }
             }
         }
