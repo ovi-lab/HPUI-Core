@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -157,6 +158,7 @@ namespace ubco.ovilab.HPUI.Interaction
             return coordsForCol;
         }
 
+        [BurstCompile]
         protected void UpdateColliderPositions()
         {
             mesh.BakeMesh(tempMesh, true);
@@ -179,6 +181,7 @@ namespace ubco.ovilab.HPUI.Interaction
             jobHandle.Complete();
         }
 
+        [BurstCompile]
         struct DeformedCollidersJob: IJobParallelForTransform
         {
             private Vector3 right, forward, temppos;
