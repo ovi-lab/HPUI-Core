@@ -182,7 +182,7 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         [BurstCompile]
-        struct DeformedCollidersJob : IJobParallelForTransform
+        struct DeformedCollidersJob: IJobParallelForTransform
         {
             private Vector3 right, forward, temppos;
             public float ScaleFactor, GridSize;
