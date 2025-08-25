@@ -4,44 +4,46 @@ using System.Linq;
 using ubco.ovilab.HPUI.Interaction;
 using UnityEngine;
 using UnityEngine.XR.Hands;
-using UXF.UI;
-
 
 namespace ubco.ovilab.HPUI.Interaction
 {
-
     [Serializable]
-
     public class HPUIEllipsoidSubSampler : IHPUIRaySubSampler
     {
-        // [Header("Pill Properties")] [SerializeField] [Tooltip("Length along local X")]
-        // float radiusA = 1f;
-        //
-        // [SerializeField] [Tooltip("Length along local Y")]
-        // float radiusB = 1f;
-        //
-        // [SerializeField] [Tooltip("Length along local Z")]
-        // float radiusC = 1f;
-        //
-        // [SerializeField] [Tooltip("Scaling factor of rays at index distal")]
-        // private float initalScalingFactor = 1f;
-        //
-        // [SerializeField] [Tooltip("Scaling factor of rays at index proximal")]
-        // float scalingFactor = 1.2f;
-        [SerializeField] private float targetRadius = 0;
-        [SerializeField] [Tooltip("Rays are created at every X degrees. Higher value requires more compute")]
-        float angleStep = 5f;
+        private float angleStep = 5f;
 
-        [SerializeField] [Tooltip("Angular Width of the cone from the target direction")]
+        public float AngleStep
+        {
+            get => angleStep;
+            set => angleStep = Mathf.Max(1, Mathf.Min(value, 180));
+        }
+
+        [SerializeField, Range(1f, 180f)]
+        [Tooltip("Angular Width of the cone from the target direction")]
         float coneAngularWidth = 45f;
 
+        public float ConeAngularWidth
+        {
+            get => coneAngularWidth;
+            set => angleStep = Mathf.Max(1, Mathf.Min(value, 180));
+        }
+
+        [SerializeField, Range(0f, 1f)]
+        [Tooltip("Target radius selected from cone ray data per phalange")]
+        private float percentileSelectionForRadiusLength = 0.35f;
+
+        public float PercentileSelectionForRadiusLength
+        {
+            get => percentileSelectionForRadiusLength;
+            set => Mathf.Max(0f, Mathf.Min(percentileSelectionForRadiusLength, 1f));
+        }
+
         [SerializeField] private HPUIInteractorConeRayAngles coneRayData;
+
         [SerializeField] private bool visualiseEllipsoid = false;
 
-        [SerializeField]
         Dictionary<(XRHandJointID, FingerSide), float> xrConeRayAngleMedian = new();
 
-        [SerializeField] private float percentile = 35f;
         private XRHandFingerID previousFingerID = XRHandFingerID.Thumb;
         [SerializeField] private bool recacheAngles;
 
@@ -50,6 +52,9 @@ namespace ubco.ovilab.HPUI.Interaction
         private float phi = Mathf.PI * (Mathf.Sqrt(5f) - 1f);
         private int _cachedSamples;
         private float numberOfSamples;
+        private float targetRadius;
+
+        [SerializeField] private FingerSide currentFingerSide;
 
         public List<HPUIInteractorRayAngle> SampleRays(Transform interactorObject, HandJointEstimatedData estimatedData)
         {
@@ -57,40 +62,34 @@ namespace ubco.ovilab.HPUI.Interaction
             if (recacheAngles)
             {
                 CacheRayAngles(estimatedData, interactorObject);
+                numberOfSamples = Mathf.Pow(360f / angleStep, 2);
                 CacheSphere(numberOfSamples);
                 recacheAngles = false;
-                numberOfSamples = Mathf.Pow(360f / angleStep, 2);
             }
 
             if (previousFingerID != estimatedData._closestFinger.Value)
             {
                 numberOfSamples = Mathf.Pow(360f / angleStep, 2);
                 CacheRayAngles(estimatedData, interactorObject);
-                CacheSphere(numberOfSamples);
             }
-            
+
             allAngles.Clear();
-            if(estimatedData.GetPlaneOnFingerPlane(estimatedData._closestFinger.Value) > 30)
+            if (estimatedData.GetPlaneOnFingerPlane(estimatedData._closestFinger.Value) > 25)
             {
-                FingerSide targetSide = FingerSide.radial;
-                float distalRadius  = xrConeRayAngleMedian[(XRHandJointID.IndexDistal, targetSide)];
-                float intermediateRadius  = xrConeRayAngleMedian[(XRHandJointID.IndexIntermediate, targetSide)];
-                float proximalRadius  = xrConeRayAngleMedian[(XRHandJointID.IndexProximal, targetSide)];
-                targetRadius = LerpThreeSmooth(distalRadius, intermediateRadius, proximalRadius, estimatedData.GetTipWeight());
+                currentFingerSide = FingerSide.radial;
             }
             else
             {
-                FingerSide targetSide = FingerSide.volar;
-                float distalRadius  = xrConeRayAngleMedian[(XRHandJointID.IndexDistal, targetSide)];
-                float intermediateRadius  = xrConeRayAngleMedian[(XRHandJointID.IndexIntermediate, targetSide)];
-                float proximalRadius  = xrConeRayAngleMedian[(XRHandJointID.IndexProximal, targetSide)];
-                targetRadius = LerpThreeSmooth(distalRadius, intermediateRadius, proximalRadius, estimatedData.GetTipWeight());
+                currentFingerSide = FingerSide.volar;
             }
-            // Your cone limit in degrees
+
+            float distalRadius = xrConeRayAngleMedian[(XRHandJointID.IndexDistal, currentFingerSide)];
+            float intermediateRadius = xrConeRayAngleMedian[(XRHandJointID.IndexIntermediate, currentFingerSide)];
+            float proximalRadius = xrConeRayAngleMedian[(XRHandJointID.IndexProximal, currentFingerSide)];
+            targetRadius = LerpThreeSmooth(distalRadius, intermediateRadius, proximalRadius, estimatedData.GetTipWeight());
             float cosMaxAngle = Mathf.Cos(coneAngularWidth * Mathf.Deg2Rad);
-            // Direction from ellipsoid center you want rays near
             Vector3 targetDir = estimatedData.TargetDirection.normalized;
-            
+
             Vector3 localTargetDir = interactorObject.InverseTransformDirection(targetDir).normalized;
             Quaternion rotationToTarget = Quaternion.FromToRotation(Vector3.forward, localTargetDir);
             float xAngle, zAngle, distance;
@@ -118,8 +117,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 distance = ellipsoidPoint.magnitude;
                 allAngles.Add(new HPUIInteractorRayAngle(xAngle, zAngle, distance));
             }
-            
-            
+
             UnityEngine.Profiling.Profiler.EndSample();
             previousFingerID = estimatedData._closestFinger.Value;
             return allAngles;
@@ -154,11 +152,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
         public void CacheRayAngles(HandJointEstimatedData estimatedData, Transform interactorObject)
         {
-            Debug.Log("Cache Ray Angles");
             switch (estimatedData._closestFinger.Value)
             {
                 case XRHandFingerID.Index:
-                {
                     foreach (HPUIInteractorConeRayAngleSides side in coneRayData.IndexDistalAngles)
                     {
                         CacheJointAndSideAngle(side, XRHandJointID.IndexDistal);
@@ -172,74 +168,77 @@ namespace ubco.ovilab.HPUI.Interaction
                         CacheJointAndSideAngle(side, XRHandJointID.IndexProximal);
                     }
                     break;
-                }
+
+                case XRHandFingerID.Middle:
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleDistalAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.MiddleDistal);
+                    }
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleIntermediateAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.MiddleIntermediate);
+                    }
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleProximalAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.MiddleProximal);
+                    }
+                    break;
+
+                case XRHandFingerID.Ring:
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingDistalAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.RingDistal);
+                    }
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingIntermediateAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.RingIntermediate);
+                    }
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingProximalAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.RingProximal);
+                    }
+                    break;
+
+                case XRHandFingerID.Little:
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleDistalAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.LittleDistal);
+                    }
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleIntermediateAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.LittleIntermediate);
+                    }
+                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleProximalAngles)
+                    {
+                        CacheJointAndSideAngle(side, XRHandJointID.LittleProximal);
+                    }
+                    break;
 
                 case XRHandFingerID.Thumb:
-                {
                     Debug.LogError("Thumb should never be the closest finger?");
                     break;
-                }
+
             }
         }
 
-        public void CacheJointAndSideAngle(HPUIInteractorConeRayAngleSides jointConeData, XRHandJointID targetJoint)
+        public void CacheJointAndSideAngle(HPUIInteractorConeRayAngleSides phalangeConeData, XRHandJointID targetJoint)
         {
-            List<float> values = jointConeData.rayAngles.Select(x => x.RaySelectionThreshold).OrderBy(x => x).ToList();
-            List<float> binnedLengths = BinValues(values, 0.001f);
-            // float medianSelectionThreshold = GetMedian(binnedLengths);// GetPercentile(binnedLengths, 25f);
-            float medianSelectionThreshold = GetPercentile(binnedLengths, percentile);
-            if (xrConeRayAngleMedian.ContainsKey((targetJoint, jointConeData.side)))
-            {
-                xrConeRayAngleMedian[(targetJoint, jointConeData.side)] = medianSelectionThreshold;
-            }
-            else
-            {
-                xrConeRayAngleMedian.Add((targetJoint, jointConeData.side), medianSelectionThreshold);
-            }
-        }
-
-        public static List<float> BinValues(List<float> data, float binSize)
-        {
-            // Bin and return one representative per bin (bin center)
-            return data
-                .GroupBy(v => (float)Math.Floor(v / binSize))
-                .Select(g => g.Key * binSize + binSize / 2f) // center of bin
-                .OrderBy(v => v)
+            List<float> targetJointRayList = phalangeConeData.rayAngles
+                .Select(x => x.RaySelectionThreshold)
                 .ToList();
-        }
-        private float GetPercentile(List<float> sortedValues, float percentile)
-        {
-            if (sortedValues.Count == 0) return 0;
 
-            float position = (sortedValues.Count + 1) * percentile / 100f;
-            int index = Mathf.FloorToInt(position);
+            float targetRadiusLength = targetJointRayList.Count == 0 ? 0 : targetJointRayList.Percentile(percentileSelectionForRadiusLength);
 
-            if (index < 1) return sortedValues[0];
-            if (index >= sortedValues.Count) return sortedValues[sortedValues.Count - 1];
-
-            float fraction = position - index;
-            return sortedValues[index - 1] + fraction * (sortedValues[index] - sortedValues[index - 1]);
-        }
-        static float GetMedian(List<float> numbers)
-        {
-            if (numbers == null || numbers.Count == 0)
-                throw new InvalidOperationException("List must not be empty.");
-
-            var sorted = numbers.OrderBy(n => n).ToList();
-            int count = sorted.Count;
-            int mid = count / 2;
-
-            if (count % 2 == 0)
+            if (xrConeRayAngleMedian.ContainsKey((targetJoint, phalangeConeData.side)))
             {
-                // Even count: average of two middle values
-                return (sorted[mid - 1] + sorted[mid]) / 2f;
+                xrConeRayAngleMedian[(targetJoint, phalangeConeData.side)] = targetRadiusLength;
             }
             else
             {
-                // Odd count: middle value
-                return sorted[mid];
+                xrConeRayAngleMedian.Add((targetJoint, phalangeConeData.side), targetRadiusLength);
             }
         }
+
         public void Dispose()
         {
 

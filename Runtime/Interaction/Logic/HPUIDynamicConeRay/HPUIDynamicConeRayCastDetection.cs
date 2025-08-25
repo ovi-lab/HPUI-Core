@@ -8,7 +8,6 @@ using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
 using Random = UnityEngine.Random;
 
-
 namespace ubco.ovilab.HPUI.Interaction
 {
     [Serializable]
@@ -23,16 +22,21 @@ namespace ubco.ovilab.HPUI.Interaction
         [SerializeReference, SubclassSelector] private IHPUIRaySubSampler coneType;
 
         [Header("Dynamic Cone Properties")]
-        [SerializeField] [Tooltip("Rotates the target vector orientation along the vector formed between the closest two XRI bones")]
+        [SerializeField]
+        [Tooltip("Rotates the target vector orientation along the vector formed between the closest two XRI bones")]
         private float rotationAngle = 0;
-        [SerializeField] [Tooltip("Rotates the target vector orientation perpendicular to the vector formed between the closest two XRI bones")]
+        [SerializeField]
+        [Tooltip("Rotates the target vector orientation perpendicular to the vector formed between the closest two XRI bones")]
         private float tiltRotation = 20f;
-        [SerializeField] [Tooltip("The bias for the cone to deviate towards proximal or tip. Higher Sensitivity gives less resolution in the middle parts of the finger. Lower sensitivity gives less resolution in the extremities")]
+        [SerializeField]
+        [Tooltip("The bias for the cone to deviate towards proximal or tip. Higher Sensitivity gives less resolution in the middle parts of the finger. Lower sensitivity gives less resolution in the extremities")]
         private float sensitivity = 2f;
 
-        [SerializeField] private JointFollowerSkeletonDriver skeletonDriver;
+        [Header("Debug")]
+        [SerializeField] private float weightToTip;
+        [SerializeField] private float weightToProximal;
+        [SerializeField] private HandJointEstimatedData currentData;
 
-        // [SerializeField] private JointFollowerSkeletonDriver jointFollowerSkeletonDriver;
         public HPUIDynamicConeRayCastDetectionLogic()
         {
 
@@ -46,7 +50,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
             if (_targetDirectionEstimator == null)
             {
-                _targetDirectionEstimator = new TargetDirectionEstimator(_xrHandTrackingEvents, XROrigin, skeletonDriver);
+                _targetDirectionEstimator = new TargetDirectionEstimator(_xrHandTrackingEvents, XROrigin);
             }
 
             if (_xrHandTrackingEvents == null || XROrigin == null)
@@ -58,6 +62,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
             _targetDirectionEstimator.Estimate(rotationAngle, tiltRotation, sensitivity, out HandJointEstimatedData estimatedData);
 
+            currentData = estimatedData;
+            weightToTip = estimatedData.GetTipWeight();
+            weightToProximal = estimatedData.GetProximalWeight();
             Transform interactorObject = interactor.transform;
             List<HPUIInteractorRayAngle> angles = coneType.SampleRays(interactorObject, estimatedData);
             Debug.DrawRay(interactor.transform.position, estimatedData.TargetDirection, Color.magenta);
@@ -91,7 +98,6 @@ namespace ubco.ovilab.HPUI.Interaction
         public Transform XROriginTransform { get => xrOriginTransform; set => xrOriginTransform = value; }
         // public XRHandFingerID ClosestFingerID => closestFingerID;
 
-
         [SerializeField]
         [Tooltip("(optional) XR Origin transform. If not set, will attempt to find XROrigin and use its transform.")]
         private Transform xrOriginTransform;
@@ -101,7 +107,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
         [SerializeField]
         [Tooltip("")]
-        private JointFollowerSkeletonDriver skeletonDriver;
         private Dictionary<XRHandJointID, Pose> jointLocations = new();
 
         private List<XRHandJointID> trackedJoints = new List<XRHandJointID>()
@@ -113,7 +118,7 @@ namespace ubco.ovilab.HPUI.Interaction
             XRHandJointID.ThumbDistal, XRHandJointID.ThumbTip
         };
 
-        private Dictionary<XRHandJointID, XRHandJointID> trackedJointsToSegment = new ()
+        private Dictionary<XRHandJointID, XRHandJointID> trackedJointsToSegment = new()
         {
             {XRHandJointID.IndexProximal,      XRHandJointID.IndexIntermediate},
             {XRHandJointID.IndexIntermediate,  XRHandJointID.IndexDistal},
@@ -136,7 +141,6 @@ namespace ubco.ovilab.HPUI.Interaction
             { XRHandFingerID.Ring,   (XRHandJointID.RingDistal,     XRHandJointID.RingProximal) },
             { XRHandFingerID.Little, (XRHandJointID.LittleDistal,   XRHandJointID.LittleProximal) }
         };
-
 
         private Dictionary<XRHandJointID, XRHandFingerID> jointToFinger = new()
         {
@@ -168,21 +172,20 @@ namespace ubco.ovilab.HPUI.Interaction
         private bool receivedNewJointData;
         private GameObject tipViz;
         private GameObject proximalViz;
-        public TargetDirectionEstimator(XRHandTrackingEvents handTrackingEvents, Transform _xrOriginTransform, JointFollowerSkeletonDriver jointFollowerSkeletonDriver)
+        public TargetDirectionEstimator(XRHandTrackingEvents handTrackingEvents, Transform _xrOriginTransform)
         {
             this.XRHandTrackingEvents = handTrackingEvents;
             xrOriginTransform = _xrOriginTransform;
             tipViz = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            tipViz.GetComponent<MeshRenderer>().enabled = false;
+            tipViz.GetComponent<MeshRenderer>().enabled = true;
             proximalViz = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            proximalViz.GetComponent<MeshRenderer>().enabled = false;
-            this.skeletonDriver = jointFollowerSkeletonDriver;
+            proximalViz.GetComponent<MeshRenderer>().enabled = true;
             Reset();
         }
 
         public void Reset()
         {
-            foreach(XRHandJointID id in trackedJoints)
+            foreach (XRHandJointID id in trackedJoints)
             {
                 if (!jointLocations.ContainsKey(id))
                 {
@@ -197,9 +200,9 @@ namespace ubco.ovilab.HPUI.Interaction
 
         private void UpdateJointsData(XRHandJointsUpdatedEventArgs args)
         {
-            foreach(XRHandJointID id in trackedJoints)
+            foreach (XRHandJointID id in trackedJoints)
             {
-                if ( args.hand.GetJoint(id).TryGetPose(out Pose pose) )
+                if (args.hand.GetJoint(id).TryGetPose(out Pose pose))
                 {
                     jointLocations[id] = pose.GetTransformedBy(XROriginTransform);
                     receivedNewJointData = true;
@@ -207,7 +210,7 @@ namespace ubco.ovilab.HPUI.Interaction
             }
         }
 
-        public void Estimate(float flatRotation, float tiltRotation, float sensitivity, out HandJointEstimatedData  estimatedData)
+        public void Estimate(float flatRotation, float tiltRotation, float sensitivity, out HandJointEstimatedData estimatedData)
         {
 
             XRHandFingerID? _closestFinger = null;
@@ -216,22 +219,21 @@ namespace ubco.ovilab.HPUI.Interaction
             Vector3 vectorToFingerProximal = Vector3.negativeInfinity;
             Vector3 targetDirection = Vector3.negativeInfinity;
             Vector3 thumbReferencePoint = Vector3.negativeInfinity;
-            estimatedData = new (_closestFinger, _closestJoint, vectorToFingerTip, vectorToFingerProximal,0, targetDirection, thumbReferencePoint, skeletonDriver);
 
+            estimatedData = new HandJointEstimatedData(_closestFinger, _closestJoint, vectorToFingerTip, vectorToFingerProximal, 0, targetDirection, thumbReferencePoint, jointLocations);
+            XRHand hand = xrHandTrackingEvents.handedness == Handedness.Left
+                ? xrHandTrackingEvents.subsystem.leftHand
+                : xrHandTrackingEvents.subsystem.rightHand;
             if (!receivedNewJointData) return;
 
             receivedNewJointData = false;
-            Vector3 thumbTipPos = skeletonDriver.HandJoints[XRHandJointID.ThumbTip].position;
+            Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip].position;
             float shortestDistance = float.MaxValue;
             foreach (KeyValuePair<XRHandJointID, XRHandJointID> kvp in trackedJointsToSegment)
             {
-                if (!skeletonDriver.HandJoints.TryGetValue(kvp.Key, out Transform value))
-                {
-                    continue;
-                }
-                Vector3 baseVector = skeletonDriver.HandJoints[kvp.Key].position;
-                Vector3 segmentVector = skeletonDriver.HandJoints[kvp.Value].position - baseVector;
-                Vector3 toTipVector = thumbTipPos - segmentVector;
+                Vector3 baseVector = jointLocations[kvp.Key].position;
+                Vector3 segmentVector = jointLocations[kvp.Value].position - baseVector;
+                Vector3 toTipVector = thumbTipPos - baseVector;
                 float distanceOnSegmentVector = Mathf.Clamp(Vector3.Dot(toTipVector, segmentVector.normalized), 0, segmentVector.magnitude);
                 Vector3 closestPoint = distanceOnSegmentVector * segmentVector.normalized + baseVector;
                 Vector3 currentToClosestPoint = (closestPoint - thumbTipPos);
@@ -242,28 +244,25 @@ namespace ubco.ovilab.HPUI.Interaction
                     _closestJoint = kvp.Key;
                 }
             }
-
             _closestFinger = jointToFinger[_closestJoint];
             (XRHandJointID start, XRHandJointID end) fingerExtremities = fingerToJointsExtremities[_closestFinger];
             XRHandJointID thumbDistal = XRHandJointID.ThumbDistal;
-            thumbReferencePoint = (thumbTipPos + skeletonDriver.HandJoints[thumbDistal].position)/2;
-
+            thumbReferencePoint = (thumbTipPos + jointLocations[thumbDistal].position) / 2;
 
             XRHandJointID fingerTipID = trackedJointsToSegment[fingerExtremities.start];
             XRHandJointID distalID = fingerExtremities.start;
             XRHandJointID intermediateID = trackedJointsToSegment[fingerExtremities.end];
             XRHandJointID proximalID = fingerExtremities.end;
 
-            Vector3 fingerTipPos =   skeletonDriver.HandJoints[fingerTipID].position;
-            Vector3 distalPos = skeletonDriver.HandJoints[distalID].position;
-            Vector3 thumbToTipVector = fingerTipPos  - thumbReferencePoint;
+            Vector3 fingerTipPos = jointLocations[fingerTipID].position;
+            Vector3 distalPos = jointLocations[distalID].position;
+            Vector3 thumbToTipVector = fingerTipPos - thumbReferencePoint;
             vectorToFingerTip = thumbToTipVector;
 
-
-            Vector3 fingerProximalPos = skeletonDriver.HandJoints[proximalID].position;
-            Vector3 intermediatePos = skeletonDriver.HandJoints[intermediateID].position;
+            Vector3 fingerProximalPos = jointLocations[proximalID].position;
+            Vector3 intermediatePos = jointLocations[intermediateID].position;
             //Proximal is too far off. Getting a mid-point between proximal and intermediate
-            Vector3 targetPoint = (intermediatePos + fingerProximalPos)/2;
+            Vector3 targetPoint = (intermediatePos + fingerProximalPos) / 2;
             Vector3 thumbToProximalVector = targetPoint - thumbReferencePoint;
             vectorToFingerProximal = thumbToProximalVector;
 
@@ -277,7 +276,7 @@ namespace ubco.ovilab.HPUI.Interaction
             proximalViz.transform.position = targetPoint;
             proximalViz.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
-            estimatedData = new HandJointEstimatedData(_closestFinger, _closestJoint, vectorToFingerTip, vectorToFingerProximal, sensitivity, targetDirection, thumbReferencePoint, skeletonDriver);
+            estimatedData = new HandJointEstimatedData(_closestFinger, _closestJoint, vectorToFingerTip, vectorToFingerProximal, sensitivity, targetDirection, thumbReferencePoint, jointLocations);
             targetDirection = estimatedData.GetTargetDirection(tiltRotation, flatRotation);
             Debug.DrawRay(thumbReferencePoint, targetDirection, Color.magenta);
         }
@@ -290,6 +289,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
     }
 
+    [Serializable]
     public class HandJointEstimatedData
     {
         public Vector3 TargetDirection => targetDirection;
@@ -300,8 +300,9 @@ namespace ubco.ovilab.HPUI.Interaction
         public Vector3 thumbReferencePoint;
         private Vector3 targetDirection;
         private float sensitivity;
-        private JointFollowerSkeletonDriver skeletonDriver;
-        public HandJointEstimatedData(XRHandFingerID? closestFinger, XRHandJointID closestJoint, Vector3 vectorToFingerTip, Vector3 vectorToFingerProximal, float sensitivity, Vector3 targetDirection, Vector3 thumbReferencePoint, JointFollowerSkeletonDriver driver)
+        private Dictionary<XRHandJointID, Pose> jointLocations;
+
+        public HandJointEstimatedData(XRHandFingerID? closestFinger, XRHandJointID closestJoint, Vector3 vectorToFingerTip, Vector3 vectorToFingerProximal, float sensitivity, Vector3 targetDirection, Vector3 thumbReferencePoint, Dictionary<XRHandJointID, Pose> jointLocations)
         {
             _closestFinger = closestFinger;
             _closestJoint = closestJoint;
@@ -309,7 +310,7 @@ namespace ubco.ovilab.HPUI.Interaction
             this.vectorToFingerProximal = vectorToFingerProximal;
             this.sensitivity = sensitivity;
             this.thumbReferencePoint = thumbReferencePoint;
-            this.skeletonDriver = driver;
+            this.jointLocations = jointLocations;
         }
 
         public bool IsDataValid()
@@ -336,28 +337,28 @@ namespace ubco.ovilab.HPUI.Interaction
             switch (fingerID)
             {
                 case XRHandFingerID.Index:
-                    v1 = skeletonDriver.HandJoints[XRHandJointID.IndexProximal].forward;
-                    v2 = skeletonDriver.HandJoints[XRHandJointID.IndexProximal].up;
+                    v1 = jointLocations[XRHandJointID.IndexProximal].forward;
+                    v2 = jointLocations[XRHandJointID.IndexProximal].up;
                     break;
                 case XRHandFingerID.Middle:
-                    v1 = skeletonDriver.HandJoints[XRHandJointID.MiddleProximal].forward;
-                    v2 = skeletonDriver.HandJoints[XRHandJointID.MiddleProximal].right;
+                    v1 = jointLocations[XRHandJointID.MiddleProximal].forward;
+                    v2 = jointLocations[XRHandJointID.MiddleProximal].right;
                     break;
                 case XRHandFingerID.Ring:
-                    v1 = skeletonDriver.HandJoints[XRHandJointID.RingProximal].forward;
-                    v2 = skeletonDriver.HandJoints[XRHandJointID.RingProximal].right;
+                    v1 = jointLocations[XRHandJointID.RingProximal].forward;
+                    v2 = jointLocations[XRHandJointID.RingProximal].right;
                     break;
                 case XRHandFingerID.Little:
-                    v1 = skeletonDriver.HandJoints[XRHandJointID.LittleProximal].forward;
-                    v2 = skeletonDriver.HandJoints[XRHandJointID.LittleProximal].right;
+                    v1 = jointLocations[XRHandJointID.LittleProximal].forward;
+                    v2 = jointLocations[XRHandJointID.LittleProximal].right;
                     break;
             }
             Vector3 planeNormal = Vector3.Cross(v1, v2).normalized;
-            Vector3 localTargetDir = - new Vector3(targetDirection.x, targetDirection.y, targetDirection.z);
-            float signedAngle = Vector3.SignedAngle(localTargetDir, planeNormal.normalized, skeletonDriver.HandJoints[XRHandJointID.IndexProximal].forward );
-            Debug.DrawRay(skeletonDriver.HandJoints[XRHandJointID.IndexProximal].position, planeNormal, Color.yellow);
-            Debug.DrawRay(skeletonDriver.HandJoints[XRHandJointID.IndexProximal].position,localTargetDir, Color.magenta);
-            Debug.DrawRay( skeletonDriver.HandJoints[XRHandJointID.IndexProximal].position ,ProjectOnPlane(targetDirection, planeNormal) , Color.black);
+            Vector3 localTargetDir = -new Vector3(targetDirection.x, targetDirection.y, targetDirection.z);
+            float signedAngle = Vector3.SignedAngle(localTargetDir, planeNormal.normalized, jointLocations[XRHandJointID.IndexProximal].forward);
+            Debug.DrawRay(jointLocations[XRHandJointID.IndexProximal].position, planeNormal, Color.yellow);
+            Debug.DrawRay(jointLocations[XRHandJointID.IndexProximal].position, localTargetDir, Color.magenta);
+            Debug.DrawRay(jointLocations[XRHandJointID.IndexProximal].position, ProjectOnPlane(targetDirection, planeNormal), Color.black);
             return AngleToPlane(targetDirection, planeNormal);
         }
 
