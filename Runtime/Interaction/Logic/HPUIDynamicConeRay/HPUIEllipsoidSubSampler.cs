@@ -67,12 +67,6 @@ namespace ubco.ovilab.HPUI.Interaction
                 initialCache = true;
             }
 
-            if (previousFingerID != estimatedData._closestFinger.Value)
-            {
-                numberOfSamples = Mathf.Pow(360f / angleStep, 2);
-                CacheRayAngles(estimatedData, interactorObject);
-            }
-
             allAngles.Clear();
             if (estimatedData.GetPlaneOnFingerPlane(estimatedData._closestFinger.Value) > 25)
             {
@@ -151,72 +145,53 @@ namespace ubco.ovilab.HPUI.Interaction
 
         public void CacheRayAngles(HandJointEstimatedData estimatedData, Transform interactorObject)
         {
-            switch (estimatedData._closestFinger.Value)
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.IndexDistalAngles)
             {
-                case XRHandFingerID.Index:
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.IndexDistalAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.IndexDistal);
-                    }
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.IndexIntermediateAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.IndexIntermediate);
-                    }
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.IndexProximalAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.IndexProximal);
-                    }
-                    break;
-
-                case XRHandFingerID.Middle:
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleDistalAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.MiddleDistal);
-                    }
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleIntermediateAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.MiddleIntermediate);
-                    }
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleProximalAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.MiddleProximal);
-                    }
-                    break;
-
-                case XRHandFingerID.Ring:
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingDistalAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.RingDistal);
-                    }
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingIntermediateAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.RingIntermediate);
-                    }
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingProximalAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.RingProximal);
-                    }
-                    break;
-
-                case XRHandFingerID.Little:
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleDistalAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.LittleDistal);
-                    }
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleIntermediateAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.LittleIntermediate);
-                    }
-                    foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleProximalAngles)
-                    {
-                        CacheJointAndSideAngle(side, XRHandJointID.LittleProximal);
-                    }
-                    break;
-
-                case XRHandFingerID.Thumb:
-                    Debug.LogError("Thumb should never be the closest finger?");
-                    break;
-
+                CacheJointAndSideAngle(side, XRHandJointID.IndexDistal);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.IndexIntermediateAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.IndexIntermediate);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.IndexProximalAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.IndexProximal);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleDistalAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.MiddleDistal);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleIntermediateAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.MiddleIntermediate);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.MiddleProximalAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.MiddleProximal);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingDistalAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.RingDistal);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingIntermediateAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.RingIntermediate);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.RingProximalAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.RingProximal);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleDistalAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.LittleDistal);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleIntermediateAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.LittleIntermediate);
+            }
+            foreach (HPUIInteractorConeRayAngleSides side in coneRayData.LittleProximalAngles)
+            {
+                CacheJointAndSideAngle(side, XRHandJointID.LittleProximal);
             }
         }
 
