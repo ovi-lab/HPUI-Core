@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ubco.ovilab.HPUI.Interaction;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 
@@ -18,34 +17,26 @@ namespace ubco.ovilab.HPUI.Interaction
             set => angleStep = Mathf.Max(1, Mathf.Min(value, 180));
         }
 
-        [SerializeField, Range(1f, 180f)]
-        [Tooltip("Angular Width of the cone from the target direction")]
-        float coneAngularWidth = 45f;
-
-        public float ConeAngularWidth
-        {
-            get => coneAngularWidth;
-            set => angleStep = Mathf.Max(1, Mathf.Min(value, 180));
-        }
+        [SerializeField] private HPUIInteractorConeRayAngles coneRayData;
 
         [SerializeField, Range(0f, 1f)]
         [Tooltip("Target radius selected from cone ray data per phalange")]
-        private float percentileSelectionForRadiusLength = 0.35f;
+        private float percentileSelectionForRadiusLength = 0.5f;
 
+        /// <summary>
+        /// Target radius selected from cone ray data per phalange
+        /// </summary>
         public float PercentileSelectionForRadiusLength
         {
             get => percentileSelectionForRadiusLength;
-            set => Mathf.Max(0f, Mathf.Min(percentileSelectionForRadiusLength, 1f));
+            set => percentileSelectionForRadiusLength = Mathf.Max(0f, Mathf.Min(value, 1f));
         }
-
-        [SerializeField] private HPUIInteractorConeRayAngles coneRayData;
 
         [SerializeField] private bool visualiseEllipsoid = false;
 
         Dictionary<(XRHandJointID, FingerSide), float> xrConeRayAngleMedian = new();
 
         private XRHandFingerID previousFingerID = XRHandFingerID.Thumb;
-        [SerializeField] private bool recacheAngles;
 
         List<HPUIInteractorRayAngle> allAngles = new();
         List<Vector3> spherePoints = new();
@@ -54,17 +45,26 @@ namespace ubco.ovilab.HPUI.Interaction
         private float numberOfSamples;
         private float targetRadius;
 
-        [SerializeField] private FingerSide currentFingerSide;
+        private float currPercentile;
+        private DynamicConeConfigurationParameters currentParams;
+        private bool initialCache;
 
-        public List<HPUIInteractorRayAngle> SampleRays(Transform interactorObject, HandJointEstimatedData estimatedData)
+        private FingerSide currentFingerSide;
+
+        public List<HPUIInteractorRayAngle> SampleRays(Transform interactorObject, HandJointEstimatedData estimatedData, DynamicConeConfigurationParameters dynamicConeParameters)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Sampling Rays");
-            if (recacheAngles)
+
+            // check if current parameters is equal to the cached parameters
+            // if not, recompute the sphere
+            if ((currentParams != dynamicConeParameters) || (currPercentile != percentileSelectionForRadiusLength) || !initialCache)
             {
+                currentParams = new DynamicConeConfigurationParameters(dynamicConeParameters);
+                currPercentile = percentileSelectionForRadiusLength;
                 CacheRayAngles(estimatedData, interactorObject);
                 numberOfSamples = Mathf.Pow(360f / angleStep, 2);
                 CacheSphere(numberOfSamples);
-                recacheAngles = false;
+                initialCache = true;
             }
 
             if (previousFingerID != estimatedData._closestFinger.Value)
@@ -87,7 +87,7 @@ namespace ubco.ovilab.HPUI.Interaction
             float intermediateRadius = xrConeRayAngleMedian[(XRHandJointID.IndexIntermediate, currentFingerSide)];
             float proximalRadius = xrConeRayAngleMedian[(XRHandJointID.IndexProximal, currentFingerSide)];
             targetRadius = LerpThreeSmooth(distalRadius, intermediateRadius, proximalRadius, estimatedData.GetTipWeight());
-            float cosMaxAngle = Mathf.Cos(coneAngularWidth * Mathf.Deg2Rad);
+            float cosMaxAngle = Mathf.Cos(currentParams.ConeAngularWidth * Mathf.Deg2Rad);
             Vector3 targetDir = estimatedData.TargetDirection.normalized;
 
             Vector3 localTargetDir = interactorObject.InverseTransformDirection(targetDir).normalized;
@@ -142,7 +142,6 @@ namespace ubco.ovilab.HPUI.Interaction
 
         public static float LerpThreeSmooth(float a, float b, float c, float t)
         {
-            // Debug.Log($"distal:{a}  intermediate:{b} volar:{c}");
             float u = (1 - t) * (1 - t);   // weight for a
             float v = 2 * (1 - t) * t;     // weight for b
             float w = t * t;               // weight for c
@@ -227,7 +226,7 @@ namespace ubco.ovilab.HPUI.Interaction
                 .Select(x => x.RaySelectionThreshold)
                 .ToList();
 
-            float targetRadiusLength = targetJointRayList.Count == 0 ? 0 : targetJointRayList.Percentile(percentileSelectionForRadiusLength);
+            float targetRadiusLength = targetJointRayList.Count == 0 ? 0 : targetJointRayList.Percentile(currPercentile);
 
             if (xrConeRayAngleMedian.ContainsKey((targetJoint, phalangeConeData.side)))
             {

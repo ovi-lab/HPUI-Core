@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using ubco.ovilab.HPUI.utils;
-using Unity.XR.CoreUtils;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit;
-using Random = UnityEngine.Random;
 
 namespace ubco.ovilab.HPUI.Interaction
 {
@@ -21,33 +18,19 @@ namespace ubco.ovilab.HPUI.Interaction
 
         [SerializeReference, SubclassSelector] private IHPUIRaySubSampler coneType;
 
-        [Header("Dynamic Cone Properties")]
-        [SerializeField]
-        [Tooltip("Rotates the target vector orientation along the vector formed between the closest two XRI bones")]
-        private float rotationAngle = 0;
-        [SerializeField]
-        [Tooltip("Rotates the target vector orientation perpendicular to the vector formed between the closest two XRI bones")]
-        private float tiltRotation = 20f;
-        [SerializeField]
-        [Tooltip("The bias for the cone to deviate towards proximal or tip. Higher Sensitivity gives less resolution in the middle parts of the finger. Lower sensitivity gives less resolution in the extremities")]
-        private float sensitivity = 2f;
+        [SerializeField] private DynamicConeConfigurationParameters coneParameters;
 
-        [Header("Debug")]
-        [SerializeField] private float weightToTip;
-        [SerializeField] private float weightToProximal;
-        [SerializeField] private HandJointEstimatedData currentData;
+        private float weightToTip;
+        private float weightToProximal;
+        private HandJointEstimatedData currentData;
 
         public HPUIDynamicConeRayCastDetectionLogic()
         {
 
         }
 
-        public float InteractionHoverRadius { get; set; }
-
         public override void DetectedInteractables(IHPUIInteractor interactor, XRInteractionManager interactionManager, Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets, out Vector3 hoverEndPoint)
         {
-            // bool failed = false;
-
             if (_targetDirectionEstimator == null)
             {
                 _targetDirectionEstimator = new TargetDirectionEstimator(_xrHandTrackingEvents, XROrigin);
@@ -60,26 +43,32 @@ namespace ubco.ovilab.HPUI.Interaction
                 return;
             }
 
-            _targetDirectionEstimator.Estimate(rotationAngle, tiltRotation, sensitivity, out HandJointEstimatedData estimatedData);
+            _targetDirectionEstimator.Estimate(coneParameters.YawAngle, coneParameters.PitchAngle, coneParameters.LerpSensitivity, out HandJointEstimatedData estimatedData);
+
+
+            if (!_targetDirectionEstimator.ReceivedNewJointData)
+            {
+                hoverEndPoint = interactor.GetAttachTransform(null).position;
+                return;
+            }
 
             currentData = estimatedData;
             weightToTip = estimatedData.GetTipWeight();
             weightToProximal = estimatedData.GetProximalWeight();
             Transform interactorObject = interactor.transform;
-            List<HPUIInteractorRayAngle> angles = coneType.SampleRays(interactorObject, estimatedData);
+            List<HPUIInteractorRayAngle> angles = coneType.SampleRays(interactorObject, estimatedData, coneParameters);
             Debug.DrawRay(interactor.transform.position, estimatedData.TargetDirection, Color.magenta);
             Process(interactor, interactionManager, angles, validTargets, out hoverEndPoint);
+
+            // this reset is happening post so that sample rays is also aware of invalid data and knows to ignore it
+            _targetDirectionEstimator.ReceivedNewJointData = false;
         }
-
-        // public void Reset(){ }
-        //
-        // public void Dispose(){ }
-
     }
 
     [Serializable]
     public class TargetDirectionEstimator : IDisposable
     {
+
         public XRHandTrackingEvents XRHandTrackingEvents
         {
             get => xrHandTrackingEvents;
@@ -96,7 +85,6 @@ namespace ubco.ovilab.HPUI.Interaction
         }
 
         public Transform XROriginTransform { get => xrOriginTransform; set => xrOriginTransform = value; }
-        // public XRHandFingerID ClosestFingerID => closestFingerID;
 
         [SerializeField]
         [Tooltip("(optional) XR Origin transform. If not set, will attempt to find XROrigin and use its transform.")]
@@ -170,6 +158,16 @@ namespace ubco.ovilab.HPUI.Interaction
         };
 
         private bool receivedNewJointData;
+
+        public bool ReceivedNewJointData { get => receivedNewJointData; set => receivedNewJointData = value; }
+
+        private XRHandFingerID? _closestFinger = null;
+        private XRHandJointID _closestJoint = XRHandJointID.BeginMarker;
+        private Vector3 vectorToFingerTip = Vector3.negativeInfinity;
+        private Vector3 vectorToFingerProximal = Vector3.negativeInfinity;
+        private Vector3 targetDirection = Vector3.negativeInfinity;
+        private Vector3 thumbReferencePoint = Vector3.negativeInfinity;
+
         private GameObject tipViz;
         private GameObject proximalViz;
         public TargetDirectionEstimator(XRHandTrackingEvents handTrackingEvents, Transform _xrOriginTransform)
@@ -212,21 +210,18 @@ namespace ubco.ovilab.HPUI.Interaction
 
         public void Estimate(float flatRotation, float tiltRotation, float sensitivity, out HandJointEstimatedData estimatedData)
         {
-
-            XRHandFingerID? _closestFinger = null;
-            var _closestJoint = XRHandJointID.BeginMarker;
-            Vector3 vectorToFingerTip = Vector3.negativeInfinity;
-            Vector3 vectorToFingerProximal = Vector3.negativeInfinity;
-            Vector3 targetDirection = Vector3.negativeInfinity;
-            Vector3 thumbReferencePoint = Vector3.negativeInfinity;
-
             estimatedData = new HandJointEstimatedData(_closestFinger, _closestJoint, vectorToFingerTip, vectorToFingerProximal, 0, targetDirection, thumbReferencePoint, jointLocations);
-            XRHand hand = xrHandTrackingEvents.handedness == Handedness.Left
-                ? xrHandTrackingEvents.subsystem.leftHand
-                : xrHandTrackingEvents.subsystem.rightHand;
+
+            // this isn't really being used
+            // if(xrHandTrackingEvents)
+            // {
+            //     XRHand hand = xrHandTrackingEvents.handedness == Handedness.Left
+            //         ? xrHandTrackingEvents.subsystem.leftHand
+            //         : xrHandTrackingEvents.subsystem.rightHand;
+            // }
+
             if (!receivedNewJointData) return;
 
-            receivedNewJointData = false;
             Vector3 thumbTipPos = jointLocations[XRHandJointID.ThumbTip].position;
             float shortestDistance = float.MaxValue;
             foreach (KeyValuePair<XRHandJointID, XRHandJointID> kvp in trackedJointsToSegment)
@@ -286,7 +281,6 @@ namespace ubco.ovilab.HPUI.Interaction
         {
             XRHandTrackingEvents.jointsUpdated.RemoveListener(UpdateJointsData);
         }
-
     }
 
     [Serializable]
@@ -412,6 +406,131 @@ namespace ubco.ovilab.HPUI.Interaction
             targetDirection = perpendicularRot * targetDirection;
 
             return targetDirection;
+        }
+    }
+
+    [Serializable]
+    public class DynamicConeConfigurationParameters : IEquatable<DynamicConeConfigurationParameters>
+    {
+        [SerializeField, Range(1f, 180f)]
+        [Tooltip("Angular Width of the cone from the target direction")]
+        private float coneAngularWidth = 45f;
+
+        /// <summary>
+        /// Angular Width of the cone from the target direction
+        /// </summary>
+        public float ConeAngularWidth
+        {
+            get => coneAngularWidth;
+            set => coneAngularWidth = Mathf.Max(1, Mathf.Min(value, 180));
+        }
+
+        [SerializeField, Range(0f, 180f)]
+        [Tooltip("Angular offset in the local Y-axis of the interactor")]
+        private float yawAngle = 0f;
+
+        /// <summary>
+        /// Angular offset in the local Y-axis of the interactor
+        /// </summary>
+        public float YawAngle
+        {
+            get => yawAngle;
+            set => yawAngle = Mathf.Max(0, Mathf.Min(value, 180));
+        }
+
+        [SerializeField, Range(0f, 180f)]
+        [Tooltip("Angular offset in the local Z-axis of the interactor")]
+        private float pitchAngle = 20f;
+
+        /// <summary>
+        /// Angular offset in the local Z-axis of the interactor
+        /// </summary>
+        public float PitchAngle
+        {
+            get => pitchAngle;
+            set => pitchAngle = Mathf.Max(0, Mathf.Min(value, 180));
+        }
+
+        [SerializeField]
+        [Tooltip("The bias for the cone to deviate towards proximal or tip. Higher Sensitivity gives less resolution in the middle parts of the finger. Lower sensitivity gives less resolution in the extremities")]
+        private float lerpSensitivity = 4;
+
+        /// <summary>
+        /// The bias for the cone to deviate towards proximal
+        /// or tip. Higher Sensitivity gives less resolution
+        /// in the middle parts of the finger. Lower sensitivity
+        /// gives less resolution in the extremities
+        /// </summary>
+        public float LerpSensitivity
+        {
+            get => lerpSensitivity;
+            set => lerpSensitivity = value;
+        }
+
+        public DynamicConeConfigurationParameters(float coneAngularWidth, float percentileSelectionForRadiusLength, float yawAngle, float pitchAngle, float lerpSensitivity)
+        {
+
+            this.coneAngularWidth = coneAngularWidth;
+            this.yawAngle = yawAngle;
+            this.pitchAngle = pitchAngle;
+            this.lerpSensitivity = lerpSensitivity;
+        }
+
+        public DynamicConeConfigurationParameters(DynamicConeConfigurationParameters parameters)
+        {
+
+            this.coneAngularWidth = parameters.ConeAngularWidth;
+            this.yawAngle = parameters.YawAngle;
+            this.pitchAngle = parameters.PitchAngle;
+            this.lerpSensitivity = parameters.LerpSensitivity;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as DynamicConeConfigurationParameters);
+        }
+
+        public bool Equals(DynamicConeConfigurationParameters other)
+        {
+            if (other == null)
+                return false;
+
+            return coneAngularWidth == other.coneAngularWidth &&
+                   yawAngle == other.yawAngle &&
+                   pitchAngle == other.pitchAngle &&
+                   lerpSensitivity == other.lerpSensitivity;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + coneAngularWidth.GetHashCode();
+                hash = hash * 23 + yawAngle.GetHashCode();
+                hash = hash * 23 + pitchAngle.GetHashCode();
+                hash = hash * 23 + lerpSensitivity.GetHashCode();
+                return hash;
+            }
+        }
+
+        public static bool operator ==(DynamicConeConfigurationParameters left, DynamicConeConfigurationParameters right)
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+            if (left is null)
+                return false;
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(DynamicConeConfigurationParameters left, DynamicConeConfigurationParameters right)
+        {
+            return !(left == right);
+        }
+
+        public override string ToString()
+        {
+            return $"ParamData: Cone Angular Width: {coneAngularWidth}; Yaw Angle: {yawAngle} Pitch Angle: {pitchAngle}, Lerp Sensitivity: {lerpSensitivity}";
         }
     }
 }

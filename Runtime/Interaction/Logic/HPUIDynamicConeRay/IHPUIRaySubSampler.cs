@@ -14,6 +14,6 @@ namespace ubco.ovilab.HPUI.Interaction
         /// <param name="interactorObject">Transform of the interactor</param>
         /// <param name="estimatedData">Current frame <see cref="HandJointEstimatedData"/> information</param>
         /// <returns>Subsampled list of HPUI Interactor Ray Angles</returns>
-        public List<HPUIInteractorRayAngle> SampleRays(Transform interactorObject, HandJointEstimatedData estimatedData);
+        public List<HPUIInteractorRayAngle> SampleRays(Transform interactorObject, HandJointEstimatedData estimatedData, DynamicConeConfigurationParameters dynamicConeParameters);
     }
 }
