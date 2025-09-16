@@ -20,10 +20,29 @@ namespace ubco.ovilab.HPUI.Editor
             "boundsCollider", // NOTE: this is not relevant to the HPUIGeneratedContinuousInteractable.
         }).ToList();
 
+
+        protected SerializedProperty sigmaFactorProperty,
+            x_sizeProperty, y_sizeProperty, y_divisionsProperty,
+            offsetProperty, numberOfBonesPerVertexProperty,
+            keypointsDataProperty, defaultMaterialProperty,
+            filterProperty;
+
+        private bool advancedFoldout;
+
         protected override void OnEnable()
         {
             base.OnEnable();
             t = target as HPUIGeneratedContinuousInteractable;
+
+            sigmaFactorProperty = serializedObject.FindProperty("sigmaFactor");
+            x_sizeProperty = serializedObject.FindProperty("x_size");
+            y_sizeProperty = serializedObject.FindProperty("y_size");
+            y_divisionsProperty = serializedObject.FindProperty("y_divisions");
+            offsetProperty = serializedObject.FindProperty("offset");
+            numberOfBonesPerVertexProperty = serializedObject.FindProperty("numberOfBonesPerVertex");
+            keypointsDataProperty = serializedObject.FindProperty("keypointsData");
+            defaultMaterialProperty = serializedObject.FindProperty("defaultMaterial");
+            filterProperty = serializedObject.FindProperty("filter");
         }
 
         public override void OnInspectorGUI()
@@ -38,6 +57,44 @@ namespace ubco.ovilab.HPUI.Editor
                 }
             }
             GUI.enabled = true;
+        }
+
+        protected override void DrawProperties()
+        {
+            base.DrawProperties();
+            EditorGUILayout.LabelField("Continuous surface configuration", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(x_sizeProperty);
+            EditorGUILayout.PropertyField(y_sizeProperty);
+            EditorGUILayout.PropertyField(y_divisionsProperty);
+            EditorGUILayout.PropertyField(offsetProperty);
+            EditorGUILayout.PropertyField(numberOfBonesPerVertexProperty);
+            EditorGUILayout.PropertyField(defaultMaterialProperty);
+            EditorGUILayout.PropertyField(filterProperty);
+            EditorGUILayout.PropertyField(keypointsDataProperty);
+
+            advancedFoldout = EditorGUILayout.Foldout(advancedFoldout, "Advanced Settings (mesh generation)");
+
+            if (advancedFoldout)
+            {
+                EditorGUILayout.PropertyField(sigmaFactorProperty);
+            }
+            EditorGUILayout.Space();
+        }
+
+        /// <inheritdoc />
+        protected override List<string> GetDerivedSerializedPropertyNames()
+        {
+            List<string> props = base.GetDerivedSerializedPropertyNames();
+            props.Add("x_size");
+            props.Add("y_size");
+            props.Add("y_divisions");
+            props.Add("offset");
+            props.Add("numberOfBonesPerVertex");
+            props.Add("defaultMaterial");
+            props.Add("filter");
+            props.Add("keypointsData");
+            props.Add("sigmaFactor");
+            return props;
         }
     }
 }

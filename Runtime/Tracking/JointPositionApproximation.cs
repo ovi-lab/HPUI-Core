@@ -33,8 +33,22 @@ namespace ubco.ovilab.HPUI.Tracking
             set => handedness = value;
         }
 
-        private const int windowSize = 100;
-        private const float maeThreshold = 0.003f; // 3mm
+        [SerializeField, Tooltip("The number of frames over which the position computation needs to be stable.")]
+        private int windowSize = 100;
+
+        /// <summary>
+        /// The number of frames over which the position computation needs to be stable.
+        /// </summary>
+        public int WindowSize { get => windowSize; set => windowSize = value; }
+
+        [SerializeField, Tooltip("The distance threshold to determine estaimates are stable, in Unity units.")]
+        private float maeThreshold = 0.005f;
+
+        /// <summary>
+        /// The distance threshold to determine estaimates are stable, in Unity units.
+        /// </summary>
+        public float MaeThreshold { get => maeThreshold; set => maeThreshold = value; }
+
         private List<XRHandJointID> computeKeypointsJoints = new List<XRHandJointID>()
         {
             XRHandJointID.IndexProximal, XRHandJointID.MiddleProximal, XRHandJointID.RingProximal, XRHandJointID.LittleProximal
@@ -69,7 +83,7 @@ namespace ubco.ovilab.HPUI.Tracking
             // Compute the distances of the joints
             foreach (XRHandFingerID fingerID in Enum.GetValues(typeof(XRHandFingerID)))
             {
-                for(var i = fingerID.GetFrontJointID().ToIndex() + 2; // intermedial
+                for (var i = fingerID.GetFrontJointID().ToIndex() + 2; // intermedial
                     i <= fingerID.GetBackJointID().ToIndex();  // to tip
                     i++)
                 {
@@ -102,7 +116,7 @@ namespace ubco.ovilab.HPUI.Tracking
                             jointLastLengths = jointsLastLengths[jointID];
                         }
 
-                        if (jointLastLengths.Count == windowSize)
+                        if (jointLastLengths.Count == WindowSize)
                         {
                             jointLastLengths.Dequeue();
                         }
@@ -113,7 +127,7 @@ namespace ubco.ovilab.HPUI.Tracking
                         float mean = jointLastLengths.Average();
                         float mae = jointLastLengths.Sum(v => Mathf.Abs(v - mean)) / jointLastLengths.Count;
 
-                        jointsLengthEstimation[jointID] = (mean, mae, jointLastLengths.Count == windowSize ? mae < maeThreshold : false);
+                        jointsLengthEstimation[jointID] = (mean, mae, jointLastLengths.Count == WindowSize ? mae < MaeThreshold : false);
                     }
                 }
             }
@@ -142,7 +156,7 @@ namespace ubco.ovilab.HPUI.Tracking
                             continue;
                         }
 
-                        if (data.positions.Count == windowSize)
+                        if (data.positions.Count == WindowSize)
                         {
                             data.positions.Dequeue();
                         }
@@ -150,10 +164,10 @@ namespace ubco.ovilab.HPUI.Tracking
                         data.positions.Enqueue(jointPose.GetTransformedBy(lastWristPose).position);
                         data.pose = new Pose(jointPose.position, Quaternion.LookRotation(childJointPose.position - jointPose.position, jointPose.up));
                         float mae = float.MaxValue;
-                        if (data.positions.Count == windowSize)
+                        if (data.positions.Count == WindowSize)
                         {
                             mae = data.positions.Skip(1).Zip(data.positions.SkipLast(1), (p1, p2) => (p1 - p2).magnitude).Sum() / (data.positions.Count - 1);
-                            if (mae < maeThreshold)
+                            if (mae < MaeThreshold)
                             {
                                 data.stable = true;
                             }

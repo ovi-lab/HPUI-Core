@@ -39,7 +39,10 @@ namespace ubco.ovilab.HPUI.Interaction
         /// The bones that will be used for the <see cref="SkinnedMeshRenderer"/>.</param>
         /// <param name="numberOfBonesPerVertex">
         /// The number of bones to use per vertex in the <see cref="SkinnedMeshRenderer"/>.</param>
-        public static void GenerateMesh(float x_size, float y_size, int x_divisions, int y_divisions, float surfaceOffset, MeshFilter filter, List<Transform> bones, byte numberOfBonesPerVertex)
+        /// <param name="sigmaFactor"> A multiplier for sigma. Sigma controls
+        /// locality. Smaller sigma results in more local influence. Sigma is the
+        /// sigmaFctor * max(x_size, y_size) </param>
+        public static void GenerateMesh(float x_size, float y_size, int x_divisions, int y_divisions, float surfaceOffset, MeshFilter filter, List<Transform> bones, byte numberOfBonesPerVertex, float sigmaFactor)
         {
             Mesh mesh;
             List<Vector3> vertices;
@@ -66,7 +69,7 @@ namespace ubco.ovilab.HPUI.Interaction
 
             byte[] bonesPerVertex;
             List<BoneWeight1> weights;
-            float sigma = Mathf.Max(x_size, y_size) * 0.15f;
+            float sigma = Mathf.Max(x_size, y_size) * sigmaFactor;
             GenerateGeodesicBoneWeights(mesh, vertices, surfaceRootTransform, bones, numberOfBonesPerVertex, sigma, out bonesPerVertex, out weights);
 
             // Create NativeArray versions of the two arrays

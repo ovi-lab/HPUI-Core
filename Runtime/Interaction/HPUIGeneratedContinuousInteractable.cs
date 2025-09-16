@@ -18,7 +18,6 @@ namespace ubco.ovilab.HPUI.Interaction
     {
         //TODO: make following configs an asset
         [Space()]
-        [Header("Continuous surface configuration")]
         [Tooltip("The size along the abduction-adduction axis of the fingers (x-axis of joints) in unity units")]
         [SerializeField] private float x_size;
         [Tooltip("The size along the flexion-extension axis of the fingers (z-axis of joints) in unity units.")]
@@ -35,6 +34,8 @@ namespace ubco.ovilab.HPUI.Interaction
         [SerializeField] private Material defaultMaterial;
         [Tooltip("(Optional) the MeshFilter of the corresponding SkinnedMeshRenderer. If not set, will create a child object with the MeshFilter and SkinnedMeshRenderer.")]
 	[SerializeField] private MeshFilter filter;
+        [Tooltip("A multiplier for sigma that controls locality when generating mesh. Smaller sigma results in more local influence.")]
+	[SerializeField] private float sigmaFactor = 0.25f;
         /// <inheritdoc />
         public override Vector2 boundsMax { get => surfaceCollidersManager?.boundsMax ?? Vector2.zero; }
 
@@ -104,6 +105,11 @@ namespace ubco.ovilab.HPUI.Interaction
         /// The keypointTransforms used by this continuous interactable;
         /// </summary>
         public List<Transform> KeypointTransforms { get; private set; }
+
+        /// <summary>
+        /// A multiplier for sigma that controls locality when generating mesh. Smaller sigma results in more local influence.
+        /// </summary>
+        public float SigmaFactor { get => sigmaFactor; set => sigmaFactor = value; }
 
         private DeformableSurfaceCollidersManager surfaceCollidersManager;
         private GameObject collidersRoot;
@@ -248,7 +254,7 @@ namespace ubco.ovilab.HPUI.Interaction
             float step_size = y_size / Y_divisions;
 	    X_divisions = (int)(x_size / step_size);
 
-            DeformableSurface.GenerateMesh(x_size, y_size, X_divisions, Y_divisions, Offset, Filter, KeypointTransforms, NumberOfBonesPerVertex);
+            DeformableSurface.GenerateMesh(x_size, y_size, X_divisions, Y_divisions, Offset, Filter, KeypointTransforms, NumberOfBonesPerVertex, sigmaFactor);
 
             if (DefaultMaterial != null)
             {
