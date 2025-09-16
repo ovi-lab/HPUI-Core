@@ -48,7 +48,7 @@ namespace ubco.ovilab.HPUI.Tracking
         /// <inheritdoc />
         protected override void ProcessJointData(XRHandSubsystem subsystem, XRHandSubsystem.UpdateSuccessFlags _)
         {
-            if (jointFollower == null || !enabled)
+            if (jointFollower == null || !enabled || approximationComputeState != ApproximationComputeState.DataCollection)
             {
                 return;
             }
@@ -143,9 +143,10 @@ namespace ubco.ovilab.HPUI.Tracking
 
                         data.positions.Enqueue(jointPose.GetTransformedBy(lastWristPose).position);
                         data.pose = new Pose(jointPose.position, Quaternion.LookRotation(childJointPose.position - jointPose.position, jointPose.up));
+                        float mae = float.MaxValue;
                         if (data.positions.Count == windowSize)
                         {
-                            float mae = data.positions.Skip(1).Zip(data.positions.SkipLast(1), (p1, p2) => (p1 - p2).magnitude).Sum() / data.positions.Count;
+                            mae = data.positions.Skip(1).Zip(data.positions.SkipLast(1), (p1, p2) => (p1 - p2).magnitude).Sum() / (data.positions.Count - 1);
                             if (mae < maeThreshold)
                             {
                                 data.stable = true;
@@ -164,18 +165,19 @@ namespace ubco.ovilab.HPUI.Tracking
             percentageDone = 0;
 
             // Was just initiated
-            if (jointsLengthEstimation.Count == 0)
+            if (jointsLengthEstimation.Count == 0 || computeKeypointJointsData.Count == 0)
             {
                 return false;
             }
 
             // Checking of all joints
             // FIXME: Optimization - Avoid computing for all joints if not necessary
-            float jointLengthsStableRatio = (float)jointsLengthEstimation.Where(kvp => kvp.Value.stable).Count() / (float)windowSize;
-            float computeKeypointsStableRatio = (float)computeKeypointJointsData.Where(kvp => kvp.Value.stable).Count() / (float)windowSize;
+            float jointLengthsStableRatio = (float)jointsLengthEstimation.Where(kvp => kvp.Value.stable).Count() / (float)jointsLengthEstimation.Count;
+            float computeKeypointsStableRatio = (float)computeKeypointJointsData.Where(kvp => kvp.Value.stable).Count() / (float)computeKeypointJointsData.Count;
 
             percentageDone = (jointLengthsStableRatio + computeKeypointsStableRatio) * 0.5f;
-            if (jointLengthsStableRatio == 1 || computeKeypointsStableRatio == 1 || !receivedLastWristPose)
+
+            if (jointLengthsStableRatio < 1 || computeKeypointsStableRatio < 1 || !receivedLastWristPose)
             {
                 return false;
             }
@@ -263,7 +265,6 @@ namespace ubco.ovilab.HPUI.Tracking
         public void AutomatedRecompute()
         {
             approximationComputeState = ApproximationComputeState.Starting;
-            computeKeypointJointsData.Clear();
             jointsLengthEstimation.Clear();
             jointsLastLengths.Clear();
             computeKeypointJointsData.Clear();
@@ -289,6 +290,44 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
+        protected virtual void ComputeApproximationAndExecuteCalibration(Dictionary<XRHandJointID, Pose> keypointPoses)
+        {
+            continuousInteractable.SetupKeypoints();
+
+            foreach (Transform t in continuousInteractable.KeypointTransforms)
+            {
+                t.GetComponent<JointFollower>().enabled = false;
+            }
+            jointFollower.enabled = false;
+
+            Pose newPose1, newPose2 = Pose.identity;
+            XRHandJointID jointID;
+
+            // Setting the base as the other keypoints can be childed to this
+            jointID = jointFollower.JointFollowerDatumProperty.Value.jointID;
+            newPose1 = keypointPoses[jointID];
+
+            jointID = jointFollower.JointFollowerDatumProperty.Value.secondJointID;
+            bool useSecondJointID = jointFollower.JointFollowerDatumProperty.Value.useSecondJointID;
+            if (useSecondJointID)
+            {
+                newPose2 = keypointPoses[jointID];
+            }
+            jointFollower.InternalSetPose(newPose1, newPose2, useSecondJointID);
+
+            foreach (Transform t in continuousInteractable.KeypointTransforms)
+            {
+                JointFollower kpJointFollower = t.GetComponent<JointFollower>();
+                jointID = kpJointFollower.JointFollowerDatumProperty.Value.jointID;
+                newPose1 = keypointPoses[jointID];
+                kpJointFollower.InternalSetPose(newPose1, Pose.identity, false);
+            }
+
+            continuousInteractable.ExecuteCalibration();
+            Debug.Log($"Finished generating");
+            approximationComputeState = ApproximationComputeState.Finished;
+        }
+
         protected override void Update()
         {
             base.Update();
@@ -306,6 +345,7 @@ namespace ubco.ovilab.HPUI.Tracking
                     continuousInteractable.ClearKeypointsCache();
                     ui?.Show();
                     approximationComputeState = ApproximationComputeState.DataCollection;
+                    Debug.Log($"Started approximation");
                     break;
                 case ApproximationComputeState.DataCollection:
                     IEnumerable<XRHandJointID> keypointsUsed = continuousInteractable.KeypointsData
@@ -320,7 +360,7 @@ namespace ubco.ovilab.HPUI.Tracking
                         .Append(jointFollower.JointFollowerDatumProperty.Value.jointID);
                     if (jointFollower.JointFollowerDatumProperty.Value.useSecondJointID)
                     {
-                        keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);
+                        keypointsUsed = keypointsUsed.Append(jointFollower.JointFollowerDatumProperty.Value.secondJointID);
                     }
 
                     if (TryComputePoseForKeyPoints(keypointsUsed.ToList(),
@@ -328,72 +368,16 @@ namespace ubco.ovilab.HPUI.Tracking
                                                    out float percentageDone))
                     {
                         ui?.Hide();
-                        continuousInteractable.SetupKeypoints();
-
-                        foreach (Transform t in continuousInteractable.KeypointTransforms)
-                        {
-                            t.GetComponent<JointFollower>().enabled = false;
-                        }
-                        jointFollower.enabled = false;
-
-                        Pose newPose1, newPose2 = Pose.identity;
-                        XRHandJointID jointID;
-                        foreach (Transform t in continuousInteractable.KeypointTransforms)
-                        {
-                            JointFollower kpJointFollower = t.GetComponent<JointFollower>();
-                            jointID = kpJointFollower.JointFollowerDatumProperty.Value.jointID;
-                            newPose1 = keypointPoses[jointID];
-                            kpJointFollower.InternalSetPose(newPose1, Pose.identity, false);
-
-                            // FIXME: Debug code
-                            // {
-                            //     var obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                            //     obj.transform.localScale = Vector3.one * 0.005f;
-                            //     obj.transform.position = kpJointFollower.transform.position;
-                            //     obj.transform.rotation = kpJointFollower.transform.rotation;
-                            // }
-                        }
-
-                        jointID = jointFollower.JointFollowerDatumProperty.Value.jointID;
-                        newPose1 = keypointPoses[jointID];
-
-                        jointID = jointFollower.JointFollowerDatumProperty.Value.secondJointID;
-                        bool useSecondJointID = jointFollower.JointFollowerDatumProperty.Value.useSecondJointID;
-                        if (useSecondJointID)
-                        {
-                            newPose2 = keypointPoses[jointID];
-                        }
-                        jointFollower.InternalSetPose(newPose1, newPose2, useSecondJointID);
-
-                        // FIXME: Debug code
-                        // {
-                        //     var obj1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        //     obj1.transform.localScale = Vector3.one * 0.005f;
-                        //     obj1.transform.position = jointFollower.transform.position;
-                        //     obj1.transform.rotation = jointFollower.transform.rotation;
-
-                        //     obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                        //     obj1.transform.localScale = Vector3.one * 0.005f;
-                        //     obj1.transform.position = newPose1.position;
-                        //     obj1.transform.rotation = newPose1.rotation;
-
-                        //     obj1 = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                        //     obj1.transform.localScale = Vector3.one * 0.005f;
-                        //     obj1.transform.position = newPose2.position;
-                        //     obj1.transform.rotation = newPose2.rotation;
-
-                        //     // todo?.Invoke();
-                        // }
-                        
-                        continuousInteractable.ExecuteCalibration();
+                        Debug.Log($"Finished collecting data for approximation");
                         approximationComputeState = ApproximationComputeState.Computing;
+                        ComputeApproximationAndExecuteCalibration(keypointPoses);
                     }
                     else
                     {
                         if (ui != null)
                         {
                             ui.TextMessage = "Processing hand pose";
-                            if (percentageDone > 1)
+                            if (percentageDone >= 1)
                             {
                                 ui.InProgress();
                             }
@@ -405,7 +389,7 @@ namespace ubco.ovilab.HPUI.Tracking
                     }
                     break;
                 case ApproximationComputeState.Computing:
-                    approximationComputeState = ApproximationComputeState.Finished;
+                    // Nothing to do here
                     break;
                 case ApproximationComputeState.Finished:
                     foreach (Transform t in continuousInteractable.KeypointTransforms)

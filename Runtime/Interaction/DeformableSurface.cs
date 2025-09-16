@@ -61,13 +61,6 @@ namespace ubco.ovilab.HPUI.Interaction
             // Setting up bones and bindPose
             foreach (Transform t in bones)
             {
-                // FIXME: Debug code
-                // {
-                //     var obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                //     obj.transform.localScale = Vector3.one * 0.005f;
-                //     obj.transform.position = t.position;
-                //     obj.transform.rotation = t.rotation;
-                // }
                 bindPoses.Add(t.worldToLocalMatrix * surfaceRootTransform.localToWorldMatrix);
             }
 
