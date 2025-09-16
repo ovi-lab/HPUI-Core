@@ -108,7 +108,7 @@ namespace ubco.ovilab.HPUI
         {
             Assert.IsTrue(Application.isPlaying, "This doesn't work in editor mode!");
 
-            if (CurrentState != State.Ready || CurrentState != State.ReadyAndHaveData)
+            if (CurrentState != State.Ready && CurrentState != State.ReadyAndHaveData)
             {
                 Debug.LogWarning($"Current state of estimator is {CurrentState}, Cannot start new procedure.");
                 return;
@@ -179,6 +179,40 @@ namespace ubco.ovilab.HPUI
             {
                 throw new InvalidOperationException("DataCollector failed to stop collecting data");
             }
+            IEnumerable<ConeRayComputationDataRecord> dataRecords = dataCollector.DataRecords;
+            HPUIInteractorConeRayAngles estimatedConeRayAngles = ScriptableObject.CreateInstance<HPUIInteractorConeRayAngles>();
+
+            StartCoroutine(EstimationCoroutine(estimatedConeRayAngles, dataRecords));
+            CurrentState = State.EstimatingConeRays;
+        }
+
+        /// <summary>
+        /// Initiates re-estimation of cone-ray parameters using the data currently held by the data collector.
+        /// </summary>
+        /// <remarks>
+        /// This method must be invoked while the application is running (Play mode). The estimator must be in
+        /// State.ReadyAndHaveData; if it is not, the method logs a warning and returns immediately without
+        /// performing any work. When the preconditions are satisfied, a new HPUIInteractorConeRayAngles
+        /// ScriptableObject is created and the EstimationCoroutine is started to perform the computation
+        /// asynchronously. After starting the coroutine, the estimator's CurrentState
+        /// is updated to State.EstimatingConeRays.
+        /// 
+        /// Derived classes may override this method to change or extend re-estimation behavior; if overridden,
+        /// ensure the Play-mode check and state-transition semantics are preserved or intentionally modified.
+        /// </remarks>
+        /// <exception cref="UnityEngine.Assertions.AssertionException">
+        /// Thrown when Application.isPlaying is false (method called outside Play mode).
+        /// </exception>
+        public virtual void ReEstimate()
+        {
+            Assert.IsTrue(Application.isPlaying, "This doesn't work in editor mode!");
+
+            if (CurrentState != State.ReadyAndHaveData)
+            {
+                Debug.LogWarning($"Current state of estimator is {CurrentState}, was expecting `ReadyAndHaveData`. Cannot re-estimate.");
+                return;
+            }
+
             IEnumerable<ConeRayComputationDataRecord> dataRecords = dataCollector.DataRecords;
             HPUIInteractorConeRayAngles estimatedConeRayAngles = ScriptableObject.CreateInstance<HPUIInteractorConeRayAngles>();
 

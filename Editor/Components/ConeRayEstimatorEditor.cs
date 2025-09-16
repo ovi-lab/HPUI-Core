@@ -137,10 +137,10 @@ namespace ubco.ovilab.HPUI.Editor
                 dontAskBeforeDiscard = !EditorGUILayout.Toggle(new GUIContent("Always Ask Before Restarting",
                                                                               "Always ask before restarting data collection to avoid discarding data."),
                                                                !dontAskBeforeDiscard);
-                                                               if (check.changed)
-                                                               {
-                                                                   EditorPrefs.SetBool(DONT_ASK_EDITORPREF_KEY, dontAskBeforeDiscard);
-                                                               }
+                if (check.changed)
+                {
+                    EditorPrefs.SetBool(DONT_ASK_EDITORPREF_KEY, dontAskBeforeDiscard);
+                }
             }
 
             if (t.ConeRaySegmentComputation == null)
@@ -164,21 +164,27 @@ namespace ubco.ovilab.HPUI.Editor
                 t.DataCollector.Interactor != null;
             if ((t.CurrentState == ConeRayEstimator.State.Ready || t.CurrentState == ConeRayEstimator.State.ReadyAndHaveData) &&
                 GUILayout.Button(new GUIContent((t.GeneratedAsset ? "Restart" : "Start") + " data collection", "Sets up the intertactables to collect data necessary for estimation.")))
+            {
+                if (EditorUtility.DisplayDialog("Restart data collection",
+                                                "Restarting data collection will discard previous data. Continue?",
+                                                "Yes",
+                                                "No",
+                                                DialogOptOutDecisionType.ForThisMachine, DONT_ASK_EDITORPREF_KEY))
                 {
-                    if (EditorUtility.DisplayDialog("Restart data collection",
-                                                    "Restarting data collection will discard previous data. Continue?",
-                                                    "Yes",
-                                                    "No",
-                                                    DialogOptOutDecisionType.ForThisMachine, DONT_ASK_EDITORPREF_KEY))
+                    if (savedAssets.ContainsKey(t))
                     {
-                        if (savedAssets.ContainsKey(t))
-                        {
-                            savedAssets.Remove(t);
-                        }
-                        t.StartDataCollection();
+                        savedAssets.Remove(t);
                     }
-                    dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
+                    t.StartDataCollection();
                 }
+                dontAskBeforeDiscard = EditorPrefs.GetBool(DONT_ASK_EDITORPREF_KEY, false);
+            }
+
+            if ((t.CurrentState == ConeRayEstimator.State.ReadyAndHaveData) &&
+                GUILayout.Button(new GUIContent("Re-estimate", "Re run the estimation on collected data.")))
+            {
+                t.ReEstimate();
+            }
 
             if (t.CurrentState == ConeRayEstimator.State.CollectingData && GUILayout.Button(new GUIContent("Finish data collection and estimate", "Finish data collection and start estimation of cones.")))
             {
@@ -234,7 +240,7 @@ namespace ubco.ovilab.HPUI.Editor
                         AssetDatabase.CreateAsset(t.GeneratedAsset, saveName);
                         AssetDatabase.SaveAssets();
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         Debug.LogError($"{e}");
                     }
