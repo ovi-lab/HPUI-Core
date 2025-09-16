@@ -45,7 +45,7 @@ namespace ubco.ovilab.HPUI.Interaction
             List<Vector3> vertices;
             Transform surfaceRootTransform = filter.transform;
 
-            GenerateMeshBottomMiddleOrigin(x_size,y_size, surfaceOffset, x_divisions, y_divisions, out mesh, out vertices);
+            GenerateMeshBottomMiddleOrigin(x_size, y_size, surfaceOffset, x_divisions, y_divisions, out mesh, out vertices);
             filter.mesh = mesh;
             filter.mesh.MarkDynamic();
 
@@ -64,36 +64,10 @@ namespace ubco.ovilab.HPUI.Interaction
                 bindPoses.Add(t.worldToLocalMatrix * surfaceRootTransform.localToWorldMatrix);
             }
 
-            // Create an array that describes the number of bone weights per vertex
-            byte[] bonesPerVertex = Enumerable.Repeat<byte>(numberOfBonesPerVertex, vertices.Count).ToArray();
-
-            // Create an array with one BoneWeight1 struct for each of the <numberOfBonesPerVertex> bone weights
-            List<BoneWeight1> weights = new List<BoneWeight1>();
-
-            for (int i = 0; i < vertices.Count; i++)
-            {
-                Vector3 vertexPos = surfaceRootTransform.TransformPoint(vertices[i]);
-
-                // The weights are the inverse of the distance from the vertex to a bone (1/dist)
-                List<(int idx, float weight)> vals = bones
-                    .Select((t, idx) => (idx, (1 / (t.position - vertexPos).magnitude)))
-                    .OrderBy(el => el.Item2) // in ascending order
-                    .Reverse()
-                    .Take(numberOfBonesPerVertex)
-                    .ToList();
-
-                float normalizingFactor = vals.Select(x => x.weight).Sum();
-
-                foreach ((int idx, float weight) item in vals)
-                {
-                    BoneWeight1 bw = new BoneWeight1()
-                    {
-                        boneIndex = item.idx,
-                        weight = item.weight / normalizingFactor
-                    };
-                    weights.Add(bw);
-                }
-            }
+            byte[] bonesPerVertex;
+            List<BoneWeight1> weights;
+            float sigma = Mathf.Max(x_size, y_size) * 0.15f;
+            GenerateGeodesicBoneWeights(mesh, vertices, surfaceRootTransform, bones, numberOfBonesPerVertex, sigma, out bonesPerVertex, out weights);
 
             // Create NativeArray versions of the two arrays
             NativeArray<byte> bonesPerVertexArray = new NativeArray<byte>(bonesPerVertex, Allocator.Temp);
@@ -103,6 +77,7 @@ namespace ubco.ovilab.HPUI.Interaction
             mesh.SetBoneWeights(bonesPerVertexArray, weightsArray);
             bonesPerVertexArray.Dispose();
             weightsArray.Dispose();
+
 
             // Assign the bind poses to the mesh
             mesh.bindposes = bindPoses.ToArray();
@@ -159,6 +134,278 @@ namespace ubco.ovilab.HPUI.Interaction
 
             mesh.RecalculateNormals();
             mesh.RecalculateTangents();
+        }
+
+        // KLUDGE: GenerateGeodesicBoneWeights and its helpers are mostly LLM generated and hasn't been fully verfied.
+        /// <summary>
+        /// small Edge struct instead of named tuples.
+        /// </summary>
+        private struct Edge
+        {
+            public int Target;
+            public float Length;
+
+            public Edge(int t, float l)
+            {
+                Target = t;
+                Length = l;
+            }
+        }
+
+        /// <summary>
+        /// Small binary min-heap for Dijkstra
+        /// </summary>
+        private struct HeapNode
+        {
+            public int Vertex;
+            public float Dist;
+
+            public HeapNode(int v, float d)
+            {
+                Vertex = v;
+                Dist = d;
+            }
+        }
+
+        /// <summary>
+        /// Build adjacency graph (undirected) using mesh.triangles and world-space vertex positions.
+        /// </summary>
+        private static List<Edge>[] BuildGraph(Vector3[] vertsWorld, int[] triangles)
+        {
+            int verticesCount = vertsWorld.Length;
+            List<Edge>[] graph = new List<Edge>[verticesCount];
+            for (int i = 0; i < verticesCount; i++) graph[i] = new List<Edge>();
+
+            for (int t = 0; t < triangles.Length; t += 3)
+            {
+                int a = triangles[t], b = triangles[t + 1], c = triangles[t + 2];
+
+                void AddEdge(int u, int v)
+                {
+                    float len = Vector3.Distance(vertsWorld[u], vertsWorld[v]);
+                    List<Edge> lst = graph[u];
+                    // avoid duplicates
+                    bool exists = false;
+                    for (int i = 0; i < lst.Count; i++)
+                    {
+                        if (lst[i].Target == v)
+                        {
+                            exists = true; break;
+                        }
+                    }
+                    if (!exists)
+                    {
+                        lst.Add(new Edge(v, len));
+                    }
+                }
+
+                AddEdge(a, b); AddEdge(b, a);
+                AddEdge(b, c); AddEdge(c, b);
+                AddEdge(c, a); AddEdge(a, c);
+            }
+
+            return graph;
+        }
+
+        /// <summary>
+        /// Min-heap implementation to use with Dijkstra
+        /// </summary>
+        private class MinHeap
+        {
+            private List<HeapNode> data = new List<HeapNode>();
+            public int Count => data.Count;
+
+            public void Push(HeapNode n)
+            {
+                data.Add(n);
+                int i = data.Count - 1;
+                while (i > 0)
+                {
+                    int p = (i - 1) >> 1;
+                    if (data[p].Dist <= data[i].Dist)
+                    {
+                        break;
+                    }
+                    HeapNode tmp = data[p]; data[p] = data[i]; data[i] = tmp;
+                    i = p;
+                }
+            }
+
+            public HeapNode Pop()
+            {
+                HeapNode ret = data[0];
+                int last = data.Count - 1;
+                data[0] = data[last];
+                data.RemoveAt(last);
+                int i = 0;
+                while (true)
+                {
+                    int l = i * 2 + 1, r = i * 2 + 2, smallest = i;
+                    if (l < data.Count && data[l].Dist < data[smallest].Dist)
+                    {
+                        smallest = l;
+                    }
+                    if (r < data.Count && data[r].Dist < data[smallest].Dist)
+                    {
+                        smallest = r;
+                    }
+                    if (smallest == i)
+                    {
+                        break;
+                    }
+                    HeapNode tmp = data[i]; data[i] = data[smallest]; data[smallest] = tmp;
+                    i = smallest;
+                }
+                return ret;
+            }
+        }
+
+        /// <summary>
+        /// Dijkstra from a source vertex on the graph (returns distances, unreachable = +inf)
+        /// </summary>
+        private static float[] Dijkstra(List<Edge>[] graph, int source)
+        {
+            int n = graph.Length;
+            float[] dist = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                dist[i] = float.PositiveInfinity;
+            }
+            dist[source] = 0f;
+
+            MinHeap heap = new MinHeap();
+            heap.Push(new HeapNode(source, 0f));
+            bool[] visited = new bool[n];
+
+            while (heap.Count > 0)
+            {
+                HeapNode node = heap.Pop();
+                int u = node.Vertex;
+                if (visited[u])
+                {
+                    continue;
+                }
+                visited[u] = true;
+
+                foreach (Edge edge in graph[u])
+                {
+                    int v = edge.Target;
+                    float w = edge.Length;
+                    float nd = dist[u] + w;
+                    if (nd < dist[v])
+                    {
+                        dist[v] = nd;
+                        heap.Push(new HeapNode(v, nd));
+                    }
+                }
+            }
+
+            return dist;
+        }
+
+        /// <summary>
+        /// Generate geodesic-based bone weights. Outputs bonesPerVertex array and a flattened list of BoneWeight1 per-vertex (top-K ordering)
+        /// </summary>
+        private static void GenerateGeodesicBoneWeights(Mesh mesh, List<Vector3> verticesLocal, Transform surfaceRootTransform,
+                                                        List<Transform> bones, byte numberOfBonesPerVertex, float sigma,
+                                                        out byte[] bonesPerVertexOut, out List<BoneWeight1> weightsOut)
+        {
+            int verticesCount = verticesLocal.Count;
+            Vector3[] vertsWorld = new Vector3[verticesCount];
+            for (int i = 0; i < verticesCount; i++)
+            {
+                vertsWorld[i] = surfaceRootTransform.TransformPoint(verticesLocal[i]);
+            }
+
+            int[] triangles = mesh.triangles;
+            List<Edge>[] graph = BuildGraph(vertsWorld, triangles);
+
+            int boneCount = bones.Count;
+            float[][] boneDists = new float[boneCount][];
+            for (int boneIdx = 0; boneIdx < boneCount; boneIdx++)
+            {
+                Vector3 bonePos = bones[boneIdx].position;
+                int seed = 0;
+                float best = float.PositiveInfinity;
+                for (int vertexIdx = 0; vertexIdx < verticesCount; vertexIdx++)
+                {
+                    float sqrtDist = (vertsWorld[vertexIdx] - bonePos).sqrMagnitude;
+                    if (sqrtDist < best)
+                    {
+                        best = sqrtDist;
+                        seed = vertexIdx;
+                    }
+                }
+                boneDists[boneIdx] = Dijkstra(graph, seed);
+            }
+
+            float sigmaSqFactor = (sigma > 0f) ? (2f * sigma * sigma) : -1f;
+            float eps = 1e-6f;
+
+            bonesPerVertexOut = Enumerable.Repeat<byte>(numberOfBonesPerVertex, verticesCount).ToArray();
+            weightsOut = new List<BoneWeight1>(verticesCount * numberOfBonesPerVertex);
+
+            for (int vertexIdx = 0; vertexIdx < verticesCount; vertexIdx++)
+            {
+                List<KeyValuePair<int, float>> perBone = new List<KeyValuePair<int, float>>(boneCount);
+                for (int boneIdx = 0; boneIdx < boneCount; boneIdx++)
+                {
+                    float dist = boneDists[boneIdx][vertexIdx];
+                    float weight = 0f;
+                    if (float.IsPositiveInfinity(dist))
+                    {
+                        weight = 0f;
+                    }
+                    else if (sigma > 0f)
+                    {
+                        weight = Mathf.Exp(-(dist * dist) / sigmaSqFactor);
+                    }
+                    else
+                    {
+                        weight = 1f / (dist + eps);
+                    }
+                    perBone.Add(new KeyValuePair<int, float>(boneIdx, weight));
+                }
+
+                List<KeyValuePair<int, float>> top = perBone.OrderByDescending(kv => kv.Value).Take(numberOfBonesPerVertex).ToList();
+                float sum = top.Sum(kv => kv.Value);
+
+                if (sum <= 0f)
+                {
+                    // fallback: assign closest bone (smallest geodesic distance)
+                    int closestBone = 0;
+                    float bestDist = float.PositiveInfinity;
+                    for (int boneIdx = 0; boneIdx < boneCount; boneIdx++)
+                    {
+                        float dist = boneDists[boneIdx][vertexIdx];
+                        if (dist < bestDist)
+                        {
+                            bestDist = dist;
+                            closestBone = boneIdx;
+                        }
+                    }
+                    for (int k = 0; k < numberOfBonesPerVertex; k++)
+                    {
+                        BoneWeight1 bw = new BoneWeight1()
+                        {
+                            boneIndex = (k == 0) ? closestBone : 0,
+                            weight = (k == 0) ? 1f : 0f
+                        };
+                        weightsOut.Add(bw);
+                    }
+                    continue;
+                }
+
+                foreach (KeyValuePair<int, float> kv in top)
+                {
+                    BoneWeight1 bw = new BoneWeight1()
+                    {
+                        boneIndex = kv.Key,
+                        weight = kv.Value / sum
+                    };
+                    weightsOut.Add(bw);
+                }
+            }
         }
     }
 }
