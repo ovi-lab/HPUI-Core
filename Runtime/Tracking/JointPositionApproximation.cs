@@ -10,9 +10,15 @@ using UnityEngine.XR.Hands;
 namespace ubco.ovilab.HPUI.Tracking
 {
     /// <summary>
-    /// This class is used to approximate the joint positions to be used with <see cref="HPUIGeneratedContinuousInteractable"/>.
+    /// Approximates world-space joint poses for use by HPUIGeneratedContinuousInteractable by collecting
+    /// recent hand joint samples and estimating bone lengths.
     /// </summary>
-    public class JointPositionApproximation: HandSubsystemSubscriber
+    /// <remarks>
+    /// Gathers pose and length data until stable, computes keypoint poses, applies them to JointFollower
+    /// components, and triggers automatic calibration. <see cref="TryComputePoseForKeyPoints"/> for mode
+    /// details.
+    /// </remarks>
+    public class JointPositionApproximation : HandSubsystemSubscriber
     {
         [Tooltip("(Optional) Will be used to provide feedback during setup.")]
         [SerializeField] private HPUIGeneratedContinuousInteractableUI ui;
@@ -159,6 +165,52 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
+        /// <summary>
+        /// Attempts to compute world-space poses for a set of hand joint keypoints using estimated joint lengths,
+        /// previously computed keypoint joint poses, and the last known wrist pose.
+        ///
+        /// The method will only produce poses when the internal joint length estimations and the compute-keypoint
+        /// joint data have reached a "stable" state for all required joints and a wrist pose has been received.
+        /// While the method is gathering stability information it returns false and sets <paramref name="percentageDone"/>
+        /// to indicate progress.
+        /// </summary>
+        /// <param name="keypoints">A list of XRHandJointID values for which poses are requested.</param>
+        /// <param name="keypointPoses">
+        /// Output dictionary that, on success, is populated with the computed Pose for each requested joint.
+        /// Keys are the requested XRHandJointID values and values are world-space Poses (position and orientation).
+        /// If the method returns false this will be set to null.
+        /// </param>
+        /// <param name="percentageDone">
+        /// Output progress indicator in range [0,1] representing the average stability progress of:
+        /// - the joint length estimations, and
+        /// - the compute-keypoint joint data.
+        /// This value is computed as the mean of the two stability ratios and is updated even when the method
+        /// returns false while waiting for full stability or a wrist pose.
+        /// </param>
+        /// <returns>
+        /// True if poses were successfully computed for the requested keypoints and written into
+        /// <paramref name="keypointPoses"/>; otherwise false. The method returns false when internal data is
+        /// uninitialized, not yet stable for all joints, or the last wrist pose has not been received.
+        /// </returns>
+        /// <remarks>
+        /// Behavior and algorithm details:
+        /// - The method requires that both the joint length estimations and the compute-keypoint joint data
+        ///   are present and fully stable for all relevant joints before computing results.
+        /// - Finger selection: the method determines which fingers are relevant to the requested keypoints.
+        ///   If only a single finger is involved, that finger's proximal orientation is used as an anchor;
+        ///   otherwise the middle finger's proximal orientation is used.
+        /// - Orientation: an anchor pose's forward and up vectors are transformed into world space, the forward
+        ///   vector is projected onto the plane orthogonal to the hand normal (derived from the wrist up), and
+        ///   a look rotation is constructed from the projected forward and a computed up vector. This orientation
+        ///   is applied to all computed keypoint poses.
+        /// - Positioning: for each relevant finger (the thumb is intentionally skipped for this approximation),
+        ///   positions are computed along the computed forward direction starting from the proximal joint position
+        ///   (transformed into world space) and stepping by the estimated mean lengths for each subsequent joint.
+        /// - The method uses a temporary origin transform (dummy origin) aligned to the XR origin transform to
+        ///   convert stored local joint poses into world-space coordinates.
+        /// - Only when the method returns true is <paramref name="keypointPoses"/> guaranteed to contain entries
+        ///   for the requested joints; otherwise it will be null.
+        /// </remarks>
         public bool TryComputePoseForKeyPoints(List<XRHandJointID> keypoints, out Dictionary<XRHandJointID, Pose> keypointPoses, out float percentageDone)
         {
             keypointPoses = null;
@@ -270,9 +322,7 @@ namespace ubco.ovilab.HPUI.Tracking
             computeKeypointJointsData.Clear();
         }
 
-        /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
-        /// </summary>
+        /// <inheritdoc />
         protected override void OnEnable()
         {
             jointFollower = GetComponent<JointFollower>();
@@ -290,6 +340,20 @@ namespace ubco.ovilab.HPUI.Tracking
             }
         }
 
+        /// <summary>
+        /// Computes joint pose approximations from the provided keypoint poses, applies them to the
+        /// joint followers, and executes calibration on the associated continuous interactable.
+        /// </summary>
+        /// <param name="keypointPoses">Mapping from XRHandJointID to Pose containing the source poses
+        /// for approximation. Must contain all joint IDs referenced by the joint follower datum and
+        /// keypoint followers.</param>
+        /// <remarks>
+        /// Sets up keypoints, disables joint followers, assigns base and optional second joint poses to
+        /// the main follower, applies poses to each keypoint follower, runs calibration, and updates the
+        /// approximation state.
+        /// </remarks>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">Thrown if a required joint
+        /// ID is missing from <paramref name="keypointPoses"/>.</exception>
         protected virtual void ComputeApproximationAndExecuteCalibration(Dictionary<XRHandJointID, Pose> keypointPoses)
         {
             continuousInteractable.SetupKeypoints();
@@ -328,6 +392,7 @@ namespace ubco.ovilab.HPUI.Tracking
             approximationComputeState = ApproximationComputeState.Finished;
         }
 
+        /// <inheritdoc />
         protected override void Update()
         {
             base.Update();
@@ -352,7 +417,7 @@ namespace ubco.ovilab.HPUI.Tracking
                         .Where(kp => kp.keypointType != DeformableSurfaceKeypoint.KeypointsOptions.Transform)
                         .Select(kp => kp.keypointType switch
                         {
-                            DeformableSurfaceKeypoint.KeypointsOptions.JointID => new List<XRHandJointID>(){kp.jointID},
+                            DeformableSurfaceKeypoint.KeypointsOptions.JointID => new List<XRHandJointID>() { kp.jointID },
                             DeformableSurfaceKeypoint.KeypointsOptions.JointFollowerData => kp.jointFollowerData.Value.JointsUsed(),
                             _ => throw new InvalidOperationException()
                         })
