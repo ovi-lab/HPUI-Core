@@ -32,7 +32,13 @@ namespace ubco.ovilab.HPUI
             /// <summary>
             /// The system is currently estimating rays relative to the cone.
             /// </summary>
-            EstimatingConeRays
+            EstimatingConeRays,
+
+            /// <summary>
+            /// The system is ready to start processing or re run estimate.
+            /// </summary>
+            ReadyAndHaveData,
+
         }
 
         [SerializeField, Tooltip("The data collector responsible for gathering cone ray data.")]
@@ -102,7 +108,7 @@ namespace ubco.ovilab.HPUI
         {
             Assert.IsTrue(Application.isPlaying, "This doesn't work in editor mode!");
 
-            if (CurrentState != State.Ready)
+            if (CurrentState != State.Ready || CurrentState != State.ReadyAndHaveData)
             {
                 Debug.LogWarning($"Current state of estimator is {CurrentState}, Cannot start new procedure.");
                 return;
@@ -307,7 +313,7 @@ namespace ubco.ovilab.HPUI
                     XRHandTrackingEventsForConeDetection != null ? XRHandTrackingEventsForConeDetection : dataCollector.Interactor.GetComponent<XRHandTrackingEvents>());
             }
 
-            CurrentState = State.Ready;
+            CurrentState = State.ReadyAndHaveData;
             OnConeAssetGenerated?.Invoke();
         }
     }

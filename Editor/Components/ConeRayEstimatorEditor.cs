@@ -162,7 +162,7 @@ namespace ubco.ovilab.HPUI.Editor
                 t.ConeRaySegmentComputation != null &&
                 t.DataCollector != null &&
                 t.DataCollector.Interactor != null;
-            if ((t.CurrentState == ConeRayEstimator.State.Ready) &&
+            if ((t.CurrentState == ConeRayEstimator.State.Ready || t.CurrentState == ConeRayEstimator.State.ReadyAndHaveData) &&
                 GUILayout.Button(new GUIContent((t.GeneratedAsset ? "Restart" : "Start") + " data collection", "Sets up the intertactables to collect data necessary for estimation.")))
                 {
                     if (EditorUtility.DisplayDialog("Restart data collection",
