@@ -232,8 +232,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             {
                 if (selectionHappenedLastFrame)
                 {
-                    selectionHappenedLastFrame = false;
-                    if (debounceStartTime + debounceTimeWindow < frameTime)
+                    if (debounceStartTime + debounceTimeWindow < frameTime &&
+                        // Start was never fired. The gesture ended just on the threshold. Hence cancel!
+                        interactorGestureState == LogicState.Gesturing)
                     {
                         gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Stopped);
 
@@ -245,6 +246,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                     {
                         gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Canceled);
                     }
+                    selectionHappenedLastFrame = false;
                     Reset();
                     return gestureEventArgs;
                 }
@@ -321,33 +323,25 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
             if (timeDelta < GestureCommitDelay)
             {
-                success = true;
-
-                // No valid candidate found
-                if (interactableToBeActive == null)
-                {
-                    success = false;
-                }
-
-                if (interactableToBeActive != activePriorityInteractable)
+                if (interactableToBeActive != null && interactableToBeActive != activePriorityInteractable)
                 {
                     if (!cachedPositionsOnInteractable.TryGetValue(interactableToBeActive, out Vector2 newCurrentPosition))
                     {
                         if (!interactableToBeActive.ComputeInteractorPosition(interactor, out newCurrentPosition))
                         {
-                            success = false;
+                            Debug.LogError("Priority interactable chosen dones't have interaction point! Resetting to recover.");
+                            Reset();
+                            priorityInteractable = null;
+                            return null;
                         }
                     }
                     currentPosition = newCurrentPosition;
                     currentTrackingInteractable = activePriorityInteractable = interactableToBeActive;
                 }
-
-                if (!success)
+                else if (interactableToBeActive == null)
                 {
-                    Debug.LogError("Priority interactable not chosen or chosen one dones't have interaction point! Resetting to recover.");
-                    Reset();
-                    priorityInteractable = null;
-                    return null;
+                    // activePriorityInteractable can be null. A gesture happened, but no one there to recieve it.
+                    activePriorityInteractable = null;
                 }
             }
 
@@ -381,6 +375,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <inheritdoc />
         public void Reset()
         {
+            debounceStartTime = Time.time;
             interactorGestureState = LogicState.NoGesture;
             trackingInteractables.Clear();
             activePriorityInteractable = null;

@@ -144,6 +144,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                                     Vector2 startPosition, Vector2 cumulativeDirection, float cumulativeDistance, Vector2 deltaDirection,
                                     IHPUIInteractable currentTrackingInteractable, Vector2 currentTrackingInteractablePoint)
         {
+            interactorObject = interactor;
+            interactableObject = interactable;
             Position = startPosition + cumulativeDirection;
             State = state;
             TimeDelta = timeDelta;
