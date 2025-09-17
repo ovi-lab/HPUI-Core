@@ -11,20 +11,15 @@ namespace ubco.ovilab.HPUI.Core.Tests
     class TestHPUIInteractable : IHPUIInteractable
     {
         public Vector2 interactorPosition;
-        public bool handlesTap, handlesGesture;
-        public System.Action<HPUITapEventArgs> onTapCallback;
+        public bool handlesGesture;
         public System.Action<HPUIGestureEventArgs> onGestureCallback;
 
-        public int tapCalled = 0;
         public int gestureCalled = 0;
 
-        public TestHPUIInteractable(int zOrder, bool handlesTap, bool handlesGesture, Action<HPUITapEventArgs> onTapCallback = null, Action<HPUIGestureEventArgs> onGestureCallback = null)
+        public TestHPUIInteractable(int zOrder, bool handlesGesture, Action<HPUIGestureEventArgs> onGestureCallback = null)
         {
             this.zOrder = zOrder;
-            this.handlesTap = handlesTap;
             this.handlesGesture = handlesGesture;
-            if (onTapCallback != null)
-                this.onTapCallback = onTapCallback;
             if (onGestureCallback != null)
                 this.onGestureCallback = onGestureCallback;
             Reset();
@@ -32,7 +27,6 @@ namespace ubco.ovilab.HPUI.Core.Tests
 
         public void Reset()
         {
-            this.tapCalled = 0;
             this.gestureCalled = 0;
         }
 
@@ -49,29 +43,15 @@ namespace ubco.ovilab.HPUI.Core.Tests
             return true;
         }
 
-        bool IHPUIInteractable.HandlesGesture(HPUIGesture state)
+        bool IHPUIInteractable.HandlesGesture()
         {
-            switch (state)
-            {
-                case HPUIGesture.Tap:
-                    return handlesTap;
-                case HPUIGesture.Gesture:
-                    return handlesGesture;
-                default:
-                    throw new InvalidOperationException($"Gesture state {state} is not handled");
-            }
+            return handlesGesture;
         }
 
         void IHPUIInteractable.OnGesture(HPUIGestureEventArgs args)
         {
             gestureCalled += 1;
             onGestureCallback?.Invoke(args);
-        }
-
-        void IHPUIInteractable.OnTap(HPUITapEventArgs args)
-        {
-            tapCalled += 1;
-            onTapCallback?.Invoke(args);
         }
         #endregion
 
@@ -109,8 +89,6 @@ namespace ubco.ovilab.HPUI.Core.Tests
         List<IXRHoverInteractor> IXRHoverInteractable.interactorsHovering => throw new NotImplementedException();
 
         bool IXRHoverInteractable.isHovered => throw new NotImplementedException();
-
-        HPUITapEvent IHPUIInteractable.TapEvent => throw new NotImplementedException();
 
         HPUIGestureEvent IHPUIInteractable.GestureEvent => throw new NotImplementedException();
 

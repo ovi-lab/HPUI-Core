@@ -6,11 +6,6 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     public interface IHPUIInteractable : IXRSelectInteractable, IXRHoverInteractable
     {
         /// <summary>
-        /// Event triggered on tap
-        /// </summary>
-        public HPUITapEvent TapEvent { get; }
-
-        /// <summary>
         /// Event triggered on gesture
         /// </summary>
         public HPUIGestureEvent GestureEvent { get; }
@@ -41,16 +36,11 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         bool ComputeInteractorPosition(IHPUIInteractor interactor, out Vector2 position);
 
         /// <summary>
-        /// This is called when a tap event occurs on the interactable.
-        /// </summary>
-        void OnTap(HPUITapEventArgs args);
-
-        /// <summary>
         /// Indicates if this handles gesture. If not, if given gesture 
         /// happens while this interactable is selected, it'll be passed to
         /// the next selected interactable in the priority list.
         /// </summary>
-        bool HandlesGesture(HPUIGesture gesture);
+        bool HandlesGesture();
 
         /// <summary>
         /// This is called when a gesture event occurs on the interactable.

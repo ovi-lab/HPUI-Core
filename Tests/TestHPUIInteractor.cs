@@ -22,8 +22,6 @@ namespace ubco.ovilab.HPUI.Core.Tests
             GameObject.DestroyImmediate(tempObj);
         }
 
-        HPUITapEvent IHPUIInteractor.TapEvent => throw new NotImplementedException();
-
         HPUIGestureEvent IHPUIInteractor.GestureEvent => throw new NotImplementedException();
 
         HPUIHoverUpdateEvent IHPUIInteractor.HoverUpdateEvent => throw new NotImplementedException();

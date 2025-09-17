@@ -5,7 +5,6 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using ubco.ovilab.HPUI.Core.Utils;
-using UnityEngine.Pool;
 using UnityEngine.XR.Interaction.Toolkit.Filtering;
 
 namespace ubco.ovilab.HPUI.Core.Interaction
@@ -20,15 +19,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     /// </summary>
     [SelectionBase]
     [DisallowMultipleComponent]
-    public class HPUIInteractor: XRBaseInteractor, IHPUIInteractor
+    public class HPUIInteractor : XRBaseInteractor, IHPUIInteractor
     {
-        [SerializeField]
-        [Tooltip("Event triggered on tap")]
-        private HPUITapEvent tapEvent = new HPUITapEvent();
-
-        /// <inheritdoc />
-        public HPUITapEvent TapEvent { get => tapEvent; set => tapEvent = value; }
-
         [SerializeField]
         [Tooltip("Event triggered on gesture")]
         private HPUIGestureEvent gestureEvent = new HPUIGestureEvent();
@@ -72,7 +64,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
         [Tooltip("The gesture logic used by the interactor")]
         [SerializeReference, SubclassSelector]
-        private IHPUIGestureLogic gestureLogic = new HPUIGestureLogic(0.3f, 0.2f, 0.05f);
+        private IHPUIGestureLogic gestureLogic = new HPUIGestureLogic(0.05f);
 
         /// <summary>
         /// The gesture logic used by the interactor
@@ -91,20 +83,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         static readonly List<IXRInteractable> tempValidTargets = new(); // reusable list when processing valid targets
         static readonly List<IXRInteractable> tempResults = new(); // reusable list when processing valid targets
         private HPUIGesture gestureToTrigger = HPUIGesture.None;
-        private HPUIInteractionEventArgs gestureEventArgs;
         private IHPUIInteractable priorityInteractable;
-        private LinkedPool<HPUITapEventArgs> hpuiTapEventArgsPool = new LinkedPool<HPUITapEventArgs>(
-            () => new HPUITapEventArgs(),
-            actionOnRelease: (args) => args.SetParams(null, null, Vector2.zero),
-            maxSize: 100
-        );
-        private LinkedPool<HPUIGestureEventArgs> hpuiGestureEventArgsPool = new LinkedPool<HPUIGestureEventArgs>(
-            () => new HPUIGestureEventArgs(),
-            actionOnRelease: (args) => args.SetParams(null, null, HPUIGestureState.Invalid, 0, 0, Vector2.zero, Vector2.zero, 0, Vector2.zero, null, Vector2.zero),
-            maxSize: 100
-        );
-        private HPUITapEventArgs tapArgsToPopulate;
-        private HPUIGestureEventArgs gestureArgsToPopulate;
+        private HPUIGestureEventArgs gestureArgsToSend;
 
 #if UNITY_EDITOR
         private bool onValidateUpdate;
@@ -231,13 +211,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                                                      hoverEndPoint,
                                                      attachTransform.position));
                     }
-                }
-                finally
+                } finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    tapArgsToPopulate = hpuiTapEventArgsPool.Get();
-                    gestureArgsToPopulate = hpuiGestureEventArgsPool.Get();
-                    GestureLogic.ComputeInteraction(this, validTargets, out gestureToTrigger, out priorityInteractable, tapArgsToPopulate, gestureArgsToPopulate);
+                    gestureArgsToSend = GestureLogic.ComputeInteraction(this, validTargets, out gestureToTrigger, out priorityInteractable);
                     UnityEngine.Profiling.Profiler.EndSample();
                 }
             }
@@ -247,51 +224,27 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <inheritdoc />
         public override void ProcessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
-            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
+            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic && gestureToTrigger == HPUIGesture.Gesture)
             {
-                switch(gestureToTrigger)
+                try
                 {
-                    case HPUIGesture.Tap:
-                        try
+                    if (priorityInteractable != null)
+                    {
+                        priorityInteractable.OnGesture(gestureArgsToSend);
+                        if (gestureArgsToSend.State == HPUIGestureState.Canceled)
                         {
-                            if (priorityInteractable != null)
-                            {
-                                priorityInteractable.OnTap(tapArgsToPopulate);
-                            }
+                            // Since the ProcessInteractor is called much later in the update loop
+                            // this should not cause any issues. Instead of the manager firing the
+                            // SelectionExit event in the next cycle, we force it here.
+                            this.interactionManager.SelectExit(this, priorityInteractable);
+                            priorityInteractable = null;
                         }
-                        finally
-                        {
-                            // NOTE: There can be interactables that don't take any events. Even
-                            // when that happens, the interactor's events should get triggered.
-                            tapEvent?.Invoke(tapArgsToPopulate);
-                        }
-                        break;
-                    case HPUIGesture.Gesture:
-                        try
-                        {
-                            if (priorityInteractable != null)
-                            {
-                                priorityInteractable.OnGesture(gestureArgsToPopulate);
-                                if (gestureArgsToPopulate.State == HPUIGestureState.Canceled)
-                                {
-                                    // Since the ProcessInteractor is called much later in the update loop
-                                    // this should not cause any issues. Instead of the manager firing the
-                                    // SelectionExit event in the next cycle, we force it here.
-                                    this.interactionManager.SelectExit(this, priorityInteractable);
-                                    priorityInteractable = null;
-                                }
-                            }
-                        }
-                        finally
-                        {
-                            // NOTE: See note when tap gets triggered.
-                            gestureEvent?.Invoke(gestureArgsToPopulate);
-                        }
-                        break;
+                    }
+                } finally
+                {
+                    // NOTE: See note when tap gets triggered.
+                    gestureEvent?.Invoke(gestureArgsToSend);
                 }
-
-                hpuiTapEventArgsPool.Release(tapArgsToPopulate);
-                hpuiGestureEventArgsPool.Release(gestureArgsToPopulate);
             }
         }
 

@@ -10,44 +10,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     /// The interactor dictates which interactable gets the gesture.
     /// </summary>
     [Serializable]
-    public class HPUIGestureLogic: IHPUIGestureLogic
+    public class HPUIGestureLogic : IHPUIGestureLogic
     {
-        [Tooltip("The time threshold at which an interaction would be treated as a gesture.")]
-        [SerializeField]
-        private float tapTimeThreshold;
-        /// <summary>
-        /// The time threshold (in seconds) at which an interaction would be
-        /// treated as a gesture.  That is, if the interactor is in contact with
-        /// an interactable for more than this threshold, it would be treated as a
-        /// gesture.
-        /// </summary>
-        public float TapTimeThreshold
-        {
-            get => tapTimeThreshold;
-            set
-            {
-                tapTimeThreshold = value;
-            }
-        }
-
-        [Tooltip("The distance threshold at which an interaction would be treated as a gesture.")]
-        [SerializeField]
-        private float tapDistanceThreshold;
-        /// <summary>
-        /// The distance threshold (in Unity units) at which an interaction would
-        /// be treated as a gesture.  That is, if the interactor has moved more
-        /// than this value after coming into contact with an interactable, it
-        /// would be treated as a gesture.
-        /// </summary>
-        public float TapDistanceThreshold
-        {
-            get => tapDistanceThreshold;
-            set
-            {
-                tapDistanceThreshold = value;
-            }
-        }
-
         [Tooltip("After a gesture completes, within this time window, not new gestures will be triggered.")]
         [SerializeField]
         private float debounceTimeWindow;
@@ -95,29 +59,28 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// Initializes a new instance with default values.
         /// </summary>
         public HPUIGestureLogic()
-        {}
+        { }
 
         /// <summary>
         /// Initializes a new instance of the with the threshold values.
         /// </summary>
-        public HPUIGestureLogic(float tapTimeThreshold, float tapDistanceThreshold, float debounceTimeWindow)
+        public HPUIGestureLogic(float debounceTimeWindow)
         {
-            UpdateThresholds(tapTimeThreshold, tapDistanceThreshold, debounceTimeWindow);
+            UpdateThresholds(debounceTimeWindow);
         }
 
         /// <summary>
         /// Update the threshold values used.
         /// </summary>
-        public void UpdateThresholds(float tapTimeThreshold, float tapDistanceThreshold, float debounceTimeWindow)
+        public void UpdateThresholds(float debounceTimeWindow)
         {
-            this.tapTimeThreshold = tapTimeThreshold;
-            this.tapDistanceThreshold = tapDistanceThreshold;
             this.debounceTimeWindow = debounceTimeWindow;
         }
 
         /// <inheritdoc />
-        public void ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out HPUIGesture gesture, out IHPUIInteractable priorityInteractable, HPUITapEventArgs tapArgsToPopulate, HPUIGestureEventArgs gestureArgsToPopulate)
+        public HPUIGestureEventArgs ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out HPUIGesture gesture, out IHPUIInteractable priorityInteractable)
         {
+            HPUIGestureEventArgs gestureEventArgs = null;
             bool updateTrackingInteractable = false;
             bool selectionHappening = false;
             float frameTime = Time.time;
@@ -125,7 +88,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             gesture = HPUIGesture.None;
             priorityInteractable = activePriorityInteractable;
 
-            foreach(IHPUIInteractable interactable in distances.Keys.Union(trackingInteractables.Keys))
+            foreach (IHPUIInteractable interactable in distances.Keys.Union(trackingInteractables.Keys))
             {
                 bool isTracked = trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state);
                 bool isInFrame = distances.TryGetValue(interactable, out HPUIInteractionInfo interactionData);
@@ -170,15 +133,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                         if (interactorGestureState == HPUIGesture.None)
                         {
                             startTime = frameTime;
-                            interactorGestureState = HPUIGesture.Tap;
+                            interactorGestureState = HPUIGesture.Gesture;
                             updateTrackingInteractable = true;
                             // Forcing the current interactable to be reset.
                             currentTrackingInteractable = null;
-                        }
-
-                        // Selectable only if within the tapTimeThreshold.
-                        if (interactorGestureState == HPUIGesture.Tap)
-                        {
                             state.SetSelectable();
 
                             state.StartTime = frameTime;
@@ -204,9 +162,6 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             }
 
             // Selection exited
-            // NOTE: If a gesture happened just on the threshold of
-            // the tap (i.e., time/distance just went over threshold
-            // and selected existed) it will be treated as a tap.
             if (selectionHappenedLastFrame && !selectionHappening)
             {
                 selectionHappenedLastFrame = false;
@@ -214,12 +169,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                 {
                     switch (interactorGestureState)
                     {
-                        case HPUIGesture.Tap:
-                            PopulateTapEventArgs(interactor, tapArgsToPopulate);
-                            gesture = HPUIGesture.Tap;
-                            break;
                         case HPUIGesture.Gesture:
-                            PopulateGestureEventArgs(interactor, HPUIGestureState.Stopped, gestureArgsToPopulate);
+                            gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Stopped);
                             gesture = HPUIGesture.Gesture;
                             break;
                     }
@@ -229,18 +180,18 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                 // If a gesture had started within the debounce window, trigger a cancel event
                 else if (interactorGestureState == HPUIGesture.Gesture)
                 {
-                    PopulateGestureEventArgs(interactor, HPUIGestureState.Canceled, gestureArgsToPopulate);
+                    gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Canceled);
                     gesture = HPUIGesture.Gesture;
                 }
                 priorityInteractable = activePriorityInteractable;
                 Reset();
-                return;
+                return gestureEventArgs;
             }
             selectionHappenedLastFrame = selectionHappening;
 
             if (interactorGestureState == HPUIGesture.None)
             {
-                return;
+                return gestureEventArgs;
             }
 
             KeyValuePair<IHPUIInteractable, HPUIInteractionState> interactableDataToTrack = trackingInteractables
@@ -278,27 +229,13 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             cumulativeDistance += delta.magnitude;
             cumulativeDirection += delta;
 
-            switch (interactorGestureState)
-            {
-                case HPUIGesture.Tap:
-                    if ((timeDelta > tapTimeThreshold || cumulativeDistance > tapDistanceThreshold))
-                    {
-                        interactorGestureState = HPUIGesture.Gesture;
-                        ComputeActivePriorityInteractable(interactor, false);
-                        PopulateGestureEventArgs(interactor, HPUIGestureState.Started, gestureArgsToPopulate);
-                        gesture = HPUIGesture.Gesture;
-                    }
-                    break;
-                case HPUIGesture.Gesture:
-                    PopulateGestureEventArgs(interactor, HPUIGestureState.Updated, gestureArgsToPopulate);
-                    gesture = HPUIGesture.Gesture;
-                    break;
-                default:
-                    throw new InvalidOperationException("Unknown gesture.");
-            }
+            gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Updated);
+            gesture = HPUIGesture.Gesture;
 
             priorityInteractable = activePriorityInteractable;
             previousPosition = currentPosition;
+
+            return gestureEventArgs;
         }
 
         /// <inheritdoc />
@@ -321,7 +258,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             // events.  For targets selected withing the window, first
             // prioritize the zOrder, then the distance.
             IHPUIInteractable interactableToBeActive = trackingInteractables
-                .Where(kvp => kvp.Key.HandlesGesture(interactorGestureState) &&
+                .Where(kvp => kvp.Key.HandlesGesture() &&
                        (usePreviousSelectableState ? kvp.Value.SelectableInPrevFrames: kvp.Value.SelectableTarget))
                 .OrderBy(kvp => kvp.Key.zOrder)
                 .ThenBy(kvp => kvp.Value.LowestHeuristicValue)
@@ -337,23 +274,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             }
         }
 
-        protected void PopulateTapEventArgs(IHPUIInteractor interactor, HPUITapEventArgs tapEventArgs)
-        {
-            ComputeActivePriorityInteractable(interactor, true);
-            HPUIInteractionState state;
-            if (activePriorityInteractable != null)
-            {
-                state = trackingInteractables[activePriorityInteractable];
-            }
-            else
-            {
-                state = HPUIInteractionState.empty;
-            }
-
-            tapEventArgs.SetParams(interactor, activePriorityInteractable, state.StartPosition + cumulativeDirection);
-        }
-
-        protected void PopulateGestureEventArgs(IHPUIInteractor interactor, HPUIGestureState gestureState, HPUIGestureEventArgs gestureEventArgs)
+        protected HPUIGestureEventArgs PopulateGestureEventArgs(IHPUIInteractor interactor, HPUIGestureState gestureState)
         {
             HPUIInteractionState state;
             if (activePriorityInteractable != null)
@@ -364,10 +285,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             {
                 state = HPUIInteractionState.empty;
             }
-            gestureEventArgs.SetParams(interactor, activePriorityInteractable,
-                                       gestureState, timeDelta, state.StartTime, state.StartPosition,
-                                       cumulativeDirection, cumulativeDistance, delta,
-                                       currentTrackingInteractable, currentPosition);
+            return new HPUIGestureEventArgs(interactor, activePriorityInteractable,
+                                                                             gestureState, timeDelta, state.StartTime, state.StartPosition,
+                                                                             cumulativeDirection, cumulativeDistance, delta,
+                                                                             currentTrackingInteractable, currentPosition);
         }
 
         /// <summary>

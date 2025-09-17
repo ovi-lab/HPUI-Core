@@ -9,7 +9,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     public enum HPUIGesture
     {
         None,
-        Tap, Gesture
+        Gesture
     }
 
     public enum HPUIGestureState
@@ -22,7 +22,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     /// Event class that reports hover events
     /// </summary>
     public class HPUIHoverUpdateEvent : UnityEvent<HPUIHoverUpdateEventArgs>
-    {}
+    { }
 
     // NOTE: This is used instead of the IXRHoverStrength* interfaces as those
     // interfaces don't report the data being exposed here.
@@ -60,9 +60,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     }
 
     /// <summary>
-    /// Base event class for tap/gesture events
+    /// Base event class for gesture events
     /// </summary>
-    public class HPUIInteractionEvent<T>: UnityEvent<T> where T: HPUIInteractionEventArgs
+    public class HPUIInteractionEvent<T> : UnityEvent<T> where T : BaseInteractionEventArgs
     {
         protected int eventsCount = 0;
 
@@ -75,14 +75,14 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         }
 
         /// <inheritdoc />
-	public new void AddListener(UnityAction<T> call)
+        public new void AddListener(UnityAction<T> call)
         {
             base.AddListener(call);
             eventsCount++;
         }
 
         /// <inheritdoc />
-	public new void RemoveListener(UnityAction<T> call)
+        public new void RemoveListener(UnityAction<T> call)
         {
             base.RemoveListener(call);
             eventsCount--;
@@ -90,16 +90,20 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         }
 
         /// <inheritdoc />
-	public new void RemoveAllListeners()
+        public new void RemoveAllListeners()
         {
             eventsCount = 0;
         }
     }
 
+    [Serializable]
+    public class HPUIGestureEvent : HPUIInteractionEvent<HPUIGestureEventArgs>
+    { }
+
     /// <summary>
     /// Event data associated with a gesture interaction on HPUI
     /// </summary>
-    public class HPUIInteractionEventArgs: BaseInteractionEventArgs
+    public class HPUIGestureEventArgs : BaseInteractionEventArgs
     {
         /// <summary>
         /// The Interactor associated with the interaction event.
@@ -125,33 +129,6 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// </summary>
         public virtual Vector2 Position { get; private set; }
 
-        public virtual void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, Vector2 position)
-        {
-            interactorObject = interactor;
-            interactableObject = interactable;
-            Position = position;
-        }
-    }
-
-    [Serializable]
-    public class HPUITapEvent: HPUIInteractionEvent<HPUITapEventArgs>
-    {}
-
-    /// <summary>
-    /// Event data associated with a tap gesture interaction on HPUI
-    /// </summary>
-    public class HPUITapEventArgs: HPUIInteractionEventArgs
-    {}
-
-    [Serializable]
-    public class HPUIGestureEvent: HPUIInteractionEvent<HPUIGestureEventArgs>
-    {}
-
-    /// <summary>
-    /// Event data associated with a gesture interaction on HPUI
-    /// </summary>
-    public class HPUIGestureEventArgs: HPUIInteractionEventArgs
-    {
         // TODO: Documentation
         public HPUIGestureState State { get; private set; }
         public float TimeDelta { get; private set; }
@@ -160,19 +137,14 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         public Vector2 CumulativeDirection { get; private set; }
         public float CumulativeDistance { get; private set; }
         public Vector2 DeltaDirection { get; private set; }
-        public IHPUIInteractable CurrentTrackingInteractable{ get; private set; }
+        public IHPUIInteractable CurrentTrackingInteractable { get; private set; }
         public Vector2 CurrentTrackingInteractablePoint { get; private set; }
 
-        public override void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, Vector2 position)
+        public HPUIGestureEventArgs(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUIGestureState state, float timeDelta, float startTime,
+                                    Vector2 startPosition, Vector2 cumulativeDirection, float cumulativeDistance, Vector2 deltaDirection,
+                                    IHPUIInteractable currentTrackingInteractable, Vector2 currentTrackingInteractablePoint)
         {
-            throw new InvalidOperationException("Call overloaded method!");
-        }
-
-        public void SetParams(IHPUIInteractor interactor, IHPUIInteractable interactable, HPUIGestureState state, float timeDelta, float startTime,
-                              Vector2 startPosition, Vector2 cumulativeDirection, float cumulativeDistance, Vector2 deltaDirection,
-                              IHPUIInteractable currentTrackingInteractable, Vector2 currentTrackingInteractablePoint)
-        {
-            base.SetParams(interactor, interactable, startPosition + cumulativeDirection);
+            Position = startPosition + cumulativeDirection;
             State = state;
             TimeDelta = timeDelta;
             StartTime = startTime;
@@ -192,8 +164,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     /// <seealso cref="DeformableSurfaceCollidersManager"/>
     /// </summary>
     [Serializable]
-    public class HPUIContinuousSurfaceEvent: UnityEvent<HPUIContinuousSurfaceCreatedEventArgs>
-    {}
+    public class HPUIContinuousSurfaceEvent : UnityEvent<HPUIContinuousSurfaceCreatedEventArgs>
+    { }
 
     /// <summary>
     /// Event args for HPUIContinuousSurfaceEvent

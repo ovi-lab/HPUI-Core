@@ -13,11 +13,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <param name="distances">A dictionary containing the distance and heuristic values for interactable currently interacting with.</param>
         /// <param name="gesture">The gesture to be triggered.</param>
         /// <param name="priorityInteractable">The target which is expected to recieve the events.</param>
-        /// <param name="tapArgsToPopulate">If <see cref="gesture"/> is <see cref="HPUIGesture.Tap"/>, this object will be populated.</param>
-        /// <param name="gestureArgsToPopulate">If <see cref="gesture"/> is <see cref="HPUIGesture.Gesture"/>, this object will be populated.</param>
         /// </summary>
-        public void ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out HPUIGesture gesture, out IHPUIInteractable priorityInteractable, HPUITapEventArgs tapArgsToPopulate, HPUIGestureEventArgs gestureArgsToPopulate);
-
+        /// <returns>If a gesture is heppening, this will return a <see cref="HPUIGestureEventArgs"/></returns>
+        public HPUIGestureEventArgs ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out HPUIGesture gesture, out IHPUIInteractable priorityInteractable);
 
         /// <summary>
         /// Resets/initializes the logic.

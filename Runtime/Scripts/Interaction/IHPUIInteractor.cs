@@ -6,14 +6,6 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     public interface IHPUIInteractor: IXRSelectInteractor, IXRHoverInteractor
     {
         /// <summary>
-        /// Event triggered on tap.
-        /// Avoid holding the reference to the corresponding <see cref="HPUITapEventArgs"/>,
-        /// it may get disposed ouside of this event call.
-        /// </summary>
-        /// <seealso cref="HPUITapEventArgs"/>
-        public HPUITapEvent TapEvent { get; }
-
-        /// <summary>
         /// Event triggered on gesture.
         /// Avoid holding the reference to the corresponding <see cref="HPUIGestureEventArgs"/>,
         /// it may get disposed ouside of this event call.

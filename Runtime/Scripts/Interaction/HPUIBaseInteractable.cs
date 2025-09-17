@@ -1,8 +1,6 @@
-using System;
 using UnityEngine;
 using UnityEngine.XR.Hands;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using UnityEngine.XR.Interaction.Toolkit.Utilities;
 
 namespace ubco.ovilab.HPUI.Core.Interaction
 {
@@ -41,12 +39,6 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
         /// <inheritdoc />
         public virtual Vector2 boundsMin { get; protected set; }
-
-        [SerializeField]
-        private HPUITapEvent tapEvent = new HPUITapEvent();
-
-        /// <inheritdoc />
-        public HPUITapEvent TapEvent { get => tapEvent; set => tapEvent = value; }
 
         [SerializeField]
         private HPUIGestureEvent gestureEvent = new HPUIGestureEvent();
@@ -122,30 +114,15 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         }
 
         /// <inheritdoc />
-        public void OnTap(HPUITapEventArgs args)
-        {
-            tapEvent?.Invoke(args);
-        }
-
-        /// <inheritdoc />
         public void OnGesture(HPUIGestureEventArgs args)
         {
             gestureEvent?.Invoke(args);
         }
 
         /// <inheritdoc />
-        public bool HandlesGesture(HPUIGesture state)
+        public bool HandlesGesture()
         {
-            switch (state) {
-                case HPUIGesture.Tap: {
-                    return TapEvent.GetAllEventsCount() > 0;
-                }
-                case HPUIGesture.Gesture: {
-                    return GestureEvent.GetAllEventsCount() > 0;
-                }
-                default:
-                    throw new InvalidOperationException($"Gesture state {state} is not handled by {typeof(HPUIBaseInteractable)}");
-            }
+            return GestureEvent.GetAllEventsCount() > 0;
         }
         #endregion
     }
