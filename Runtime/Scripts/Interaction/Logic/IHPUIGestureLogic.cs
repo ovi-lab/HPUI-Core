@@ -11,11 +11,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// the <see cref="IHPUIInteractor"/>.
         /// <param name="interactor">The interactor to use when processing the distances.</param>
         /// <param name="distances">A dictionary containing the distance and heuristic values for interactable currently interacting with.</param>
-        /// <param name="gesture">The gesture to be triggered.</param>
         /// <param name="priorityInteractable">The target which is expected to recieve the events.</param>
         /// </summary>
         /// <returns>If a gesture is heppening, this will return a <see cref="HPUIGestureEventArgs"/></returns>
-        public HPUIGestureEventArgs ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out HPUIGesture gesture, out IHPUIInteractable priorityInteractable);
+        public HPUIGestureEventArgs ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out IHPUIInteractable priorityInteractable);
 
         /// <summary>
         /// Resets/initializes the logic.

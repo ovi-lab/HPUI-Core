@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace ubco.ovilab.HPUI.Core.Interaction
@@ -12,11 +11,18 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     [Serializable]
     public class HPUIGestureLogic : IHPUIGestureLogic
     {
-        [Tooltip("After a gesture completes, within this time window, not new gestures will be triggered.")]
+        protected enum LogicState
+        {
+            NoGesture,
+            AwaitingCommit,
+            Gesturing
+        }
+
+        [Tooltip("After a gesture completes, within this time window, no new gestures will be triggered.")]
         [SerializeField]
         private float debounceTimeWindow;
         /// <summary>
-        /// After a gesture completes, within this time window (in seconds), not
+        /// After a gesture completes, within this time window (in seconds), no
         /// new gestures will be triggered.  Should be less than <see cref="TapTimeThreshold"/>.
         /// </summary>
         public float DebounceTimeWindow
@@ -25,6 +31,22 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             set
             {
                 debounceTimeWindow = value;
+            }
+        }
+
+        [Tooltip("Wait for this many seconds before fixing the interactable that would recieve the events.")]
+        [SerializeField]
+        private float gestureCommitDelay;
+        /// <summary>
+        /// Wait for this many seconds before fixing the interactable that would recieve the events.
+        /// During this time window, the gesture state would be <see cref="HPUIGestureState.PreCommit"/>.
+        /// </summary>
+        public float GestureCommitDelay
+        {
+            get => gestureCommitDelay;
+            set
+            {
+                gestureCommitDelay = value;
             }
         }
 
@@ -46,14 +68,11 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
         private float startTime, cumulativeDistance, timeDelta, currentTrackingInteractableHeuristic, debounceStartTime;
         private Vector2 delta, currentPosition, previousPosition, cumulativeDirection;
-        private int activeInteractables = 0;
-        private bool success,
-            selectionHappenedLastFrame = false;
-
+        private bool selectionHappenedLastFrame = false;
         private IHPUIInteractable activePriorityInteractable, currentTrackingInteractable;
         private Dictionary<IHPUIInteractable, HPUIInteractionState> trackingInteractables = new Dictionary<IHPUIInteractable, HPUIInteractionState>();
-
-        private HPUIGesture interactorGestureState = HPUIGesture.None;
+        private Dictionary<IHPUIInteractable, Vector2> cachedPositionsOnInteractable = new Dictionary<IHPUIInteractable, Vector2>();
+        private LogicState interactorGestureState = LogicState.NoGesture;
 
         /// <summary>
         /// Initializes a new instance with default values.
@@ -64,175 +83,296 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <summary>
         /// Initializes a new instance of the with the threshold values.
         /// </summary>
-        public HPUIGestureLogic(float debounceTimeWindow)
+        public HPUIGestureLogic(float debounceTimeWindow, float gestureCommitDelay)
         {
-            UpdateThresholds(debounceTimeWindow);
+            UpdateThresholds(debounceTimeWindow, gestureCommitDelay);
         }
 
         /// <summary>
         /// Update the threshold values used.
         /// </summary>
-        public void UpdateThresholds(float debounceTimeWindow)
+        public void UpdateThresholds(float debounceTimeWindow, float gestureCommitDelay)
         {
             this.debounceTimeWindow = debounceTimeWindow;
+            this.gestureCommitDelay = gestureCommitDelay;
         }
 
         /// <inheritdoc />
-        public HPUIGestureEventArgs ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out HPUIGesture gesture, out IHPUIInteractable priorityInteractable)
+        public HPUIGestureEventArgs ComputeInteraction(IHPUIInteractor interactor, IDictionary<IHPUIInteractable, HPUIInteractionInfo> distances, out IHPUIInteractable priorityInteractable)
         {
             HPUIGestureEventArgs gestureEventArgs = null;
             bool updateTrackingInteractable = false;
             bool selectionHappening = false;
+            bool success;
             float frameTime = Time.time;
-            // Default values
-            gesture = HPUIGesture.None;
+            // Default value
             priorityInteractable = activePriorityInteractable;
+            cachedPositionsOnInteractable.Clear();
 
-            foreach (IHPUIInteractable interactable in distances.Keys.Union(trackingInteractables.Keys))
+            // Phase 1: Update/add interactables present this frame
+            foreach (KeyValuePair<IHPUIInteractable, HPUIInteractionInfo> kvp in distances)
             {
-                bool isTracked = trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state);
-                bool isInFrame = distances.TryGetValue(interactable, out HPUIInteractionInfo interactionData);
+                IHPUIInteractable interactable = kvp.Key;
+                HPUIInteractionInfo interactionInfo = kvp.Value;
 
-                // seeing a new interactable
-                if (!isTracked)
+                if (!trackingInteractables.TryGetValue(interactable, out HPUIInteractionState state))
                 {
                     state = new HPUIInteractionState();
                     trackingInteractables.Add(interactable, state);
                 }
-
-                if (isInFrame)
+                // Target entered hover state
+                if (!state.Active)
                 {
-                    // Target entered hover state
-                    if (!state.Active)
+                    state.SetActive();
+
+                    if (currentTrackingInteractable != null)
                     {
-                        state.SetActive();
-                        activeInteractables++;
-
-                        if (currentTrackingInteractable != null)
-                        {
-                            updateTrackingInteractable = true;
-                        }
-                    }
-
-                    if (interactionData.heuristic < state.LowestHeuristicValue)
-                    {
-                        state.LowestHeuristicValue = interactionData.heuristic;
-                    }
-
-                    if (currentTrackingInteractable == interactable)
-                    {
-                        currentTrackingInteractableHeuristic = interactionData.heuristic;
-                    }
-
-                    state.CurrentHeuristicValue = interactionData.heuristic;
-
-                    if (interactionData.isSelection)
-                    {
-                        selectionHappening = true;
-
-                        if (interactorGestureState == HPUIGesture.None)
-                        {
-                            startTime = frameTime;
-                            interactorGestureState = HPUIGesture.Gesture;
-                            updateTrackingInteractable = true;
-                            // Forcing the current interactable to be reset.
-                            currentTrackingInteractable = null;
-                            state.SetSelectable();
-
-                            state.StartTime = frameTime;
-                            success = interactable.ComputeInteractorPosition(interactor, out Vector2 startPosition);
-                            state.StartPosition = startPosition;
-                            Debug.Assert(success, $"Current tracking interactable ({interactable.transform?.name}) was not hovered by interactor  {interactor.transform?.name}");
-                        }
+                        updateTrackingInteractable = true;
                     }
                 }
-                // Target exited hover state
+
+                if (interactionInfo.heuristic < state.LowestHeuristicValue)
+                {
+                    state.LowestHeuristicValue = interactionInfo.heuristic;
+                }
+
+                if (currentTrackingInteractable == interactable)
+                {
+                    currentTrackingInteractableHeuristic = interactionInfo.heuristic;
+                }
+
+                state.CurrentHeuristicValue = interactionInfo.heuristic;
+
+                if (interactionInfo.isSelection)
+                {
+                    selectionHappening = true;
+
+                    if (interactorGestureState == LogicState.NoGesture)
+                    {
+                        startTime = frameTime;
+                        interactorGestureState = LogicState.AwaitingCommit;
+                        updateTrackingInteractable = true;
+                        // Forcing the current interactable to be reset.
+                        currentTrackingInteractable = null;
+                    }
+
+                    if (interactorGestureState == LogicState.AwaitingCommit)
+                    {
+                        state.SetSelectable();
+
+                        state.StartTime = frameTime;
+                        success = interactable.ComputeInteractorPosition(interactor, out Vector2 startPosition);
+                        state.StartPosition = startPosition;
+                        if (!success)
+                        {
+                            Debug.LogError("IsSelection but no position on interactable - something went wrong. Resetting");
+                            Reset();
+                            priorityInteractable = null;
+                            return null;
+                        }
+                        cachedPositionsOnInteractable.Add(interactable, startPosition);
+                    }
+                }
+            }
+
+            // Phase 2: Mark those that exited hover as not active and compute potential tracking/active interactable
+            IHPUIInteractable interactableToTrack = null;
+            HPUIInteractionState interactableToTrackState = null;
+            float bestHeuristicForTracking = float.PositiveInfinity;
+
+            IHPUIInteractable interactableToBeActive = null;
+            int bestZOrder = int.MaxValue;
+            float bestHeuristicForActive = float.PositiveInfinity;
+
+            foreach (KeyValuePair<IHPUIInteractable, HPUIInteractionState> kvp in trackingInteractables)
+            {
+                IHPUIInteractable interactable = kvp.Key;
+                HPUIInteractionState state = kvp.Value;
+
+                if (!distances.ContainsKey(kvp.Key) && state.Active)
+                {
+                    state.SetNotActive(frameTime);
+                    if (interactable == currentTrackingInteractable)
+                    {
+                        updateTrackingInteractable = true;
+                    }
+                }
+
+                // Determine tracking interactable
+                if (state.Active && state.CurrentHeuristicValue < bestHeuristicForTracking)
+                {
+                    bestHeuristicForTracking = state.CurrentHeuristicValue;
+                    interactableToTrack = interactable;
+                    interactableToTrackState = state;
+                }
+
+                // Determine active interactable
+                // Targets not selected within the priority window (see
+                // gestureCommitDelay), will not get any events.  For targets selected
+                // withing the window, first prioritize the zOrder, then the
+                // HeuristicValue.
+                if (interactable.HandlesGesture() && state.SelectableTarget) // or state.SelectableInPrevFrames
+                {
+                    int z = interactable.zOrder;
+                    float lowestHeuristicValue = state.LowestHeuristicValue;
+
+                    // Choose lower zOrder first; if equal, choose lower heuristic
+                    if (interactableToBeActive == null || z < bestZOrder || (z == bestZOrder && lowestHeuristicValue < bestHeuristicForActive))
+                    {
+                        interactableToBeActive = interactable;
+                        bestZOrder = z;
+                        bestHeuristicForActive = lowestHeuristicValue;
+                    }
+                }
+            }
+
+            // Phase 3: Early exit conditions met? Setup events and exit.
+            // Selection exited
+            if (!selectionHappening)
+            {
+                if (selectionHappenedLastFrame)
+                {
+                    selectionHappenedLastFrame = false;
+                    if (debounceStartTime + debounceTimeWindow < frameTime)
+                    {
+                        gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Stopped);
+
+                        // We update this only if it was a valid gesture/tap
+                        debounceStartTime = frameTime;
+                    }
+                    // If a gesture had started within the debounce window, trigger a cancel event
+                    else
+                    {
+                        gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Canceled);
+                    }
+                    Reset();
+                    return gestureEventArgs;
+                }
                 else
                 {
-                    if (state.Active)
-                    {
-                        state.SetNotActive(frameTime);
-                        activeInteractables--;
-                        if (interactable == currentTrackingInteractable)
-                        {
-                            updateTrackingInteractable = true;
-                        }
-                    }
+                    return null;
                 }
             }
 
-            // Selection exited
-            if (selectionHappenedLastFrame && !selectionHappening)
+            // Phase 4: Ensure correct interactable is used for tracking and active
+            if (interactableToTrack == null)
             {
-                selectionHappenedLastFrame = false;
-                if (debounceStartTime + debounceTimeWindow < frameTime)
-                {
-                    switch (interactorGestureState)
-                    {
-                        case HPUIGesture.Gesture:
-                            gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Stopped);
-                            gesture = HPUIGesture.Gesture;
-                            break;
-                    }
-                    // We update this only if it was a valid gesture/tap
-                    debounceStartTime = frameTime;
-                }
-                // If a gesture had started within the debounce window, trigger a cancel event
-                else if (interactorGestureState == HPUIGesture.Gesture)
-                {
-                    gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Canceled);
-                    gesture = HPUIGesture.Gesture;
-                }
-                priorityInteractable = activePriorityInteractable;
+                Debug.LogError("Early exit condition should have been fired! Resetting and returning null");
                 Reset();
-                return gestureEventArgs;
-            }
-            selectionHappenedLastFrame = selectionHappening;
-
-            if (interactorGestureState == HPUIGesture.None)
-            {
-                return gestureEventArgs;
+                priorityInteractable = null;
+                return null;
             }
 
-            KeyValuePair<IHPUIInteractable, HPUIInteractionState> interactableDataToTrack = trackingInteractables
-                .Where(kvp => kvp.Value.Active)
-                .OrderBy(kvp => kvp.Value.CurrentHeuristicValue)
-                .First();
-
-
-            if (interactableDataToTrack.Key != currentTrackingInteractable)
+            if (interactableToTrack != currentTrackingInteractable)
             {
                 float heuristicRatio = Mathf.Infinity;
                 if (currentTrackingInteractable != null)
                 {
-                    heuristicRatio = (interactableDataToTrack.Value.CurrentHeuristicValue /
-                                      currentTrackingInteractableHeuristic);
+                    heuristicRatio = (interactableToTrackState.CurrentHeuristicValue /
+                                      (currentTrackingInteractableHeuristic + 1e-6f)); // Avoiding dividing by zero
                 }
-                if (!updateTrackingInteractable && heuristicRatio < switchCurrentTrackingInteractableThreshold)
+                else
                 {
                     updateTrackingInteractable = true;
                 }
 
-                if (updateTrackingInteractable)
+                if (!updateTrackingInteractable && heuristicRatio < switchCurrentTrackingInteractableThreshold)
                 {
-                    currentTrackingInteractableHeuristic = interactableDataToTrack.Value.CurrentHeuristicValue;
-                    currentTrackingInteractable = interactableDataToTrack.Key;
-                    success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out previousPosition);
-                    Debug.Assert(success, $"Current tracking interactable was not hovered by interactor  {interactor.transform.name}");
+                    updateTrackingInteractable = true;
                 }
             }
 
-            success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out currentPosition);
-            Debug.Assert(success, $"Current tracking interactable was not hovered by interactor  {interactor.transform.name}");
-            delta = currentPosition - previousPosition;
+            // Phase 5: Compute parametrs and setup events appropriately
+            bool resetPositionDeltaComputation = interactableToTrack != currentTrackingInteractable;
+            if (updateTrackingInteractable)
+            {
+                currentTrackingInteractableHeuristic = interactableToTrackState.CurrentHeuristicValue;
+                currentTrackingInteractable = interactableToTrack;
+            }
+
+            if (currentTrackingInteractable == null)
+            {
+                Debug.LogError("Current tracking interactable was null. Resetting to recover.");
+                Reset();
+                priorityInteractable = null;
+                return null;
+            }
+
+            if (!cachedPositionsOnInteractable.TryGetValue(currentTrackingInteractable, out currentPosition))
+            {
+                success = currentTrackingInteractable.ComputeInteractorPosition(interactor, out currentPosition);
+
+                if (!success)
+                {
+                    Debug.LogError("Current tracking interactable was not hovered by interactor! Resetting to recover.");
+                    Reset();
+                    priorityInteractable = null;
+                    return null;
+                }
+                cachedPositionsOnInteractable.Add(currentTrackingInteractable, currentPosition);
+            }
+
+            if (resetPositionDeltaComputation)
+            {
+                previousPosition = currentPosition; // start computation from new point
+            }
+
             timeDelta = frameTime - startTime;
+
+            if (timeDelta < GestureCommitDelay)
+            {
+                success = true;
+
+                // No valid candidate found
+                if (interactableToBeActive == null)
+                {
+                    success = false;
+                }
+
+                if (interactableToBeActive != activePriorityInteractable)
+                {
+                    if (!cachedPositionsOnInteractable.TryGetValue(interactableToBeActive, out Vector2 newCurrentPosition))
+                    {
+                        if (!interactableToBeActive.ComputeInteractorPosition(interactor, out newCurrentPosition))
+                        {
+                            success = false;
+                        }
+                    }
+                    currentPosition = newCurrentPosition;
+                    currentTrackingInteractable = activePriorityInteractable = interactableToBeActive;
+                }
+
+                if (!success)
+                {
+                    Debug.LogError("Priority interactable not chosen or chosen one dones't have interaction point! Resetting to recover.");
+                    Reset();
+                    priorityInteractable = null;
+                    return null;
+                }
+            }
+
+            // Updating parameters before firing event
+            delta = currentPosition - previousPosition;
             cumulativeDistance += delta.magnitude;
             cumulativeDirection += delta;
-
-            gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Updated);
-            gesture = HPUIGesture.Gesture;
-
             priorityInteractable = activePriorityInteractable;
+
+            if (timeDelta < GestureCommitDelay)
+            {
+                gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.CommitPending);
+            }
+            else if (interactorGestureState == LogicState.AwaitingCommit)
+            {
+                interactorGestureState = LogicState.Gesturing;
+                gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Started);
+            }
+            else
+            {
+                gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Updated);
+            }
+
+            // Updating parameters after firing event
+            selectionHappenedLastFrame = selectionHappening;
             previousPosition = currentPosition;
 
             return gestureEventArgs;
@@ -241,37 +381,12 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <inheritdoc />
         public void Reset()
         {
-            interactorGestureState = HPUIGesture.None;
+            interactorGestureState = LogicState.NoGesture;
             trackingInteractables.Clear();
             activePriorityInteractable = null;
             currentTrackingInteractable = null;
             cumulativeDistance = 0;
             cumulativeDirection = Vector2.zero;
-        }
-
-        // NOTE: This gets called only within the tapDistanceThreshold window.
-        // Thus using distance as opposed to start time to pick the target that is the most ideal.
-        protected void ComputeActivePriorityInteractable(IHPUIInteractor interactor, bool usePreviousSelectableState)
-        {
-            // Targets not selected within the priority window
-            // (defaults to tapDistanceThreshold), will not get any
-            // events.  For targets selected withing the window, first
-            // prioritize the zOrder, then the distance.
-            IHPUIInteractable interactableToBeActive = trackingInteractables
-                .Where(kvp => kvp.Key.HandlesGesture() &&
-                       (usePreviousSelectableState ? kvp.Value.SelectableInPrevFrames: kvp.Value.SelectableTarget))
-                .OrderBy(kvp => kvp.Key.zOrder)
-                .ThenBy(kvp => kvp.Value.LowestHeuristicValue)
-                .FirstOrDefault().Key;
-
-            if (interactableToBeActive != activePriorityInteractable)
-            {
-                currentTrackingInteractable = activePriorityInteractable = interactableToBeActive;
-                if (currentTrackingInteractable.ComputeInteractorPosition(interactor, out Vector2 newCurrentPosition))
-                {
-                    currentPosition = newCurrentPosition;
-                }
-            }
         }
 
         protected HPUIGestureEventArgs PopulateGestureEventArgs(IHPUIInteractor interactor, HPUIGestureState gestureState)
@@ -286,9 +401,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                 state = HPUIInteractionState.empty;
             }
             return new HPUIGestureEventArgs(interactor, activePriorityInteractable,
-                                                                             gestureState, timeDelta, state.StartTime, state.StartPosition,
-                                                                             cumulativeDirection, cumulativeDistance, delta,
-                                                                             currentTrackingInteractable, currentPosition);
+                                            gestureState, timeDelta, state.StartTime, state.StartPosition,
+                                            cumulativeDirection, cumulativeDistance, delta,
+                                            currentTrackingInteractable, currentPosition);
         }
 
         /// <summary>

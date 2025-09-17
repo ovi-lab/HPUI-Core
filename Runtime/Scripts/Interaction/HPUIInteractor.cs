@@ -64,7 +64,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
         [Tooltip("The gesture logic used by the interactor")]
         [SerializeReference, SubclassSelector]
-        private IHPUIGestureLogic gestureLogic = new HPUIGestureLogic(0.05f);
+        private IHPUIGestureLogic gestureLogic = new HPUIGestureLogic(0.05f, 0.05f);
 
         /// <summary>
         /// The gesture logic used by the interactor
@@ -82,7 +82,6 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         private Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
         static readonly List<IXRInteractable> tempValidTargets = new(); // reusable list when processing valid targets
         static readonly List<IXRInteractable> tempResults = new(); // reusable list when processing valid targets
-        private HPUIGesture gestureToTrigger = HPUIGesture.None;
         private IHPUIInteractable priorityInteractable;
         private HPUIGestureEventArgs gestureArgsToSend;
 
@@ -214,7 +213,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                 } finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    gestureArgsToSend = GestureLogic.ComputeInteraction(this, validTargets, out gestureToTrigger, out priorityInteractable);
+                    gestureArgsToSend = GestureLogic.ComputeInteraction(this, validTargets, out priorityInteractable);
                     UnityEngine.Profiling.Profiler.EndSample();
                 }
             }
@@ -224,7 +223,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <inheritdoc />
         public override void ProcessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
-            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic && gestureToTrigger == HPUIGesture.Gesture)
+            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic && gestureArgsToSend != null)
             {
                 try
                 {

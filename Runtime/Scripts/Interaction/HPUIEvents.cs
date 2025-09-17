@@ -14,7 +14,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
     public enum HPUIGestureState
     {
-        Started, Updated, Stopped, Invalid, Canceled
+        CommitPending, Started, Updated, Stopped, Invalid, Canceled
     }
 
     #region events classes
