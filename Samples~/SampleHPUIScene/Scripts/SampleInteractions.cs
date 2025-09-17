@@ -1,8 +1,8 @@
 using UnityEngine;
 using TMPro;
-using ubco.ovilab.HPUI.Interaction;
+using ubco.ovilab.HPUI.Core.Interaction;
 
-namespace ubco.ovilab.HPUI.Sample
+namespace ubco.ovilab.HPUI.Core.Sample
 {
     public class SampleInteractions: MonoBehaviour
     {

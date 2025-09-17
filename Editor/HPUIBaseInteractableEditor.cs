@@ -1,11 +1,11 @@
 using UnityEditor;
-using ubco.ovilab.HPUI.Interaction;
+using ubco.ovilab.HPUI.Core.Interaction;
 using UnityEditor.XR.Interaction.Toolkit.Interactables;
 using System.Collections.Generic;
 using UnityEngine;
-using ubco.ovilab.HPUI.Tracking;
+using ubco.ovilab.HPUI.Core.Tracking;
 
-namespace ubco.ovilab.HPUI.Editor
+namespace ubco.ovilab.HPUI.Core.Editor
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(HPUIBaseInteractable), true)]

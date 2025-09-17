@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEditor;
-using ubco.ovilab.HPUI.Tracking;
+using ubco.ovilab.HPUI.Core.Tracking;
 
-namespace ubco.ovilab.HPUI.Editor
+namespace ubco.ovilab.HPUI.Core.Editor
 {
     [CanEditMultipleObjects]
     [CustomPropertyDrawer(typeof(JointToTransformMapping), true)]

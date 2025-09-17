@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEditor;
-using ubco.ovilab.HPUI.Tracking;
-using ubco.ovilab.HPUI.UI;
+using ubco.ovilab.HPUI.Core.Tracking;
+using ubco.ovilab.HPUI.Core.UI;
 using System.Linq;
 
-namespace ubco.ovilab.HPUI.Editor
+namespace ubco.ovilab.HPUI.Core.Editor
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(JointPositionApproximation), true)]

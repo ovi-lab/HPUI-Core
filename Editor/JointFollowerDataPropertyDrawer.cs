@@ -1,8 +1,8 @@
 using UnityEditor;
-using ubco.ovilab.HPUI.Tracking;
+using ubco.ovilab.HPUI.Core.Tracking;
 using UnityEngine;
 
-namespace ubco.ovilab.HPUI.Editor
+namespace ubco.ovilab.HPUI.Core.Editor
 {
     [CustomPropertyDrawer(typeof(JointFollowerData))]
     public class JointFollowerDataPropertyDrawer : PropertyDrawer

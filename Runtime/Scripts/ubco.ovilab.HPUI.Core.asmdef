@@ -1,0 +1,21 @@
+{
+    "name": "ubco.ovilab.HPUI.Core",
+    "rootNamespace": "ubco.ovilab.HPUI.Core",
+    "references": [
+        "Unity.XR.Hands",
+        "Unity.XR.CoreUtils",
+        "Unity.XR.Interaction.Toolkit",
+        "Unity.TextMeshPro",
+        "Unity.Burst",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,11 +1,11 @@
 using System.Collections;
 using UnityEngine.TestTools;
-using ubco.ovilab.HPUI.Interaction;
+using ubco.ovilab.HPUI.Core.Interaction;
 using System.Collections.Generic;
 using UnityEngine;
 using NUnit.Framework;
 
-namespace ubco.ovilab.HPUI.Tests
+namespace ubco.ovilab.HPUI.Core.Tests
 {
     public class HPUIGestureLogicTest
     {

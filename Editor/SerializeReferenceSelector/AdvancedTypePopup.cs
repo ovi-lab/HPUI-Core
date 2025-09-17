@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 
-namespace ubco.ovilab.HPUI.Editor
+namespace ubco.ovilab.HPUI.Core.Editor
 {
     /// <summary>
     /// Items used in <see cref="AdvancedTypePopup"/>

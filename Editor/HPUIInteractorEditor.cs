@@ -1,14 +1,14 @@
 using UnityEditor;
-using ubco.ovilab.HPUI.Interaction;
+using ubco.ovilab.HPUI.Core.Interaction;
 using UnityEditor.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using System.Collections.Generic;
-using ubco.ovilab.HPUI.Tracking;
+using ubco.ovilab.HPUI.Core.Tracking;
 using UnityEngine;
 
 using UnityEngine.XR.Hands;
 
-namespace ubco.ovilab.HPUI.Editor
+namespace ubco.ovilab.HPUI.Core.Editor
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(HPUIInteractor), true)]

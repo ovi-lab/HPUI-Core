@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEditor;
-using ubco.ovilab.HPUI.Interaction;
+using ubco.ovilab.HPUI.Core.Interaction;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ubco.ovilab.HPUI.Editor
+namespace ubco.ovilab.HPUI.Core.Editor
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(HPUIGeneratedContinuousInteractable), true)]

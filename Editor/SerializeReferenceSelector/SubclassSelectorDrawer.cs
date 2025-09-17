@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
-using ubco.ovilab.HPUI.utils;
+using ubco.ovilab.HPUI.Core.Utils;
 
-namespace ubco.ovilab.HPUI.Editor
+namespace ubco.ovilab.HPUI.Core.Editor
 {
     /// This is taken from https://github.com/mackysoft/Unity-SerializeReferenceExtensions
     [CustomPropertyDrawer(typeof(SubclassSelectorAttribute))]
@@ -246,7 +246,7 @@ namespace ubco.ovilab.HPUI.Editor
         /// <summary>
         /// Sets and returns the managed reference.
         /// </summary>
-        internal static object SetManagedReference (SerializedProperty property,Type type)
+        public static object SetManagedReference (SerializedProperty property,Type type)
         {
             object result = null;
 
