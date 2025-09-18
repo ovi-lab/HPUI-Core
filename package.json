@@ -1,6 +1,6 @@
 {
     "name": "ubc.ok.ovilab.hpui-core",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "displayName": "HPUI Core",
     "description": "Core functionality of HPUI",
     "unity": "2021.3",
