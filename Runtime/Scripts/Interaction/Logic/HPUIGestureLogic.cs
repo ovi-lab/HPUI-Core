@@ -165,10 +165,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                         state.StartPosition = startPosition;
                         if (!success)
                         {
-                            Debug.LogError("IsSelection but no position on interactable - something went wrong. Resetting");
-                            Reset();
-                            priorityInteractable = null;
-                            return null;
+                            return ErrorReset("IsSelection but no position on interactable - something went wrong. Resetting to recover.",
+                                              interactor);
                         }
                         cachedPositionsOnInteractable.Add(interactable, startPosition);
                     }
@@ -259,10 +257,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             // Phase 4: Ensure correct interactable is used for tracking and active
             if (interactableToTrack == null)
             {
-                Debug.LogError("Early exit condition should have been fired! Resetting and returning null");
-                Reset();
-                priorityInteractable = null;
-                return null;
+                return ErrorReset("Early exit condition should have been fired! Resetting and returning null",
+                                  interactor);
             }
 
             if (interactableToTrack != currentTrackingInteractable)
@@ -294,10 +290,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
             if (currentTrackingInteractable == null)
             {
-                Debug.LogError("Current tracking interactable was null. Resetting to recover.");
-                Reset();
-                priorityInteractable = null;
-                return null;
+                return ErrorReset("Current tracking interactable was null. Resetting to recover.",
+                                  interactor);
             }
 
             if (!cachedPositionsOnInteractable.TryGetValue(currentTrackingInteractable, out currentPosition))
@@ -306,10 +300,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
                 if (!success)
                 {
-                    Debug.LogError("Current tracking interactable was not hovered by interactor! Resetting to recover.");
-                    Reset();
-                    priorityInteractable = null;
-                    return null;
+                    return ErrorReset("Current tracking interactable was not hovered by interactor! Resetting to recover.",
+                                      interactor);
                 }
                 cachedPositionsOnInteractable.Add(currentTrackingInteractable, currentPosition);
             }
@@ -329,10 +321,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                     {
                         if (!interactableToBeActive.ComputeInteractorPosition(interactor, out newCurrentPosition))
                         {
-                            Debug.LogError("Priority interactable chosen dones't have interaction point! Resetting to recover.");
-                            Reset();
-                            priorityInteractable = null;
-                            return null;
+                            return ErrorReset("Priority interactable chosen dones't have interaction point! Resetting to recover.",
+                                              interactor);
                         }
                     }
                     currentPosition = newCurrentPosition;
@@ -382,6 +372,27 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             currentTrackingInteractable = null;
             cumulativeDistance = 0;
             cumulativeDirection = Vector2.zero;
+        }
+
+        /// <summary>
+        /// Error log the message and rest the logic state. Depending on the logicState, return the appropriate gestureEventArgs. Also sets the selectionHappenedLastFrame to false.
+        /// </summary>
+        protected HPUIGestureEventArgs ErrorReset(string message, IHPUIInteractor interactor)
+        {
+            Debug.LogError(message);
+            HPUIGestureEventArgs gestureEventArgs;
+            if (interactorGestureState != LogicState.NoGesture)
+            {
+                gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Canceled);
+            }
+            else
+            {
+                // FIXME: This ever happens?
+                gestureEventArgs = null;
+            }
+            selectionHappenedLastFrame = false;
+            Reset();
+            return gestureEventArgs;
         }
 
         protected HPUIGestureEventArgs PopulateGestureEventArgs(IHPUIInteractor interactor, HPUIGestureState gestureState)
