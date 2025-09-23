@@ -17,7 +17,7 @@ namespace ubco.ovilab.HPUI.Core.Editor
         private HPUIInteractor t;
         protected List<SerializedProperty> eventProperties;
         protected SerializedProperty coneRayAnglesProperty, fullRangeRayAnglesProperty;
-        protected List<string> eventPropertyNames = new List<string>() { "tapEvent", "gestureEvent" };
+        protected List<string> eventPropertyNames = new List<string>() { "gestureEvent" };
 
         protected bool hpuiInteractablesExpanded;
 

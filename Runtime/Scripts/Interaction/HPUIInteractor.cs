@@ -239,9 +239,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                             priorityInteractable = null;
                         }
                     }
-                } finally
+                }
+                finally
                 {
-                    // NOTE: See note when tap gets triggered.
                     gestureEvent?.Invoke(gestureArgsToSend);
                 }
             }

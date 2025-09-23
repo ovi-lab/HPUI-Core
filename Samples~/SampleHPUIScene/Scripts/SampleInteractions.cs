@@ -8,11 +8,6 @@ namespace ubco.ovilab.HPUI.Core.Sample
     {
         public TextMeshPro text;
 
-        public void OnTap(HPUITapEventArgs args)
-        {
-            text.text = $"Tap @ {args.Position}";
-        }
-
         public void OnGesture(HPUIGestureEventArgs args)
         {
             text.text = $"Gesture @ {args.Position} in {args.CumulativeDirection}";

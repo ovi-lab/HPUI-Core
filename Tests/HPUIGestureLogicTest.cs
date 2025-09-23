@@ -50,7 +50,6 @@ namespace ubco.ovilab.HPUI.Core.Tests
             eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
             Assert.IsNull(eventArgs);
 
-            // Tap and hold
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
             eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
             Assert.IsNotNull(eventArgs);
@@ -94,7 +93,6 @@ namespace ubco.ovilab.HPUI.Core.Tests
             eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
             Assert.IsNull(eventArgs);
 
-            // Tap and hold
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
             eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
             Assert.IsNotNull(eventArgs);
@@ -315,7 +313,7 @@ namespace ubco.ovilab.HPUI.Core.Tests
             HPUIGestureEventArgs eventArgs;
 
             updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            // even though this has a higher heuristic, this should get the tap
+            // even though this has a higher heuristic, this should get the gesture
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue + 0.1f, true, Vector3.zero, null, 0, null);
             eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
             Assert.IsNotNull(eventArgs);

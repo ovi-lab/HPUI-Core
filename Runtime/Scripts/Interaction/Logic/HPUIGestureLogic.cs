@@ -23,7 +23,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         private float debounceTimeWindow;
         /// <summary>
         /// After a gesture completes, within this time window (in seconds), no
-        /// new gestures will be triggered.  Should be less than <see cref="TapTimeThreshold"/>.
+        /// new gestures will be triggered.
         /// </summary>
         public float DebounceTimeWindow
         {
@@ -236,7 +236,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                     {
                         gestureEventArgs = PopulateGestureEventArgs(interactor, HPUIGestureState.Stopped);
 
-                        // We update this only if it was a valid gesture/tap
+                        // We update this only if it was a valid gesture
                         debounceStartTime = frameTime;
                     }
                     // If a gesture had started within the debounce window, trigger a cancel event
