@@ -53,6 +53,9 @@ namespace ubco.ovilab.HPUI.Core.Tests
             gestureCalled += 1;
             onGestureCallback?.Invoke(args);
         }
+
+        void IHPUIInteractable.OnInteractableStateEvent(HPUIInteractableStateEventArgs args)
+        { }
         #endregion
 
         #region Implement all other interfaces
@@ -91,6 +94,8 @@ namespace ubco.ovilab.HPUI.Core.Tests
         bool IXRHoverInteractable.isHovered => throw new NotImplementedException();
 
         HPUIGestureEvent IHPUIInteractable.GestureEvent => throw new NotImplementedException();
+
+        HPUIInteractableStateEvent IHPUIInteractable.AuxGestureEvent => throw new NotImplementedException();
 
         event Action<InteractableRegisteredEventArgs> IXRInteractable.registered
         {

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
-namespace ubco.ovilab.HPUI.Core.Interaction 
+namespace ubco.ovilab.HPUI.Core.Interaction
 {
     public interface IHPUIInteractable : IXRSelectInteractable, IXRHoverInteractable
     {
@@ -9,6 +9,11 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// Event triggered on gesture
         /// </summary>
         public HPUIGestureEvent GestureEvent { get; }
+
+        /// <summary>
+        /// Auxiliary gesture realted event triggered on gesture
+        /// </summary>
+        public HPUIInteractableStateEvent AuxGestureEvent { get; }
 
         /// <summary>
         /// Lower z order will get higher priority.
@@ -46,6 +51,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// This is called when a gesture event occurs on the interactable.
         /// </summary>
         void OnGesture(HPUIGestureEventArgs args);
-    }
 
+        /// <summary>
+        /// This is called when an auxiliary gesture event occurs on the interactable.
+        /// </summary>
+        void OnInteractableStateEvent(HPUIInteractableStateEventArgs args);
+    }
 }

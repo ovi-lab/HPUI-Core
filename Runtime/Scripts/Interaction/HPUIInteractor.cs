@@ -23,10 +23,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     {
         [SerializeField]
         [Tooltip("Event triggered on gesture")]
-        private HPUIGestureEvent gestureEvent = new HPUIGestureEvent();
+        private HPUIInteractorGestureEvent gestureEvent = new HPUIInteractorGestureEvent();
 
         /// <inheritdoc />
-        public HPUIGestureEvent GestureEvent { get => gestureEvent; set => gestureEvent = value; }
+        public HPUIInteractorGestureEvent GestureEvent { get => gestureEvent; set => gestureEvent = value; }
 
         [SerializeField]
         [Tooltip("Event triggered on hover update.")]
@@ -82,8 +82,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         private Dictionary<IHPUIInteractable, HPUIInteractionInfo> validTargets = new();
         static readonly List<IXRInteractable> tempValidTargets = new(); // reusable list when processing valid targets
         static readonly List<IXRInteractable> tempResults = new(); // reusable list when processing valid targets
-        private IHPUIInteractable priorityInteractable;
-        private HPUIGestureEventArgs gestureArgsToSend;
+        private Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+        private Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
+        private HPUIInteractorGestureEventArgs interactorGestureToReturn;
 
 #if UNITY_EDITOR
         private bool onValidateUpdate;
@@ -152,6 +153,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                 tempValidTargets.Clear();
                 tempResults.Clear();
 
+                gestureEvents.Clear();
+                interactableEvents.Clear();
+
                 Transform attachTransform = GetAttachTransform(null);
                 Vector3 interactionPoint = attachTransform.position;
                 Vector3 hoverEndPoint = attachTransform.position;
@@ -213,7 +217,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                 } finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
-                    gestureArgsToSend = GestureLogic.ComputeInteraction(this, validTargets, out priorityInteractable);
+                    interactorGestureToReturn = GestureLogic.ComputeInteraction(this, validTargets, gestureEvents, interactableEvents);
                     UnityEngine.Profiling.Profiler.EndSample();
                 }
             }
@@ -223,27 +227,35 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <inheritdoc />
         public override void ProcessInteractor(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
-            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic && gestureArgsToSend != null)
+            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic && interactorGestureToReturn != null)
             {
-                try
+                foreach ((IHPUIInteractable interactable, HPUIInteractableStateEventArgs args) in interactableEvents)
                 {
-                    if (priorityInteractable != null)
+                    try
                     {
-                        priorityInteractable.OnGesture(gestureArgsToSend);
-                        if (gestureArgsToSend.State == HPUIGestureState.Canceled)
+                        interactable.OnInteractableStateEvent(args);
+                    }
+                    catch
+                    { }
+                }
+
+                foreach ((IHPUIInteractable interactable, HPUIGestureEventArgs args) in gestureEvents)
+                {
+                    try
+                    {
+                        interactable.OnGesture(args);
+                        if (args.State == HPUIGestureState.Canceled)
                         {
                             // Since the ProcessInteractor is called much later in the update loop
                             // this should not cause any issues. Instead of the manager firing the
                             // SelectionExit event in the next cycle, we force it here.
-                            this.interactionManager.SelectExit(this, priorityInteractable);
-                            priorityInteractable = null;
+                            this.interactionManager.SelectExit(this, interactable);
                         }
                     }
+                    catch
+                    { }
                 }
-                finally
-                {
-                    gestureEvent?.Invoke(gestureArgsToSend);
-                }
+                gestureEvent?.Invoke(interactorGestureToReturn);
             }
         }
 
@@ -261,7 +273,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         public override bool CanSelect(IXRSelectInteractable interactable)
         {
             bool canSelect = ProcessSelectFilters(interactable);
-            return canSelect && (!SelectOnlyPriorityTarget || priorityInteractable == interactable);
+            return canSelect && (!SelectOnlyPriorityTarget || gestureEvents.ContainsKey(interactable as IHPUIInteractable));
         }
         #endregion
 

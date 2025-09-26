@@ -20,7 +20,7 @@ namespace ubco.ovilab.HPUI.Core.Tests
         const float InsideCommitWindow = 0.05f;
         const float OutsideCommitWindow = 0.11f;
         const float SimpleWaitTime = OutsideDebounceWindow * 2;
-        private IHPUIInteractable winningInteractable, lastGestureInteractable;
+        private IHPUIInteractable lastGestureInteractable;
         private int gesturesCount = 0;
 
         void OnGestureCallback(HPUIGestureEventArgs args)
@@ -32,7 +32,6 @@ namespace ubco.ovilab.HPUI.Core.Tests
         private void Reset()
         {
             gesturesCount = 0;
-            winningInteractable = null;
             lastGestureInteractable = null;
         }
             
@@ -44,38 +43,57 @@ namespace ubco.ovilab.HPUI.Core.Tests
             IHPUIInteractor interactor = new TestHPUIInteractor();
             HPUIGestureLogic logic = new HPUIGestureLogic(DebounceTimeWindow, GestureCommitDelay);
             Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
 
-            HPUIGestureEventArgs eventArgs;
+            HPUIInteractorGestureEventArgs eventArgs;
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
+            Assert.IsEmpty(gestureEvents);
 
             yield return new WaitForSeconds(InsideCommitWindow);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
+            Assert.IsEmpty(gestureEvents);
 
             yield return new WaitForSeconds(OutsideCommitWindow);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Started, eventArgs.State);
+            Assert.AreEqual(1, gestureEvents.Count);
+            Assert.AreEqual(HPUIGestureState.Started, gestureEvents[i1].State);
 
             yield return new WaitForSeconds(SimpleWaitTime);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Updated, eventArgs.State);
+            Assert.AreEqual(1, gestureEvents.Count);
+            Assert.AreEqual(HPUIGestureState.Updated, gestureEvents[i1].State);
 
             updates.Remove(i1);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Stopped, eventArgs.State);
+            Assert.AreEqual(1, gestureEvents.Count);
+            Assert.AreEqual(HPUIGestureState.Stopped, gestureEvents[i1].State);
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
         }
 
@@ -87,60 +105,116 @@ namespace ubco.ovilab.HPUI.Core.Tests
             IHPUIInteractor interactor = new TestHPUIInteractor();
             HPUIGestureLogic logic = new HPUIGestureLogic(DebounceTimeWindow, GestureCommitDelay);
             Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
 
-            HPUIGestureEventArgs eventArgs;
+            HPUIInteractorGestureEventArgs eventArgs;
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsEmpty(eventArgs.InteractableGestureStates);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates[i1], interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.TrackingStarted, interactableEvents[i1].State);
 
             yield return new WaitForSeconds(InsideDebounceWindow);
             updates.Remove(i1);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Canceled, eventArgs.State);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsEmpty(eventArgs.InteractableGestureStates);
+            Assert.IsEmpty(interactableEvents);
+            Assert.IsEmpty(eventArgs.InteractableAuxGestureStates);
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             // Started new gesture
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsEmpty(eventArgs.InteractableGestureStates);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates[i1], interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.TrackingStarted, interactableEvents[i1].State);
 
             // Exit without start even getting triggered should cancel
             yield return new WaitForSeconds(OutsideDebounceWindow);
             updates.Remove(i1);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Canceled, eventArgs.State);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsEmpty(eventArgs.InteractableGestureStates);
+            Assert.IsEmpty(interactableEvents);
+            Assert.IsEmpty(eventArgs.InteractableAuxGestureStates);
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             // Start another gesture
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsEmpty(eventArgs.InteractableGestureStates);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates[i1], interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.TrackingStarted, interactableEvents[i1].State);
 
             yield return new WaitForSeconds(OutsideDebounceWindow);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Started, eventArgs.State);
+            Assert.AreEqual(eventArgs.InteractableGestureStates.Count, gestureEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableGestureStates.Count);
+            Assert.AreEqual(eventArgs.InteractableGestureStates[i1], gestureEvents[i1].State);
+            Assert.AreEqual(HPUIGestureState.Started, gestureEvents[i1].State);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates[i1], interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.TrackingUpdate, interactableEvents[i1].State);
 
             updates.Remove(i1);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Stopped, eventArgs.State);
+            Assert.AreEqual(eventArgs.InteractableGestureStates.Count, gestureEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableGestureStates.Count);
+            Assert.AreEqual(eventArgs.InteractableGestureStates[i1], gestureEvents[i1].State);
+            Assert.AreEqual(HPUIGestureState.Stopped, gestureEvents[i1].State);
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
+            Assert.IsEmpty(interactableEvents);
         }
 
         // Testing the interaction radius
@@ -153,33 +227,50 @@ namespace ubco.ovilab.HPUI.Core.Tests
             HPUIGestureLogic logic = new HPUIGestureLogic(DebounceTimeWindow, GestureCommitDelay);
             Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
 
-            HPUIGestureEventArgs eventArgs;
+            HPUIInteractorGestureEventArgs eventArgs;
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:false, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
-            Assert.IsNull(eventArgs);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
+            Assert.AreEqual(1, interactableEvents.Count);
+            Assert.AreEqual(HPUIInteractableState.Hovered, interactableEvents[i1].State);
 
             yield return new WaitForSeconds(OutsideCommitWindow);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
-            Assert.IsNull(eventArgs);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
+            Assert.AreEqual(1, interactableEvents.Count);
+            Assert.AreEqual(HPUIInteractableState.Hovered, interactableEvents[i1].State);
 
             updates.Remove(i1);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             // The interaction crosses radius
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:false, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
-            Assert.IsNull(eventArgs);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
             yield return new WaitForSeconds(OutsideCommitWindow);
 
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsTrue(interactableEvents.ContainsKey(i1));
         }
 
         [UnityTest]
@@ -190,40 +281,96 @@ namespace ubco.ovilab.HPUI.Core.Tests
             TestHPUIInteractable i2 = new TestHPUIInteractable(0, true, OnGestureCallback);
             IHPUIInteractor interactor = new TestHPUIInteractor();
             HPUIGestureLogic logic = new HPUIGestureLogic(DebounceTimeWindow, GestureCommitDelay);
+            logic.SwitchCurrentTrackingInteractableThreshold = 0;
             Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
 
-            HPUIGestureEventArgs eventArgs;
+            HPUIInteractorGestureEventArgs eventArgs;
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsEmpty(eventArgs.InteractableGestureStates);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates[i1], interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.TrackingStarted, interactableEvents[i1].State);
 
+            // Smaller heuristic - should be selected as active
             updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue - 0.001f, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
-            Assert.AreEqual(i2, winningInteractable);
-
-            updates.Clear();
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
-            Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Canceled, eventArgs.State);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(2, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(HPUIInteractableState.TrackingUpdate, interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.InContact, interactableEvents[i2].State);
 
             yield return new WaitForSeconds(OutsideCommitWindow);
-            i1.Reset();
-            i2.Reset();
+            // Should pick i2 still, as the lowest was still with i2
+            updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(2, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(1, gestureEvents.Count);
+            Assert.AreEqual(HPUIInteractableState.TrackingEnded, interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.TrackingStarted, interactableEvents[i2].State);
+            Assert.AreEqual(HPUIGestureState.Started, gestureEvents[i2].State);
+
+            updates.Clear();
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, 0);
+            Assert.AreEqual(HPUIGestureState.Stopped, gestureEvents[i2].State);
+
+
+            // Same loop with the tracking change threshold being high
+            yield return new WaitForSeconds(OutsideDebounceWindow);
+            logic.SwitchCurrentTrackingInteractableThreshold = 1;
+            updates.Clear();
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNull(eventArgs);
 
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue - 0.1f, true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
-            Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
-            Assert.AreEqual(i2, winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+
+            // Smaller heuristic - should be selected as active
+            updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue - 0.001f, isSelection:true, Vector3.zero, null, 0, null);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.AreEqual(HPUIInteractableState.TrackingEnded, interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.TrackingStarted, interactableEvents[i2].State);
+
+            yield return new WaitForSeconds(OutsideCommitWindow);
+            // Should pick i2 still, as the lowest was still with i2
+            updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.AreEqual(HPUIInteractableState.InContact, interactableEvents[i1].State);
+            Assert.AreEqual(HPUIInteractableState.TrackingUpdate, interactableEvents[i2].State);
+            Assert.AreEqual(HPUIGestureState.Started, gestureEvents[i2].State);
         }
 
         [UnityTest]
@@ -236,28 +383,94 @@ namespace ubco.ovilab.HPUI.Core.Tests
             HPUIGestureLogic logic = new HPUIGestureLogic(DebounceTimeWindow, GestureCommitDelay);
             Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
 
-            HPUIGestureEventArgs eventArgs;
+            HPUIInteractorGestureEventArgs eventArgs;
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
-            Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
-
             updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue - 0.001f, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(2, eventArgs.InteractableAuxGestureStates.Count);
+
+            yield return new WaitForSeconds(OutsideCommitWindow);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
+            Assert.AreEqual(eventArgs.InteractableGestureStates.Count, gestureEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableGestureStates.Count);
+            Assert.AreEqual(HPUIGestureState.Started, eventArgs.InteractableGestureStates[i1]);
+        }
+
+        [UnityTest]
+        public IEnumerator HPUIGestureLogicTest_CancelOnDebounce()
+        {
+            Reset();
+            TestHPUIInteractable i1 = new TestHPUIInteractable(0, true, OnGestureCallback);
+            IHPUIInteractor interactor = new TestHPUIInteractor();
+            float _debounceTimeWindow = 0.2f,
+                _gestureCommitDelay = 0.1f,
+                _outsideCommitInsideDebouceDelay = 0.12f,
+                _simpleDelay = 0.25f;
+
+            HPUIGestureLogic logic = new HPUIGestureLogic(_debounceTimeWindow, _gestureCommitDelay);
+            Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
+
+            HPUIInteractorGestureEventArgs eventArgs;
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
+
+            // Firest trigger valid gesture
+            updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            yield return new WaitForSeconds(_simpleDelay);
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            updates.Clear();
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
+            Assert.AreEqual(HPUIGestureState.Stopped, gestureEvents[i1].State);
+
+            // Now trigger a gesture that would get canceled
+            updates.Clear();
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNull(eventArgs);
+
+            updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
+            Assert.AreEqual(eventArgs.InteractableAuxGestureStates.Count, interactableEvents.Count);
+            Assert.AreEqual(1, eventArgs.InteractableAuxGestureStates.Count);
+
+            yield return new WaitForSeconds(_outsideCommitInsideDebouceDelay);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
+            Assert.IsNotNull(eventArgs);
+            Assert.AreEqual(HPUIGestureState.Started, gestureEvents[i1].State);
 
             updates.Clear();
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Canceled, eventArgs.State);
-            return null;
+            Assert.AreEqual(HPUIGestureState.Canceled, gestureEvents[i1].State);
         }
 
         // Anything outside the priority window should not get selected
@@ -271,32 +484,40 @@ namespace ubco.ovilab.HPUI.Core.Tests
             HPUIGestureLogic logic = new HPUIGestureLogic(DebounceTimeWindow, GestureCommitDelay);
             Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
 
-            HPUIGestureEventArgs eventArgs;
+            HPUIInteractorGestureEventArgs eventArgs;
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out IHPUIInteractable _);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNull(eventArgs);
 
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
-            Assert.AreEqual(i1, eventArgs.interactableObject);
+            Assert.AreEqual(HPUIInteractableState.TrackingStarted, interactableEvents[i1].State);
 
             yield return new WaitForSeconds(OutsideCommitWindow);
 
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Started, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
-            Assert.AreEqual(i1, eventArgs.interactableObject);
+            Assert.AreEqual(1, gestureEvents.Count);
+            Assert.AreEqual(HPUIGestureState.Started, gestureEvents[i1].State);
 
             // Even though this has lower zOrder and lower heuristic, this should not get selected
             updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue - 0.01f, true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Updated, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
+            Assert.AreEqual(1, gestureEvents.Count);
+            Assert.AreEqual(HPUIGestureState.Updated, gestureEvents[i1].State);
+            Assert.AreEqual(2, interactableEvents.Count);
         }
 
         // When an event is not handled, hand over to next item in the priority list
@@ -310,27 +531,36 @@ namespace ubco.ovilab.HPUI.Core.Tests
             HPUIGestureLogic logic = new HPUIGestureLogic(DebounceTimeWindow, GestureCommitDelay);
             Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
 
-            HPUIGestureEventArgs eventArgs;
+            HPUIInteractorGestureEventArgs eventArgs;
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
 
             updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
             // even though this has a higher heuristic, this should get the gesture
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue + 0.1f, true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
 
             yield return new WaitForSeconds(OutsideCommitWindow);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Started, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
+            Assert.AreEqual(2, interactableEvents.Count);
+            Assert.AreEqual(1, gestureEvents.Count);
+            Assert.AreEqual(HPUIGestureState.Started, eventArgs.InteractableGestureStates[i1]);
 
             updates.Clear();
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.Stopped, eventArgs.State);
-            Assert.AreEqual(i1, winningInteractable);
+            Assert.IsEmpty(interactableEvents);
+            Assert.AreEqual(1, gestureEvents.Count);
+            Assert.AreEqual(gestureEvents.Count, eventArgs.InteractableGestureStates.Count);
+            Assert.AreEqual(HPUIGestureState.Stopped, eventArgs.InteractableGestureStates[i1]);
         }
 
         //There can be instances where the event is not handled by any interactable
@@ -344,29 +574,45 @@ namespace ubco.ovilab.HPUI.Core.Tests
             HPUIGestureLogic logic = new HPUIGestureLogic(DebounceTimeWindow, GestureCommitDelay);
             Dictionary<IHPUIInteractable, HPUIInteractionInfo> updates = new Dictionary<IHPUIInteractable, HPUIInteractionInfo>();
 
-            HPUIGestureEventArgs eventArgs;
+            HPUIInteractorGestureEventArgs eventArgs;
+            Dictionary<IHPUIInteractable, HPUIGestureEventArgs> gestureEvents = new();
+            Dictionary<IHPUIInteractable, HPUIInteractableStateEventArgs> interactableEvents = new();
 
             updates[i2] = new HPUIInteractionInfo(dummyHeuristicValue, isSelection:true, Vector3.zero, null, 0, null);
             updates[i1] = new HPUIInteractionInfo(dummyHeuristicValue + 0.1f, true, Vector3.zero, null, 0, null);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
-            Assert.AreEqual(HPUIGestureState.CommitPending, eventArgs.State);
-            Assert.AreEqual(null, winningInteractable);
-            Assert.AreEqual(null, eventArgs.interactableObject);
+            Assert.AreEqual(2, interactableEvents.Count);
+            Assert.IsEmpty(gestureEvents);
+            Assert.AreEqual(interactableEvents.Count, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(HPUIInteractableState.TrackingStarted, eventArgs.InteractableAuxGestureStates[i2]);
+            Assert.AreEqual(gestureEvents.Count, eventArgs.InteractableGestureStates.Count);
 
             yield return new WaitForSeconds(OutsideCommitWindow);
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
             Assert.AreEqual(HPUIGestureState.Started, eventArgs.State);
-            Assert.AreEqual(null, winningInteractable);
-            Assert.AreEqual(null, eventArgs.interactableObject);
+            Assert.AreEqual(2, interactableEvents.Count);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsEmpty(eventArgs.InteractableGestureStates);
+            Assert.AreEqual(interactableEvents.Count, eventArgs.InteractableAuxGestureStates.Count);
+            Assert.AreEqual(HPUIInteractableState.TrackingUpdate, eventArgs.InteractableAuxGestureStates[i2]);
+            Assert.AreEqual(HPUIInteractableState.InContact, eventArgs.InteractableAuxGestureStates[i1]);
 
             updates.Clear();
-            eventArgs = logic.ComputeInteraction(interactor, updates, out winningInteractable);
+            gestureEvents.Clear();
+            interactableEvents.Clear();
+            eventArgs = logic.ComputeInteraction(interactor, updates, gestureEvents, interactableEvents);
             Assert.IsNotNull(eventArgs);
             Assert.AreEqual(HPUIGestureState.Stopped, eventArgs.State);
-            Assert.AreEqual(null, winningInteractable);
-            Assert.AreEqual(null, eventArgs.interactableObject);
+            Assert.IsEmpty(gestureEvents);
+            Assert.IsEmpty(eventArgs.InteractableGestureStates);
+            Assert.IsEmpty(interactableEvents);
+            Assert.IsEmpty(eventArgs.InteractableAuxGestureStates);
         }
     }
 }
