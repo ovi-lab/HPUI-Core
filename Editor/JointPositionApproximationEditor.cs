@@ -8,14 +8,14 @@ namespace ubco.ovilab.HPUI.Core.Editor
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(JointPositionApproximation), true)]
-    public class JointPositionApproximationEditor: UnityEditor.Editor
+    public class JointPositionApproximationEditor : UnityEditor.Editor
     {
         private static readonly string[] excludedSerializedNames = new string[]{
-            "ui", "windowSize", "maeThreshold"
+            "ui", "windowSize", "maeThreshold", "onApproximationComplete"
         };
         private const string UIPrefab = "Packages/ubc.ok.ovilab.hpui-core/Runtime/Assets/HPUIContinousUI.prefab";
         private JointPositionApproximation t;
-        private SerializedProperty uiProp, windowSizeProp, maeThresholdProp;
+        private SerializedProperty uiProp, windowSizeProp, maeThresholdProp, onApproximationCompleteCallback;
         private bool advancedFoldout = false;
 
         protected void OnEnable()
@@ -24,6 +24,7 @@ namespace ubco.ovilab.HPUI.Core.Editor
             uiProp = serializedObject.FindProperty("ui");
             windowSizeProp = serializedObject.FindProperty("windowSize");
             maeThresholdProp = serializedObject.FindProperty("maeThreshold");
+            onApproximationCompleteCallback = serializedObject.FindProperty("onApproximationComplete");
         }
 
         public override void OnInspectorGUI()
@@ -49,6 +50,7 @@ namespace ubco.ovilab.HPUI.Core.Editor
             {
                 EditorGUILayout.PropertyField(windowSizeProp);
                 EditorGUILayout.PropertyField(maeThresholdProp);
+                EditorGUILayout.PropertyField(onApproximationCompleteCallback);
             }
 
             if (uiProp.objectReferenceValue == null)

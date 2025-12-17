@@ -4,6 +4,7 @@ using System.Linq;
 using ubco.ovilab.HPUI.Core.Interaction;
 using ubco.ovilab.HPUI.Core.UI;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Pool;
 using UnityEngine.XR.Hands;
 
@@ -53,6 +54,14 @@ namespace ubco.ovilab.HPUI.Core.Tracking
         {
             XRHandJointID.IndexProximal, XRHandJointID.MiddleProximal, XRHandJointID.RingProximal, XRHandJointID.LittleProximal
         };
+
+        [Tooltip("Callback once automated recompute is complete")]
+        [SerializeField] private UnityEvent onApproximationComplete;
+
+        /// <summary>
+        /// Callback once automated recompute is complete
+        /// </summary>
+        public UnityEvent OnApproximationComplete { get => onApproximationComplete; set => onApproximationComplete = value; }
 
         private Handedness handedness;
         private Dictionary<XRHandJointID, (float mean, float mae, bool stable)> jointsLengthEstimation = new Dictionary<XRHandJointID, (float, float, bool)>();
@@ -476,6 +485,7 @@ namespace ubco.ovilab.HPUI.Core.Tracking
                         t.GetComponent<JointFollower>().enabled = true;
                     }
                     jointFollower.enabled = true;
+                    onApproximationComplete?.Invoke();
                     approximationComputeState = ApproximationComputeState.None;
                     break;
                 default:
