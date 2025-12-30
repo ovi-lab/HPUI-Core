@@ -438,6 +438,22 @@ MonoBehaviour:
   _zOrder: 0
   gestureEvent:
     m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2058045446}
+        m_TargetAssemblyTypeName: ubco.ovilab.ViconUnityStream.Samples.SampleInteractions,
+          ubco.ovilab.ViconUnityStream.Sample
+        m_MethodName: OnGesture
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  interactableStateEvent:
+    m_PersistentCalls:
       m_Calls: []
 --- !u!114 &329480958
 MonoBehaviour:
@@ -1577,6 +1593,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  interactableStateEvent:
+    m_PersistentCalls:
+      m_Calls: []
   x_size: 0.01
   y_size: 0.07
   y_divisions: 35
@@ -1841,6 +1860,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6044e5d1cfc6f3f44b752a453eddc97a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 0}
 --- !u!114 &2058045447
 MonoBehaviour:
   m_ObjectHideFlags: 0
