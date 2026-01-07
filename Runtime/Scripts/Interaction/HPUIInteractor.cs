@@ -214,7 +214,12 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                                                      hoverEndPoint,
                                                      attachTransform.position));
                     }
-                } finally
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"Something went wrong: {e}\n{e.StackTrace}");
+                }
+                finally
                 {
                     UnityEngine.Profiling.Profiler.BeginSample("gestureLogic");
                     interactorGestureToReturn = GestureLogic.ComputeInteraction(this, validTargets, gestureEvents, interactableEvents);
@@ -235,8 +240,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                     {
                         interactable.OnInteractableStateEvent(args);
                     }
-                    catch
-                    { }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"Something went wrong: {e}\n{e.StackTrace}");
+                    }
                 }
 
                 foreach ((IHPUIInteractable interactable, HPUIGestureEventArgs args) in gestureEvents)
@@ -252,8 +259,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                             this.interactionManager.SelectExit(this, interactable);
                         }
                     }
-                    catch
-                    { }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"Something went wrong: {e}\n{e.StackTrace}");
+                    }
                 }
                 gestureEvent?.Invoke(interactorGestureToReturn);
             }
