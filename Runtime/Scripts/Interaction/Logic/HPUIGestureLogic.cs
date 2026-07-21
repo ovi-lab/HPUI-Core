@@ -11,6 +11,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
     [Serializable]
     public class HPUIGestureLogic : IHPUIGestureLogic
     {
+        private const float c_switchCurrentTrackingInteractableThresholdDefault = 0.15f;
+
         protected enum LogicState
         {
             NoGesture,
@@ -50,7 +52,8 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         }
 
         [Tooltip("The ratio at which the current tracking interactable should be recomputed. The higher the value, the easier it is to switch")]
-        [Range(0f, 1f), SerializeField] private float switchCurrentTrackingInteractableThreshold = 0.15f;
+        [Range(0f, 1f), SerializeField]
+        private float switchCurrentTrackingInteractableThreshold = c_switchCurrentTrackingInteractableThresholdDefault;
 
         /// <summary>
         /// The ratio at which the current tracking interactable should be recomputed.
@@ -72,7 +75,11 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// If enabled, will always report position in interactable state events. Otherwise, position is reported only during Tracking related events.
         /// The position data when this is disabled will be Vector2.zero.
         /// </summary>
-        public bool AlwaysReportPositionInStateEvents { get => alwaysReportPositionInStateEvents; set => alwaysReportPositionInStateEvents = value; }
+        public bool AlwaysReportPositionInStateEvents
+        {
+            get => alwaysReportPositionInStateEvents;
+            set => alwaysReportPositionInStateEvents = value;
+        }
 
         private float startTime, cumulativeDistance, timeDelta, currentTrackingInteractableHeuristic, debounceStartTime;
         private Vector2 delta, currentPosition, previousPosition, cumulativeDirection;
@@ -93,18 +100,21 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <summary>
         /// Initializes a new instance of the with the threshold values.
         /// </summary>
-        public HPUIGestureLogic(float debounceTimeWindow, float gestureCommitDelay)
+        public HPUIGestureLogic(float debounceTimeWindow,
+                                float gestureCommitDelay,
+                                float switchCurrentTrackingInteractableThreshold = c_switchCurrentTrackingInteractableThresholdDefault)
         {
-            UpdateThresholds(debounceTimeWindow, gestureCommitDelay);
+            UpdateThresholds(debounceTimeWindow, gestureCommitDelay, switchCurrentTrackingInteractableThreshold);
         }
 
         /// <summary>
         /// Update the threshold values used.
         /// </summary>
-        public void UpdateThresholds(float debounceTimeWindow, float gestureCommitDelay)
+        public void UpdateThresholds(float debounceTimeWindow, float gestureCommitDelay, float switchCurrentTrackingInteractableThreshold)
         {
-            this.debounceTimeWindow = debounceTimeWindow;
-            this.gestureCommitDelay = gestureCommitDelay;
+            this.DebounceTimeWindow = debounceTimeWindow;
+            this.GestureCommitDelay = gestureCommitDelay;
+            this.SwitchCurrentTrackingInteractableThreshold = switchCurrentTrackingInteractableThreshold;
         }
 
         /// <inheritdoc />
@@ -279,7 +289,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             {
                 if (selectionHappenedLastFrame)
                 {
-                    if (debounceStartTime + debounceTimeWindow < frameTime &&
+                    if (debounceStartTime + DebounceTimeWindow < frameTime &&
                         // If not gesturing, start was never fired. The gesture had ended just on the threshold. Hence that should result in cancel!
                         interactorGestureState == LogicState.Gesturing)
                     {
@@ -327,7 +337,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                     updateTrackingInteractable = true;
                 }
 
-                if (!updateTrackingInteractable && heuristicRatio < switchCurrentTrackingInteractableThreshold)
+                if (!updateTrackingInteractable && heuristicRatio < SwitchCurrentTrackingInteractableThreshold)
                 {
                     updateTrackingInteractable = true;
                 }
@@ -472,7 +482,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             {
                 Vector2 auxPosition;
 
-                if (alwaysReportPositionInStateEvents || auxState == HPUIInteractableState.TrackingUpdate || auxState == HPUIInteractableState.TrackingStarted || auxState == HPUIInteractableState.TrackingEnded)
+                if (AlwaysReportPositionInStateEvents || auxState == HPUIInteractableState.TrackingUpdate || auxState == HPUIInteractableState.TrackingStarted || auxState == HPUIInteractableState.TrackingEnded)
                 {
                     if (!cachedPositionsOnInteractable.TryGetValue(interactable, out auxPosition))
                     {
