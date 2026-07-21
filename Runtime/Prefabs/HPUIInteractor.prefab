@@ -94,6 +94,7 @@ MonoBehaviour:
         debounceTimeWindow: 0
         gestureCommitDelay: 0
         switchCurrentTrackingInteractableThreshold: 0.15
+        alwaysReportPositionInStateEvents: 0
 --- !u!114 &6470572868118742890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -115,7 +116,7 @@ MonoBehaviour:
       secondJointID: 6
       defaultJointRadius: 0.01
       offsetAngle: 0
-      offsetAsRatioToRadius: 0.5
-      longitudinalOffset: 0.8
+      offsetAsRatioToRadius: 0
+      longitudinalOffset: 0.85
     m_Variable: {fileID: 0}
   targetTransform: {fileID: 0}
