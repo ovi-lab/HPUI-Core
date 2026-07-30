@@ -103,6 +103,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             return colliders;
         }
 
+        // TODO: Revisit the contract of continuous interactable with this?
         /// <summary>
         /// Return the (approximate) point on the surface of where the collider is.
         /// The returned Vector2 - (x, z) on the xz-plane. This is relative to the
@@ -116,6 +117,26 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             }
 
             return colliderCoords[collider];
+        }
+
+        // TODO: Revisit the contract of continuous interactable with this?
+        /// <summary>
+        /// Gets the collider whose surface coordinate is closest to the specified
+        /// coordinate.
+        /// </summary>
+        /// <param name="coord">
+        /// The surface coordinate to compare, expressed as <c>(x, z)</c> on the
+        /// surface plane and relative to the center of the deformable surface.
+        /// </param>
+        /// <returns>
+        /// The collider closest to <paramref name="coord"/>.
+        /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if no colliders have been generated.
+        /// </exception>
+        public Collider GetClosestCollider(Vector2 coord)
+        {
+            return colliderCoords.OrderBy(kvp => (coord - kvp.Value).magnitude).First().Key;
         }
 
         /// <summary>
