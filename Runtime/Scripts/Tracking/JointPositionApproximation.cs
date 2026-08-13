@@ -4,6 +4,7 @@ using System.Linq;
 using ubco.ovilab.HPUI.Core.Interaction;
 using ubco.ovilab.HPUI.Core.UI;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Pool;
 using UnityEngine.XR.Hands;
 
@@ -14,14 +15,56 @@ namespace ubco.ovilab.HPUI.Core.Tracking
     /// recent hand joint samples and estimating bone lengths.
     /// </summary>
     /// <remarks>
-    /// Gathers pose and length data until stable, computes keypoint poses, applies them to JointFollower
-    /// components, and triggers automatic calibration. <see cref="TryComputePoseForKeyPoints"/> for mode
-    /// details.
+    /// Gathers pose and length data until stable, computes and applies keypoint poses, and invokes
+    /// <see cref="ApproximationReady"/>. Calibration then runs automatically when
+    /// <see cref="ExecuteCalibrationAutomatically"/> is enabled; otherwise it waits for an external call to
+    /// <see cref="ExecuteCalibration"/>. <see cref="TryComputePoseForKeyPoints"/> for computation details.
     /// </remarks>
     public class JointPositionApproximation : HandSubsystemSubscriber
     {
         [Tooltip("(Optional) Will be used to provide feedback during setup.")]
         [SerializeField] private HPUIGeneratedContinuousInteractableUI ui;
+
+        [Tooltip("Automatically execute calibration after the computed approximation has been applied and Approximation Ready is invoked. If disabled, call Execute Calibration externally.")]
+        [SerializeField] private bool executeCalibrationAutomatically = true;
+
+        [Tooltip("Invoked after approximation data collection and pose application finish, before calibration.")]
+        [SerializeField] private UnityEvent approximationReady = new UnityEvent();
+
+        [Tooltip("Invoked after the computed approximation has been applied and calibration finishes.")]
+        [SerializeField] private UnityEvent calibrationCompleted = new UnityEvent();
+
+        /// <summary>
+        /// Invoked after approximation data collection and pose application finish, before calibration.
+        /// </summary>
+        /// <remarks>
+        /// When automatic calibration is disabled, the component waits in its pending-calibration state
+        /// after this event until an external script calls <see cref="ExecuteCalibration"/>.
+        /// </remarks>
+        public UnityEvent ApproximationReady => approximationReady;
+
+        /// <summary>
+        /// Invoked after the computed approximation has been applied and calibration finishes.
+        /// </summary>
+        /// <remarks>
+        /// This event is invoked after <see cref="ApproximationReady"/> and after either automatic or
+        /// externally triggered calibration completes.
+        /// </remarks>
+        public UnityEvent CalibrationCompleted => calibrationCompleted;
+
+        /// <summary>
+        /// Whether to execute calibration automatically after the computed approximation has been applied
+        /// and <see cref="ApproximationReady"/> has been invoked.
+        /// </summary>
+        /// <remarks>
+        /// When false, the component remains pending calibration until an external script calls
+        /// <see cref="ExecuteCalibration"/>.
+        /// </remarks>
+        public bool ExecuteCalibrationAutomatically
+        {
+            get => executeCalibrationAutomatically;
+            set => executeCalibrationAutomatically = value;
+        }
 
         private enum ApproximationComputeState { None, Starting, DataCollection, Computing, Finished }
         private Transform dummyXROriginTransform;
@@ -64,6 +107,7 @@ namespace ubco.ovilab.HPUI.Core.Tracking
         private ApproximationComputeState approximationComputeState = ApproximationComputeState.Starting;
         private JointFollower jointFollower;
         private HPUIGeneratedContinuousInteractable continuousInteractable;
+        private Dictionary<XRHandJointID, Pose> computedKeypointPoses;
 
         /// <inheritdoc />
         protected override void ProcessJointData(XRHandSubsystem subsystem, XRHandSubsystem.UpdateSuccessFlags _)
@@ -326,14 +370,19 @@ namespace ubco.ovilab.HPUI.Core.Tracking
         }
 
         /// <summary>
-        /// Restart the automated computation procedure.
+        /// Restarts the approximation procedure and clears any previously computed poses.
         /// </summary>
+        /// <remarks>
+        /// The procedure begins collecting data on a subsequent update. If the previous approximation is
+        /// waiting for manual calibration, calling this method abandons that pending calibration.
+        /// </remarks>
         public void AutomatedRecompute()
         {
             approximationComputeState = ApproximationComputeState.Starting;
             jointsLengthEstimation.Clear();
             jointsLastLengths.Clear();
             computeKeypointJointsData.Clear();
+            computedKeypointPoses = null;
         }
 
         /// <inheritdoc />
@@ -355,20 +404,51 @@ namespace ubco.ovilab.HPUI.Core.Tracking
         }
 
         /// <summary>
-        /// Computes joint pose approximations from the provided keypoint poses, applies them to the
-        /// joint followers, and executes calibration on the associated continuous interactable.
+        /// Executes calibration using the most recently computed and applied approximation.
         /// </summary>
-        /// <param name="keypointPoses">Mapping from XRHandJointID to Pose containing the source poses
-        /// for approximation. Must contain all joint IDs referenced by the joint follower datum and
-        /// keypoint followers.</param>
         /// <remarks>
-        /// Sets up keypoints, disables joint followers, assigns base and optional second joint poses to
-        /// the main follower, applies poses to each keypoint follower, runs calibration, and updates the
-        /// approximation state.
+        /// Call this from an external script after <see cref="ApproximationReady"/> when
+        /// <see cref="ExecuteCalibrationAutomatically"/> is disabled. The approximation has already been
+        /// applied before <see cref="ApproximationReady"/> is invoked; this method performs only the remaining
+        /// calibration step and transitions the process to <c>Finished</c>.
+        /// It does nothing when automatic calibration is enabled or when approximation data is not ready.
         /// </remarks>
+        public void ExecuteCalibration()
+        {
+            if (executeCalibrationAutomatically)
+            {
+                Debug.LogWarning("Cannot manually execute calibration while automatic calibration is enabled.");
+                return;
+            }
+
+            if (computedKeypointPoses == null)
+            {
+                Debug.LogWarning("Cannot execute calibration before approximation data collection completes.");
+                return;
+            }
+
+            if (approximationComputeState != ApproximationComputeState.Computing)
+            {
+                Debug.LogWarning("Calling ExecuteCalibration too early (approximation still hasn't completed) or late (estimation has been completed).");
+                return;
+            }
+
+            ExecuteCalibrationInternal();
+        }
+
+        /// <summary>
+        /// Sets up the keypoints and applies the supplied keypoint poses without executing calibration.
+        /// </summary>
+        /// <remarks>
+        /// This is the first phase after pose computation. It disables live joint followers, applies the
+        /// approximation, and leaves the component ready for the <see cref="ApproximationReady"/> event and
+        /// the subsequent calibration phase.
+        /// </remarks>
+        /// <param name="keypointPoses">Mapping from XRHandJointID to Pose containing all poses required by
+        /// the joint follower datum and keypoint followers.</param>
         /// <exception cref="System.Collections.Generic.KeyNotFoundException">Thrown if a required joint
         /// ID is missing from <paramref name="keypointPoses"/>.</exception>
-        protected virtual void ComputeApproximationAndExecuteCalibration(Dictionary<XRHandJointID, Pose> keypointPoses)
+        protected virtual void ApplyComputedApproximation(Dictionary<XRHandJointID, Pose> keypointPoses)
         {
             continuousInteractable.SetupKeypoints();
 
@@ -401,9 +481,22 @@ namespace ubco.ovilab.HPUI.Core.Tracking
                 kpJointFollower.InternalSetPose(newPose1, Pose.identity, false);
             }
 
+        }
+
+        /// <summary>
+        /// Executes the calibration phase using the previously applied approximation.
+        /// </summary>
+        /// <remarks>
+        /// This is called automatically when configured to do so, or by <see cref="ExecuteCalibration"/> in
+        /// manual mode. It transitions the component from its pending-calibration state to <c>Finished</c>
+        /// and invokes <see cref="CalibrationCompleted"/>.
+        /// </remarks>
+        private void ExecuteCalibrationInternal()
+        {
             continuousInteractable.ExecuteCalibration();
             Debug.Log($"Finished generating");
             approximationComputeState = ApproximationComputeState.Finished;
+            calibrationCompleted.Invoke();
         }
 
         /// <inheritdoc />
@@ -446,10 +539,17 @@ namespace ubco.ovilab.HPUI.Core.Tracking
                                                    out Dictionary<XRHandJointID, Pose> keypointPoses,
                                                    out float percentageDone))
                     {
+                        computedKeypointPoses = keypointPoses;
                         ui?.Hide();
                         Debug.Log($"Finished collecting data for approximation");
                         approximationComputeState = ApproximationComputeState.Computing;
-                        ComputeApproximationAndExecuteCalibration(keypointPoses);
+                        ApplyComputedApproximation(computedKeypointPoses);
+                        approximationReady.Invoke();
+
+                        if (executeCalibrationAutomatically)
+                        {
+                            ExecuteCalibrationInternal();
+                        }
                     }
                     else
                     {
@@ -468,7 +568,8 @@ namespace ubco.ovilab.HPUI.Core.Tracking
                     }
                     break;
                 case ApproximationComputeState.Computing:
-                    // Nothing to do here
+                    // The approximation has been applied and calibration is pending or in progress.
+                    // In manual mode, ExecuteCalibration() transitions this state to Finished.
                     break;
                 case ApproximationComputeState.Finished:
                     foreach (Transform t in continuousInteractable.KeypointTransforms)
