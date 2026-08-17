@@ -8,7 +8,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         public float X_size { get; }
 
         /// <summary>
-        /// The size along the flexion-extension axis of the fingers (z-axis of joints) in unity units.
+        /// The signed size along the longitudinal axis of the fingers in Unity units.
+        /// The reported surface position always increases in logical +y from proximal to distal;
+        /// a negative value places the generated surface in the opposite physical z direction.
         /// </summary>
         public float Y_size { get; }
     }

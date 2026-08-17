@@ -35,10 +35,11 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         Vector2 boundsMin { get; }
 
         /// <summary>
-        /// Get the projection of the interactor position on the xz plane of this interactable.
+        /// Get the projection of the interactor position on the surface plane of this interactable.
         /// If the interactor is not hovering, will return false.
-        /// the returned Vector2 - (x, z) on the xz-plane, relative to the center of the
-        /// interactable in Unity units.
+        /// The returned Vector2 is relative to the center of the interactable in Unity units.
+        /// Its x component is the surface's local x coordinate and its y component is the
+        /// surface's logical longitudinal coordinate.
         /// </summary>
         bool ComputeInteractorPosition(IHPUIInteractor interactor, out Vector2 position);
 

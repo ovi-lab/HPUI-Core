@@ -18,7 +18,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         /// <param name="x_size">
         /// The size along the abduction-adduction axis of the fingers (x-axis of joints).</param>
         /// <param name="y_size">
-        /// The size along the flexion-extension axis of the fingers (z-axis of joints).</param>
+        /// The signed size along the longitudinal axis of the fingers. The generated rows and
+        /// reported logical surface coordinates increase from proximal to distal, including when
+        /// this value is negative.</param>
         /// <param name="x_divisions">
         /// The number of subdivisions along the abduction-adduction
         /// axis of the fingers.</param>
@@ -69,7 +71,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
             byte[] bonesPerVertex;
             List<BoneWeight1> weights;
-            float sigma = Mathf.Max(x_size, y_size) * sigmaFactor;
+            float sigma = Mathf.Max(Mathf.Abs(x_size), Mathf.Abs(y_size)) * sigmaFactor;
             GenerateGeodesicBoneWeights(mesh, vertices, surfaceRootTransform, bones, numberOfBonesPerVertex, sigma, out bonesPerVertex, out weights);
 
             // Create NativeArray versions of the two arrays
@@ -101,13 +103,18 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             List<Vector3> normals = new List<Vector3>();
             List<Vector2> uvs = new List<Vector2>();
 
+            // TODO: Normalize the x coordinate for handedness so logical +x is little finger to index finger.
+            Vector3 origin = y_size > 0 ? Vector3.zero : new Vector3(0, 0, y_size);
+
+            y_size = Mathf.Abs(y_size);
+
             for (int k = 0; k < y_divisions; k++)
             {
 
                 //for (int i = -x_divisions/2; i < x_divisions/2; i++)
                 for (int i = 0; i < x_divisions; i++)
                 {
-                    vertices.Add(new Vector3(x_size * ((i - ((float)x_divisions / 2.0f)) / (float)x_divisions), surfaceOffset, y_size * (k / (float)y_divisions)));
+                    vertices.Add(origin + new Vector3(x_size * ((i - ((float)x_divisions / 2.0f)) / (float)x_divisions), surfaceOffset, y_size * (k / (float)y_divisions)));
                     normals.Add(Vector3.down);
 
                     uvs.Add(new Vector2(1 - k / (float)(y_divisions - 1), i / (float)(x_divisions - 1)));
@@ -123,10 +130,10 @@ namespace ubco.ovilab.HPUI.Core.Interaction
                     continue;
                 }
 
-                triangles.AddRange(new List<int>()
+                triangles.AddRange(new[]
                 {
-                    i,i+x_divisions,i+x_divisions+1,
-                    i,i+x_divisions+1,i+1
+                    i, i + x_divisions, i + x_divisions + 1,
+                    i, i + x_divisions + 1, i + 1
                 });
             }
 

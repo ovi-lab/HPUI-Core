@@ -20,7 +20,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         [Space()]
         [Tooltip("The size along the abduction-adduction axis of the fingers (x-axis of joints) in unity units")]
         [SerializeField] private float x_size;
-        [Tooltip("The size along the flexion-extension axis of the fingers (z-axis of joints) in unity units.")]
+        [Tooltip("Signed size along the longitudinal axis of the fingers. Surface position +y runs from proximal to distal; negative values place the surface in the opposite physical z direction.")]
         [SerializeField] private float y_size;
         [Tooltip("The number of subdivisions along the flexion-extension axis of the fingers. The subdivisions along the abduction-adduction axis will be computed from this such that the resulting subdivisions are squares.")]
 	[SerializeField] private int y_divisions = 35;
@@ -252,7 +252,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
             }
 
             float step_size = y_size / Y_divisions;
-	    X_divisions = (int)(x_size / step_size);
+	    X_divisions = (int)Mathf.Max(1f, Mathf.Abs(x_size / step_size));
 
             DeformableSurface.GenerateMesh(x_size, y_size, X_divisions, Y_divisions, Offset, Filter, KeypointTransforms, NumberOfBonesPerVertex, sigmaFactor);
 

@@ -192,8 +192,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         public IXRSelectInteractor interactorObject { get; set; }
 
         /// <summary>
-        /// The position of the interaction on the plane of the
-        /// interactable relative to its position.
+        /// The position of the interaction on the interactable surface, relative to its center.
+        /// The y component is the logical longitudinal coordinate and increases from proximal
+        /// to distal, including for generated surfaces with a negative physical z extent.
         /// </summary>
         public virtual Vector2 Position { get; protected set; }
 
@@ -310,8 +311,9 @@ namespace ubco.ovilab.HPUI.Core.Interaction
         }
 
         /// <summary>
-        /// The position of the interaction on the plane of the
-        /// interactable relative to its position.
+        /// The position of the interaction on the interactable surface, relative to its center.
+        /// The y component is the logical longitudinal coordinate and increases from proximal
+        /// to distal, including for generated surfaces with a negative physical z extent.
         /// </summary>
         public virtual Vector2 Position { get; private set; }
 

@@ -154,6 +154,7 @@ namespace ubco.ovilab.HPUI.Core.Interaction
 
             colliderCoords = new Dictionary<Collider, Vector2>();
 
+            // TODO: Reverse the reported x coordinate for the left hand so logical +x is little finger to index finger.
             for(var i = 0; i < positions.Count; i ++)
 	    {
                 colliderObj = new GameObject();
